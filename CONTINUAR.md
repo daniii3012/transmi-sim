@@ -306,3 +306,13 @@ ruta (ML82 = M82/L82, MK86 = M86/K86).
   Un chevron pliega las dos filas de mandos y deja la de arriba, que es la que dice qué momento se
   está mirando: 128 px abiertos, 52 plegado. El alto sale de `--clock-height`, del que cuelgan el
   borde inferior de la hoja, el de la ficha y el del aviso, para no repartir el mismo número a mano.
+- Retoques sobre lo anterior: «Ahora» vuelve a ser texto, no un dibujo, y la línea del día deja de
+  rozar el borde de la tarjeta —el alto se midió mal: la fila de arriba ocupa 44, la altura táctil
+  de un campo, no 36—. De paso se arregla un daño que había hecho yo: envolver «Ahora» en un span
+  para poder rotularlo lo dejaba invisible entre 801 y 1250 px, porque `.date-controls span` se
+  usaba para esconder el día de la semana. Esa regla nombra ahora `#day-type`, que era lo que quería
+  esconder.
+- **Se retira guardar el escenario.** No había dónde ver ni borrar lo guardado, y al reabrir la
+  página se volvía a un escenario viejo sin haberlo pedido. Se van el botón, el guardado y la
+  restauración; lo que quedara en el navegador se borra al abrir. El tema y las estaciones favoritas
+  se quedan, que sí tienen dónde cambiarse.

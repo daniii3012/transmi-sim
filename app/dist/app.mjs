@@ -1,9 +1,9 @@
-import {mountShell} from './shell.mjs?v=20260913.4';
-import {NetworkMap} from './map.mjs?v=20260913.4';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260913.4';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260913.4';
-import {registerSimulationTools} from './webmcp.mjs?v=20260913.4';
-import {LiveFeed,groupByDestination,occupancyText,ageText,sameName} from './live.mjs?v=20260913.4';
+import {mountShell} from './shell.mjs?v=20260913.7';
+import {NetworkMap} from './map.mjs?v=20260913.7';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260913.7';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260913.7';
+import {registerSimulationTools} from './webmcp.mjs?v=20260913.7';
+import {LiveFeed,groupByDestination,occupancyText,ageText,sameName} from './live.mjs?v=20260913.7';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -28,7 +28,6 @@ try{
  const [response,contextResponse,demandResponse,layoutsResponse,signalsResponse,lanesResponse,wagonsResponse,scheduleResponse,speedResponse]=await Promise.all([fetch('./services.json',{cache:'no-store'}),fetch('./context.json',{cache:'no-store'}),fetch('./demand.json',{cache:'no-store'}),fetch('./station_layouts.json',{cache:'no-store'}),fetch('./busway_signals.json',{cache:'no-store'}),fetch('./busway_lanes.json',{cache:'no-store'}),fetch('./station_wagons.json',{cache:'no-store'}),fetch('./schedule.json',{cache:'no-store'}),fetch('./speed_profiles.json',{cache:'no-store'})]);
  if(!response.ok)throw new Error('No se pudieron cargar los servicios locales.');
  const data=await response.json();if(scheduleResponse.ok)data.schedule=await scheduleResponse.json();if(speedResponse.ok)data.speed_profiles=await speedResponse.json();if(signalsResponse.ok)data.busway_signals=await signalsResponse.json();if(lanesResponse.ok)data.busway_lanes=await lanesResponse.json();if(layoutsResponse.ok)data.station_layouts=await layoutsResponse.json();if(wagonsResponse.ok)data.station_wagons=await wagonsResponse.json();if(demandResponse.ok){data.demand=await demandResponse.json();const profiles=new Map(data.demand.profiles.map(p=>[p.station_id,p]));for(const s of data.stations){const p=profiles.get(s.id);if(p)s.demand_profile=p;}}const routeById=new Map(data.routes.map(r=>[r.id,r]));
- let saved=null;try{const current=localStorage.getItem('transmi-scenario-v3');saved=JSON.parse(current||localStorage.getItem('transmi-scenario-v2'));if(saved&&!current){const p=saved.config.params;if(p.cruiseKmh===48)p.cruiseKmh=60;if(p.streetKmh===30)p.streetKmh=50;delete p.biarticulatedShare;delete p.biarticulatedCapacity;delete p.biShare;delete p.bioShare;delete p.bioCapacity;delete p.capacity;if(saved.config.selection.route==='10082')saved.config.selection.route='396';}if(saved?.revision!==data.revision)saved=null;}catch{}
  // Hora civil de Bogotá, independiente del huso del equipo.
  function bogotaNow(){
   const parts=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Bogota',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
@@ -40,19 +39,20 @@ try{
  const inicio=bogotaNow();
  let config={date:inicio.date,params:{...DEFAULTS},selection:{mode:'all'}};
  let clock={time:inicio.time,speed:1,paused:false};
- if(saved){try{saved.config.params=parameters(saved.config.params);dateNumber(saved.config.date);if(!Number.isFinite(saved.clock.time)||saved.clock.time<DAY||saved.clock.time>=2*DAY||![1,8,32,120].includes(saved.clock.speed))throw Error();if(!['all','route','zones'].includes(saved.config.selection.mode))throw Error();if(saved.config.selection.mode==='route'&&!routeById.get(saved.config.selection.route)?.ready)throw Error();if(saved.config.selection.mode==='zones'&&!saved.config.selection.zones?.length)throw Error();config=saved.config;clock={...clock,...saved.clock,paused:true};}catch{saved=null;}}
  let selection=null,following=false,focusedRoute=null,activePanel='routes',generation=0,ready=false,pendingSample=false,lastUI=0,lastList=0,lastInspect=0,lastSample=0,windows={},snap={buses:[],stats:{}};
  let viewMode=config.selection.mode,scrubbing=false,sampleSequence=0,planSequence=0;
  let selectedZones=new Set(config.selection.zones||[]);const map=new NetworkMap($('#canvas-host'),$('#labels'),data,onSelect);
  if(contextResponse.ok)map.setContext(await contextResponse.json());
+ // El escenario guardado se retiró; lo que quedara de él en este navegador ya no tiene dueño.
+ try{localStorage.removeItem('transmi-scenario-v3');localStorage.removeItem('transmi-scenario-v2');}catch{}
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260913.4',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260913.7',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260913.4',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260913.7',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;
   worker.postMessage({type:'init',generation,data,config,time:clock.time});syncControls();renderRoutes();
@@ -586,7 +586,6 @@ try{
  $('#signals-toggle').onclick=()=>{const oculto=map.signalsEnabled;map.setSignals(!oculto);$('#signals-toggle').setAttribute('aria-pressed',oculto);$('#signals-toggle').classList.toggle('active',oculto);};
  $('#corridors-toggle').onclick=()=>{const faded=!map.corridorsFaded;map.setCorridorsFaded(faded);$('#corridors-toggle').setAttribute('aria-pressed',faded);$('#corridors-toggle').classList.toggle('active',faded);};map.onPan=()=>following=false;
  $('#close-inspector').onclick=()=>{clearSelection();renderRoutes();restoreLiveRoute();};
- $('#save').onclick=()=>{try{localStorage.setItem('transmi-scenario-v3',JSON.stringify({revision:data.revision,config,clock}));toast('Escenario guardado. Se restaurará pausado al abrirlo.');}catch{toast('No se pudo guardar en este dispositivo.');}};
  const coverage=el('div',undefined,'coverage-grid');for(const [value,label] of [[data.counts.map_records,'registros del mapa'],[data.counts.map_codes,'códigos distintos'],[data.counts.ready,'variantes utilizables'],[data.counts.pending,'registros pendientes']]){const box=el('div');box.append(el('strong',value),el('span',label));coverage.append(box);}$('#coverage').append(coverage);// Fechas y cifras derivadas del propio dato: una instantánea nueva las actualiza sola.
  const mes=iso=>new Date(iso+'T12:00:00Z').toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'});
  const snapshotDate=`${data.snapshot.slice(0,4)}-${data.snapshot.slice(4,6)}-${data.snapshot.slice(6,8)}`;

@@ -59,10 +59,8 @@ navegador corre y guarda su propio escenario.
 7. **En vivo.** **Todo el sistema** ubica los buses troncales y duales con su conteo por servicio;
    **Por servicio** sigue una ruta. Las dos lecturas tienen precisión distinta y la pestaña lo
    rotula. Requiere el servidor local y `tools/en_vivo.local.json`, que no se versiona.
-8. **Guardar.** Conserva fecha, hora, selección y parámetros en este navegador; al volver, se
-   restaura en pausa. No hay partida en la nube.
-
-El botón **Ahora** usa la hora de Bogotá y el de luna/sol recuerda el tema.
+El botón **Ahora** usa la hora de Bogotá y el de luna/sol recuerda el tema. No se guardan
+escenarios: cada visita empieza en el momento actual.
 
 </details>
 

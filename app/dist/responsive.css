@@ -58,9 +58,11 @@ body[data-theme=dark] #sidebar,body[data-theme=dark] #inspector,body[data-theme=
     «Ahora» dejan de vivir tras el menú Más, que no era sitio para ellas: `shell.mjs` arma las tres
     filas en un teléfono y devuelve cada control a la suya en una pantalla ancha. El chevron pliega
     las dos filas de mandos y deja a la vista la que dice qué momento se está mirando. */
- body{--clock-height:128px}
- body[data-clock=closed]{--clock-height:52px}
- #timeline{bottom:10px;left:10px;right:10px;padding:8px 12px;height:var(--clock-height);overflow:hidden;border-radius:14px;display:flex;flex-direction:column;gap:6px}
+ /* Alto medido, no estimado: 44 de la fila de arriba —la altura táctil de un campo—, 36 de los
+    mandos y 32 de la línea del día, más dos huecos y el relleno. */
+ body{--clock-height:146px}
+ body[data-clock=closed]{--clock-height:66px}
+ #timeline{bottom:10px;left:10px;right:10px;padding:8px 12px 14px;height:var(--clock-height);overflow:hidden;border-radius:14px;display:flex;flex-direction:column;gap:6px}
  .date-controls{display:flex;align-items:center;gap:6px;margin:0}
  .time-main{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}
  .scrub-row{display:flex;align-items:center;gap:10px;margin:0}
@@ -77,12 +79,7 @@ body[data-theme=dark] #sidebar,body[data-theme=dark] #inspector,body[data-theme=
  #timeline-toggle{display:grid;place-items:center;flex:none;margin-left:auto;min-width:38px;width:38px;min-height:36px;padding:0}
  #timeline-toggle:before{content:'';width:8px;height:8px;border:solid currentColor;border-width:0 2px 2px 0;transform:translateY(-2px) rotate(45deg)}
  body[data-clock=closed] #timeline-toggle:before{transform:translateY(2px) rotate(225deg)}
- /* «Ahora» se queda en un reloj dibujado: un círculo y dos agujas, que miden lo mismo en cualquier
-    fuente y no dependen de que el sistema tenga el emoji. */
- #now{position:relative;flex:none;min-width:38px;width:38px;min-height:36px;padding:0;font-size:0}
- #now>span{display:none}
- #now:before{content:'';position:absolute;left:50%;top:50%;width:15px;height:15px;margin:-8px 0 0 -8px;border:1.5px solid currentColor;border-radius:50%}
- #now:after{content:'';position:absolute;left:50%;top:50%;width:4px;height:5px;margin:-5px 0 0 -4px;border-left:1.5px solid currentColor;border-bottom:1.5px solid currentColor}
+ #now{flex:none;min-width:0;min-height:36px;padding:4px 10px;font-size:.72rem}
  /* El icono nativo del selector se lleva veinte píxeles de un campo que aquí no los tiene. Tocar el
     campo sigue abriendo el selector, que es como se usa en un teléfono. */
  #date::-webkit-calendar-picker-indicator,#time::-webkit-calendar-picker-indicator{display:none}
