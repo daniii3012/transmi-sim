@@ -1,9 +1,9 @@
-import {mountShell} from './shell.mjs?v=20260913.7';
-import {NetworkMap} from './map.mjs?v=20260913.7';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260913.7';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260913.7';
-import {registerSimulationTools} from './webmcp.mjs?v=20260913.7';
-import {LiveFeed,groupByDestination,occupancyText,ageText,sameName} from './live.mjs?v=20260913.7';
+import {mountShell} from './shell.mjs?v=20260913.8';
+import {NetworkMap} from './map.mjs?v=20260913.8';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260913.8';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260913.8';
+import {registerSimulationTools} from './webmcp.mjs?v=20260913.8';
+import {LiveFeed,groupByDestination,occupancyText,ageText,sameName} from './live.mjs?v=20260913.8';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -48,11 +48,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260913.7',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260913.8',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260913.7',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260913.8',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;
   worker.postMessage({type:'init',generation,data,config,time:clock.time});syncControls();renderRoutes();
@@ -390,13 +390,12 @@ try{
   const filas=[...porLinea].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'es',{numeric:true}));
   list.replaceChildren();
   if(!filas.length){list.append(el('li','El planificador no ubica ningún bus troncal ahora mismo.','muted'));return;}
-  for(const [code,count] of filas.slice(0,14)){
+  for(const [code,count] of filas){
    const li=el('li'),swatch=el('i',undefined,'swatch');swatch.style.background=colorByCode.get(code)||'#8b98a8';
    const boton=el('button',code+(colorByCode.has(code)?'':' · fuera del catálogo'));
    boton.onclick=()=>{if(!colorByCode.has(code))return;setLiveScope('route');$('#live-route').value=code;$('#live-route').onchange();};
    li.append(swatch,boton,el('span',fmt(count),'value'));list.append(li);
   }
-  if(filas.length>14)list.append(el('li',`y ${filas.length-14} servicios más`,'muted'));
  }
  function setLiveScope(scope){
   liveScope=scope;liveFitted=null;

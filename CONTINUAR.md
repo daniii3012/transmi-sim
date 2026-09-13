@@ -318,3 +318,9 @@ ruta (ML82 = M82/L82, MK86 = M86/K86).
   página se volvía a un escenario viejo sin haberlo pedido. Se van el botón, el guardado y la
   restauración; lo que quedara en el navegador se borra al abrir. El tema y las estaciones favoritas
   se quedan, que sí tienen dónde cambiarse.
+- **El recorte de «y N servicios más» seguía vivo aquí.** Al quitar el scroll interno de la lista de
+  En vivo el 12/09 se corrigió el árbol privado, pero este conservaba `filas.slice(0,14)` y la línea
+  «y N servicios más», que es literalmente lo que Daniel había pedido quitar: en el sitio publicado
+  se seguían viendo solo los catorce servicios con más buses. Ahora se listan todos, como en el
+  privado. Cadena de caché en `20260913.8`, que además hacía falta para que el motor nuevo no se
+  sirviera desde una caché con `.7`.
