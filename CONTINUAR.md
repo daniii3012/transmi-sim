@@ -288,3 +288,15 @@ ruta (ML82 = M82/L82, MK86 = M86/K86).
 - La nota de la vista general describía la instantánea del planificador, que se retiró el 12/09.
   Hoy esa vista es el alimentador abierto: posición reportada, sellada con la hora del lote y no con
   la del GPS de cada bus, y sin ocupación. El texto lo dice ya así.
+- **El menú Más quedaba detrás de la ficha.** No era su z-index: la barra inferior y su menú cuelgan
+  de `<header>`, que abre su propio contexto de apilamiento con `z-index:6`, y dentro de él da igual
+  subir el menú a 20 —el bloque entero se compara con la ficha por ese 6—. Se sube el contexto.
+- **El reloj del móvil se reparte por uso, en las mismas dos filas.** Arriba lo que mueve el tiempo
+  —quince minutos, pausa, quince minutos—, la velocidad y el día; abajo la línea del día con la hora
+  y el salto al ahora. La fecha y «Ahora» dejan de vivir tras el menú Más, que no era sitio para
+  ellas: `shell.mjs` baja la hora y el botón a la segunda fila en un teléfono y los devuelve a la
+  suya en una pantalla ancha, como ya hacía con el selector de En vivo. Con eso se va también
+  `time-expanded` y el desplegable de fecha del menú. «Ahora» pasa a ser un reloj dibujado con
+  bordes —círculo y dos agujas—, que mide igual en cualquier fuente; su texto queda de etiqueta.
+  Los indicadores nativos de los campos de fecha y hora se ocultan en el móvil: se llevaban veinte
+  píxeles cada uno y tocar el campo sigue abriendo el selector.

@@ -1,5 +1,5 @@
-import {MetricPath} from './simulation.mjs?v=20260913.2';
-import {signalPhase} from './signals.mjs?v=20260913.2';
+import {MetricPath} from './simulation.mjs?v=20260913.3';
+import {signalPhase} from './signals.mjs?v=20260913.3';
 import * as THREE from './vendor/three.module.js';
 
 export class NetworkMap {

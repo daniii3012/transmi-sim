@@ -19,7 +19,10 @@ body[data-theme=dark]{--surface:#202b36f5;--edge:#e5efff16}
 body[data-theme=dark] #sidebar,body[data-theme=dark] #inspector,body[data-theme=dark] #timeline{background:var(--surface)}
 @media(max-width:800px){
  html,body{height:100%;width:100%;overflow:hidden}
- header{height:calc(52px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) 16px 0;gap:12px}
+ /* La barra inferior y su menú cuelgan de <header>, que abre su propio contexto de apilamiento;
+    por alto que sea el z-index del menú, el bloque entero quedaba debajo de la ficha de detalle.
+    Se sube el contexto, no el menú. */
+ header{height:calc(52px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) 16px 0;gap:12px;z-index:20}
  .brand>div{display:block;font-size:1.1rem}.brand small{display:none}.brand>b{width:29px;height:30px;font-size:1.2rem}
  .header-right{margin-left:auto}.header-right #theme{width:42px;min-height:42px}
  nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-height) + var(--safe-bottom));padding:4px 10px var(--safe-bottom);display:flex;align-items:center;justify-content:space-around;z-index:15;background:var(--surface);border-top:1px solid var(--edge);overflow:visible;gap:4px}
@@ -49,15 +52,36 @@ body[data-theme=dark] #sidebar,body[data-theme=dark] #inspector,body[data-theme=
  #metrics,body[data-panel=live] #metrics{left:12px;right:auto;top:66px;bottom:auto;max-width:calc(100% - 80px);padding:8px 0;overflow:hidden}
  #metrics>div{min-width:0;padding:0 10px}#metrics strong{font-size:.98rem}#metrics span{font-size:.58rem}
  .map-bottom,body[data-panel=live] .map-bottom{top:auto;bottom:8px;left:16px;max-width:calc(100% - 32px);pointer-events:none}.map-bottom small{font-size:.5rem}
- #timeline{bottom:10px;left:10px;right:10px;padding:10px 12px;height:98px;overflow:auto;border-radius:14px}
- .time-main{gap:5px;flex-wrap:nowrap}.date-controls{display:none}.time-main>button{min-width:34px;min-height:36px;padding:4px}.time-main input[type=time],#time{min-width:102px!important;width:102px!important;font-size:.9rem!important;min-height:36px}
- .speed-controls{gap:0;margin-left:auto;order:0}.speed-controls button{min-width:30px;padding:4px;font-size:.7rem;min-height:36px}.period{display:none}.scrub-row{margin-top:6px}.scrub-row input{min-height:28px}
+ /* Dos filas repartidas por uso, no por lo que cupo primero. Arriba lo que mueve el tiempo —quince
+    minutos, pausa, quince minutos—, la velocidad y el día. Abajo la línea del día con la hora y el
+    salto al ahora. La fecha y «Ahora» dejan de vivir tras el menú Más, que no era sitio para ellas:
+    `shell.mjs` baja la hora y el botón a la segunda fila en un teléfono y los devuelve a la suya en
+    una pantalla ancha. */
+ #timeline{bottom:10px;left:10px;right:10px;padding:8px 12px;height:98px;overflow:hidden;border-radius:14px}
+ .time-main{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}
+ .date-controls{display:contents}#day-type,.period{display:none}
+ .time-main>button{min-width:34px;min-height:36px;padding:4px;order:0}
+ .speed-controls{display:flex;gap:0;margin:0 0 0 auto;order:1}
+ .speed-controls button{min-width:26px;padding:4px;font-size:.65rem;min-height:36px}
+ .date-controls input,#date{order:2;flex:none;width:88px;min-width:0;border:0;padding:4px 0;font-size:.75rem!important;font-weight:650;text-align:right;-webkit-appearance:none;appearance:none}
+ .scrub-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+ .scrub-row>span{display:none}
+ .scrub-row input[type=range],#scrub{flex:1;min-width:0;min-height:28px}
+ .time-main input[type=time],#time{flex:none;min-width:96px!important;width:96px!important;font-size:.82rem!important;min-height:36px;text-align:center;padding:0}
+ /* «Ahora» se queda en un reloj dibujado: un círculo y dos agujas, que miden lo mismo en cualquier
+    fuente y no dependen de que el sistema tenga el emoji. */
+ #now{position:relative;flex:none;min-width:38px;width:38px;min-height:36px;padding:0;font-size:0}
+ #now>span{display:none}
+ #now:before{content:'';position:absolute;left:50%;top:50%;width:15px;height:15px;margin:-8px 0 0 -8px;border:1.5px solid currentColor;border-radius:50%}
+ #now:after{content:'';position:absolute;left:50%;top:50%;width:4px;height:5px;margin:-5px 0 0 -4px;border-left:1.5px solid currentColor;border-bottom:1.5px solid currentColor}
+ /* El icono nativo del selector se lleva veinte píxeles de un campo que aquí no los tiene. Tocar el
+    campo sigue abriendo el selector, que es como se usa en un teléfono. */
+ #date::-webkit-calendar-picker-indicator,#time::-webkit-calendar-picker-indicator{display:none}
  body[data-panel=planner] #timeline{display:none}body[data-panel=planner] #metrics{display:none}
  /* La ficha se apoya donde acabe el reloj: si está a la vista le deja su franja, y si la pestaña
     no lo muestra llega hasta abajo del todo. */
  body{--sheet-bottom:10px}
  body[data-inspect=true]{--sheet-bottom:116px}
- body[data-inspect=true].time-expanded{--sheet-bottom:173px}
  body[data-inspect=true][data-panel=live],body[data-inspect=true][data-panel=planner]{--sheet-bottom:10px}
  #inspector,body[data-panel=live] #inspector{top:auto;bottom:var(--sheet-bottom,10px);left:10px;right:10px;width:auto;max-height:48%;padding:24px 20px;border-radius:16px;z-index:8}
  /* La hoja sí cede el sitio a la ficha, pero el reloj no: con una estación o un bus en foco es el
@@ -73,12 +97,7 @@ body[data-theme=dark] #sidebar,body[data-theme=dark] #inspector,body[data-theme=
  #timeline{left:320px;height:98px}#inspector{left:10px;right:auto;width:300px;max-height:95%}.map-caption,#metrics{left:330px}
 }
 
-.mobile-date{display:none!important}
-@media(max-width:800px){
- .mobile-date{display:block!important}.time-main{gap:3px}.speed-controls button{min-width:26px;font-size:.65rem}.time-main input[type=time],#time{min-width:92px!important;width:92px!important;font-size:.8rem!important}
- body.time-expanded #timeline{height:155px}body.time-expanded #sidebar{bottom:175px}body.time-expanded .time-main{flex-wrap:wrap}body.time-expanded .date-controls{display:flex;flex-basis:100%;margin:0 0 5px}body.time-expanded .date-controls input{width:145px}
- body[data-panel=live].time-expanded #sidebar,body[data-panel=planner].time-expanded #sidebar{bottom:10px}
-}
+
 
 /* La fecha y la hora se salían del panel y desplazaban la hoja entera de lado. En WebKit estos dos
    controles se dimensionan solos —el ancho que piden no lo fija `width`, sino la maqueta nativa que

@@ -7,8 +7,18 @@ export function mountShell(){
  const menu=document.createElement('div');menu.className='more-options';more.append(menu);
  for(const button of document.querySelectorAll('[data-panel="depots"],[data-panel="settings"],[data-panel="data"],[data-panel="sources"]'))menu.append(button);
  document.querySelector('nav').append(more);
- const dateButton=document.createElement('button');dateButton.textContent='Fecha del escenario';dateButton.className='mobile-date';dateButton.type='button';menu.append(dateButton);
- dateButton.addEventListener('click',()=>{body.classList.toggle('time-expanded');more.open=false;});
+ // La hora y el salto al ahora bajan a la fila de la línea del día en un teléfono, donde el reloj
+ // se reparte en dos filas por uso; en una pantalla ancha vuelven a la suya. Antes la fecha y
+ // «Ahora» vivían escondidas tras el menú Más, que no era sitio para ellas.
+ const timeMain=document.querySelector('.time-main'),scrubRow=document.querySelector('.scrub-row');
+ const timeInput=document.querySelector('#time'),nowButton=document.querySelector('#now');
+ const dateControls=document.querySelector('.date-controls'),speeds=timeMain.querySelector('.speed-controls');
+ const estrechoReloj=matchMedia('(max-width:800px)');
+ const colocarReloj=()=>{
+  if(estrechoReloj.matches)scrubRow.append(timeInput,nowButton);
+  else{timeMain.insertBefore(timeInput,speeds);dateControls.append(nowButton);}
+ };
+ estrechoReloj.addEventListener('change',colocarReloj);colocarReloj();
  let expanded=true;
  const setExpanded=value=>{expanded=value;body.dataset.sheet=value?'open':'closed';toggle.setAttribute('aria-expanded',String(value));};
  toggle.addEventListener('click',()=>setExpanded(!expanded));
