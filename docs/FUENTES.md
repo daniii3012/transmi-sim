@@ -19,8 +19,8 @@ Las consultas de estaciones y trazados usan las capas 2 y 5 de [Consulta Planifi
 
 ## Fuentes identificadas que necesitan trabajo adicional
 
-> **Actualización del 12/09/2026.** El GTFS sí está resuelto: TRANSMILENIO lo publica, junto con un
-> alimentador GTFS-Realtime, en `gtfs.transmilenio.gov.co`. Ver [Horario publicado](HORARIO_GTFS_20260912.md),
+> **Actualización del 12/09/2026.** El GTFS sí está resuelto: TRANSMILENIO S.A. lo publica como dato
+> abierto, junto con un alimentador GTFS-Realtime. Ver [Horario publicado](HORARIO_GTFS_20260912.md),
 > [Captura del alimentador en vivo](CAPTURA_RT_20260912.md) y, para las direcciones muertas que
 > siguen citándose por ahí, [Endpoints de legado](ENDPOINTS_LEGADO_20260912.md). El párrafo que sigue
 > conserva lo que se sabía el 8 de septiembre.

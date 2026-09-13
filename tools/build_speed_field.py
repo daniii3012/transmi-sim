@@ -323,7 +323,7 @@ def construir(carpeta, servicios):
         'sources': {'detail': archivos,
                     'routes_sha256': hashlib.sha256((carpeta / 'routes.txt').read_bytes()).hexdigest(),
                     'corridors': 'app/dist/services.json · corridors kind=trunk',
-                    'feed': 'https://gtfs.transmilenio.gov.co/positions.pb'},
+                    'feed': 'GTFS-Realtime de TRANSMILENIO S.A., datos abiertos'},
         'coverage': {'pairs_used': usadas, 'pairs_off_corridor': descartadas,
                      'buckets': sum(conteo.values()), **{k: conteo[k] for k in sorted(conteo)},
                      'trunk_km': round(sum(e['length'] for e in ejes) / 1000, 1),

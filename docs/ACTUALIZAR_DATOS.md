@@ -63,8 +63,8 @@ los `build_*` escriben ambas.
 | Paraderos de calle de los duales | Capa oficial de paraderos SITP | `fetch_dual_stops.py` | (lo consume `build_services.py`) | dentro de `services.json` |
 | Contexto urbano: vías, parques, agua | OpenStreetMap / Overpass | (consulta registrada en `data/raw/context`) | `build_context.py` | `app/dist/context.json` |
 | Geometría física de estaciones y portales | OpenStreetMap API 0.6 y Overpass | `fetch_station_layouts.py` | `build_station_layouts.py` | `app/dist/station_layouts.json` |
-| Salidas programadas de cada servicio | GTFS abierto de TRANSMILENIO, `gtfs.transmilenio.gov.co` | `fetch_gtfs.py` | `build_schedule.py` | `app/dist/schedule.json` |
-| Operación observada: flota por hora, tiempos reales de tramo, agrupamiento | Alimentador GTFS-Realtime abierto, `gtfs.transmilenio.gov.co` | `capture_rt.py` (corre días) | `analyse_capture.py` | `data/processed/rt_capture_analysis.json` |
+| Salidas programadas de cada servicio | GTFS abierto de TRANSMILENIO S.A. | `fetch_gtfs.py` | `build_schedule.py` | `app/dist/schedule.json` |
+| Operación observada: flota por hora, tiempos reales de tramo, agrupamiento | Alimentador GTFS-Realtime abierto de TRANSMILENIO S.A. | `capture_rt.py` (corre días) | `analyse_capture.py` | `data/processed/rt_capture_analysis.json` |
 | Semáforos en calzada de buses | OpenStreetMap API 0.6 | `fetch_busway_signals.py` | `build_busway_signals.py` | `app/dist/busway_signals.json` |
 | Calzada y carriles de TransMilenio | OpenStreetMap / Overpass | `fetch_busway_lanes.py` | `build_busway_lanes.py` | `app/dist/busway_lanes.json` |
 | Punto de atención de cada servicio: vagón y puertas | Tablero de salidas por estación, de un servicio configurado en local | `fetch_station_departures.py` | `build_station_wagons.py` | `app/dist/station_wagons.json` |

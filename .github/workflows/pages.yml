@@ -70,6 +70,16 @@ jobs:
           if git ls-files --error-unmatch tools/en_vivo.local.json > /dev/null 2>&1; then
             echo "tools/en_vivo.local.json no puede estar versionado"; exit 1
           fi
+          if git ls-files --error-unmatch tools/gtfs.local.json > /dev/null 2>&1; then
+            echo "tools/gtfs.local.json no puede estar versionado"; exit 1
+          fi
+          # El repositorio nombra el GTFS de TRANSMILENIO, no da su dirección: esa vive solo en la
+          # configuración local. Un rebuild o un pegado la reintroducen sin que nadie lo note, así
+          # que se comprueba aquí. data/raw guarda el manifiesto del portal, documento ajeno.
+          if git grep -nI 'gtfs\.transmilenio\.gov\.co' -- . ':!data/raw/'; then
+            echo "Ahí está la dirección del alimentador. Va en tools/gtfs.local.json, que no se versiona."
+            exit 1
+          fi
           echo "Comprobaciones superadas"
 
   publicar:

@@ -1,7 +1,8 @@
 """Record the official GTFS-Realtime feed of TRANSMILENIO, for days, without any credential.
 
-This reads https://gtfs.transmilenio.gov.co/positions.pb, open data published by TRANSMILENIO S.A.
-that needs no credential and returns every vehicle in the system —about 5.500— in one request of
+This reads the vehicle positions of the GTFS-Realtime feed published by TRANSMILENIO S.A. —open
+data, no credential, address configured in tools/gtfs.local.json— which returns every vehicle in
+the system —about 5.500— in one request of
 some 700 kB, instead of asking bounding box by bounding box and coming back truncated.
 
 Two things come out of it:
@@ -121,7 +122,8 @@ def procedencia(destino):
     """
     if destino.exists():
         return
-    registro = {'written_at': datetime.now(BOGOTA).isoformat(timespec='seconds'), 'positions_url': POSITIONS}
+    registro = {'written_at': datetime.now(BOGOTA).isoformat(timespec='seconds'),
+                'positions_source': 'GTFS-Realtime de TRANSMILENIO S.A., datos abiertos'}
     try:
         registro['portal_manifest'] = json.loads(descargar(MANIFEST).decode('utf-8'))
     except (OSError, ValueError) as error:

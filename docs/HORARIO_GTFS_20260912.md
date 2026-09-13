@@ -21,9 +21,11 @@ poder construir escenarios a mano y para comparar contra lo anterior.
 
 ## De dónde sale
 
-[`https://gtfs.transmilenio.gov.co/`](https://gtfs.transmilenio.gov.co/) publica datos abiertos sin
-credencial, con un `manifest.json` que declara sus archivos y frecuencias. El paquete estático se
-regenera a diario hacia las 04:19 de Bogotá.
+TRANSMILENIO S.A. publica datos abiertos sin credencial, con un `manifest.json` que declara sus
+archivos y frecuencias. El paquete estático se regenera a diario hacia las 04:19 de Bogotá.
+
+La dirección no se versiona: se configura en `tools/gtfs.local.json` y queda anotada en el
+repositorio privado. Ver `tools/gtfs_rt.py`.
 
 No confundirlo con `gis.transmilenio.gov.co/gtfs/`, el alimentador anterior que todavía citan
 artículos y catálogos: devuelve 500 y está abandonado. Ver

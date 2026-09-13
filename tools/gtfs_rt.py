@@ -20,14 +20,39 @@ de flota que el vehículo lleva pintado —`E0067`, `K10657`— y de él sale el
 esa fecha solo guardaron identificador y placa, y para ellas la etiqueta se reconstruye a partir del
 identificador.
 """
+import json
 import struct
+from pathlib import Path
 
-POSITIONS = 'https://gtfs.transmilenio.gov.co/positions.pb'
-GTFS = 'https://gtfs.transmilenio.gov.co/GTFS.zip'
-MANIFEST = 'https://gtfs.transmilenio.gov.co/manifest.json'
+# Las direcciones del alimentador se leen de aquí y no se versionan, como las de en_vivo.local.json.
+# El repositorio nombra la fuente —el GTFS de TRANSMILENIO S.A., dato abierto— pero no la sirve.
+LOCAL = Path(__file__).resolve().parent / 'gtfs.local.json'
 AGENCIES = {'1': 'Troncal', '2': 'Alimentador', '3': 'Zonal urbano', '4': 'Zonal complementario',
             '5': 'Zonal especial', '6': 'Dual', '7': 'Cable'}
 TRUNK = ('Troncal', 'Dual')
+ATTRIBUTION = 'GTFS-Realtime de TRANSMILENIO S.A., datos abiertos'
+
+_direcciones = {}
+if LOCAL.exists():
+    try:
+        _direcciones = json.loads(LOCAL.read_text())
+    except (OSError, ValueError):
+        _direcciones = {}
+if _direcciones.get('positions'):
+    POSITIONS = _direcciones['positions']
+if _direcciones.get('gtfs'):
+    GTFS = _direcciones['gtfs']
+if _direcciones.get('manifest'):
+    MANIFEST = _direcciones['manifest']
+
+
+def __getattr__(name):
+    """Sin configuración local, nombrar una dirección dice qué falta en vez de fallar al usarla."""
+    if name in ('POSITIONS', 'GTFS', 'MANIFEST'):
+        raise AttributeError(
+            f'Falta la clave de {name} en {LOCAL.name}, que no se versiona. Las lecturas de este '
+            'módulo salen del GTFS de TRANSMILENIO S.A.; su dirección se configura en local.')
+    raise AttributeError(name)
 
 
 def _varint(buf, i):

@@ -9,7 +9,7 @@
   },
   "sources": [
     {
-      "url": "https://gtfs.transmilenio.gov.co/GTFS.zip",
+      "url": "GTFS de TRANSMILENIO S.A., datos abiertos",
       "retrieved_at_utc": "2026-09-12T19:21:33.083257+00:00",
       "published_header": null,
       "sha256": "43c0c82de709e8bd1e3c6a170084ee696e5283553bb38b1235fe59551586a14d",
@@ -17,7 +17,7 @@
       "reused_archive": "/Users/daniel/Documents/Codex/2026-09-08/ho/outputs/BogotaTransmi/data/raw/gtfs/GTFS_20260912T184722Z.zip"
     },
     {
-      "url": "https://gtfs.transmilenio.gov.co/manifest.json",
+      "url": "GTFS de TRANSMILENIO S.A., datos abiertos",
       "retrieved_at_utc": "2026-09-12T19:21:33.424077+00:00",
       "sha256": "965738e931bcbed07c42778c883ee6498522b8277dae9cfafdbd7437f6fcaf8b",
       "bytes": 1369

@@ -15,6 +15,10 @@ __pycache__/
 # Credencial de un servicio de terceros: se toma de la propia captura, no se publica.
 tools/en_vivo.local.json
 
+# Direcciones del alimentador GTFS de TRANSMILENIO. La fuente se nombra en el repositorio; su
+# dirección se configura aquí y no se versiona.
+tools/gtfs.local.json
+
 # El paquete GTFS se vuelve a publicar a diario y pesa 121 MB: se guarda el manifiesto con su
 # SHA-256 y las tablas reducidas, no el zip.
 data/raw/gtfs/*.zip

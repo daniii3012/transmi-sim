@@ -20,7 +20,7 @@ procedimiento está en [Actualizar datos](ACTUALIZAR_DATOS.md).
 | Qué aporta | Fuente abierta |
 |---|---|
 | Servicios troncales y duales: código, destino, trazado, paradas, color, vigencia | Catálogo público de rutas de TRANSMILENIO |
-| Salidas programadas y duración de cada tramo | GTFS abierto de TRANSMILENIO, `gtfs.transmilenio.gov.co` |
+| Salidas programadas y duración de cada tramo | GTFS abierto de TRANSMILENIO S.A. |
 | Geometría física de estaciones y portales | OpenStreetMap |
 | Semáforos sobre calzada de buses | OpenStreetMap |
 | Calzada, carriles y contexto urbano | OpenStreetMap |

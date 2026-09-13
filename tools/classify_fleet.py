@@ -189,7 +189,7 @@ def construir(carpeta):
         'method': ('Tipo por servicio a partir de la etiqueta de flota del alimentador GTFS-Realtime; '
                    'ver docs/TIPOS_DE_BUS_20260912.md'),
         'sources': {'detail': archivos, 'routes_sha256': huella,
-                    'feed': 'https://gtfs.transmilenio.gov.co/positions.pb'},
+                    'feed': 'GTFS-Realtime de TRANSMILENIO S.A., datos abiertos'},
         'label_ranges': {prefijo: {tipo: [[bajo, alto] for bajo, alto in rangos]
                                    for tipo, rangos in tipos.items()} for prefijo, tipos in RANGOS.items()},
         'observed_ranges': {prefijo: {tipo: [min(v), max(v), len(v)] for tipo, v in sorted(tipos.items())}

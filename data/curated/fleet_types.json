@@ -10,7 +10,7 @@
    "rt_detalle_20260912.csv.gz"
   ],
   "routes_sha256": "28f87becdea357aa7b921909d58a81344aaab495ca5acb3db127d0aa3e79b8ca",
-  "feed": "https://gtfs.transmilenio.gov.co/positions.pb"
+  "feed": "GTFS-Realtime de TRANSMILENIO S.A., datos abiertos"
  },
  "label_ranges": {
   "E": {

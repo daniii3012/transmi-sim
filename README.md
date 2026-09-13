@@ -69,8 +69,8 @@ escenarios: cada visita empieza en el momento actual.
 | Dato | Fuente oficial | Qué aporta |
 |---|---|---|
 | Recorridos, paradas, horarios, colores | [Mapa digital](https://mapadigital.transmilenio.gov.co/) y API del buscador de rutas | 137 registros del catálogo ampliado, con vigencia, trazado y estaciones |
-| Salidas y tiempos entre paradas | [GTFS de TRANSMILENIO](https://gtfs.transmilenio.gov.co/GTFS.zip) | 115 de los 117 servicios utilizables despachan a las horas publicadas, 47.190 salidas |
-| **Tipo de bus y velocidad por trecho** | [GTFS-Realtime oficial](https://gtfs.transmilenio.gov.co/positions.pb) | La etiqueta de flota de cada vehículo: 87 servicios resueltos. Y 113,8 km de corredor en cubetas de 100 m con su velocidad y su tiempo detenido |
+| Salidas y tiempos entre paradas | GTFS abierto de TRANSMILENIO S.A. | 115 de los 117 servicios utilizables despachan a las horas publicadas, 47.190 salidas |
+| **Tipo de bus y velocidad por trecho** | GTFS-Realtime de TRANSMILENIO S.A., datos abiertos | La etiqueta de flota de cada vehículo: 87 servicios resueltos. Y 113,8 km de corredor en cubetas de 100 m con su velocidad y su tiempo detenido |
 | Demanda de pasajeros | [Validaciones diarias SITP](https://datosabiertos.bogota.gov.co/dataset/validaciones-diarias-sitp) | 28.014.777 validaciones en 17 días; perfil por hora, estación y tipo de día |
 | Calzada, semáforos, estaciones | [OpenStreetMap](https://www.openstreetmap.org/copyright) · Overpass | Carriles publicados, 723 semáforos con evidencia y 40 estaciones con geometría |
 | Andenes, separadores, construcciones | [Datos Abiertos Bogotá](https://datosabiertos.bogota.gov.co/) · IDECA | Contexto urbano fechado y con licencia por ficha |

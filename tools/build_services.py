@@ -204,7 +204,7 @@ def build():
             route['vehicle_profile']={'type':observed['type'],'capacity':observed['capacity'],'status':observed['status'],
                 'buses':observed['buses'],'snapshot':(fleet['observed_days'] or [fleet['derived_at'][:10]])[-1],
                 'observed_days':len(fleet['observed_days']),'source':'gtfs_rt_fleet_labels',
-                'source_url':fleet['sources']['feed']}
+                'source_feed':fleet['sources']['feed']}
         route['served_zones']=sorted({stations[s['station_id']]['zone'] for s in raw_stops if s['station_id'] in stations and stations[s['station_id']]['zone']})
         route['issues']=list(dict.fromkeys(issues));route['warnings']=list(dict.fromkeys(warnings))
         route['ready']=bool(route['points']) and not route['issues']

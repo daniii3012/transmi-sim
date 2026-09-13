@@ -12,7 +12,7 @@
     {
       "file": "rt_detalle_20260912.csv.gz",
       "written_at": "2026-09-12T14:21:20-05:00",
-      "positions_url": "https://gtfs.transmilenio.gov.co/positions.pb",
+      "positions_url": "GTFS-Realtime de TRANSMILENIO S.A., datos abiertos",
       "portal_manifest": {
         "manifest_version": "1.0",
         "generated_at": "2026-09-12T04:19:12.260515-05:00",
@@ -26,7 +26,7 @@
             "file_name": "GTFS.zip",
             "size_bytes": 121251822,
             "last_modified": "2026-09-12T04:19:10.594000-05:00",
-            "url": "https://gtfs.transmilenio.gov.co/GTFS.zip"
+            "url": "GTFS de TRANSMILENIO S.A., datos abiertos"
           },
           {
             "icon": "📍",
@@ -36,7 +36,7 @@
             "file_name": "alerts.pb",
             "size_bytes": 90756,
             "last_modified": "2026-09-12T04:19:07.472000-05:00",
-            "url": "https://gtfs.transmilenio.gov.co/alerts.pb"
+            "url": "GTFS-Realtime de TRANSMILENIO S.A., datos abiertos"
           },
           {
             "icon": "📍",
@@ -46,7 +46,7 @@
             "file_name": "positions.pb",
             "size_bytes": 193134,
             "last_modified": "2026-09-12T04:19:07.740000-05:00",
-            "url": "https://gtfs.transmilenio.gov.co/positions.pb"
+            "url": "GTFS-Realtime de TRANSMILENIO S.A., datos abiertos"
           },
           {
             "icon": "📍",
@@ -56,7 +56,7 @@
             "file_name": "tripupdates.pb",
             "size_bytes": 173977,
             "last_modified": "2026-09-12T04:19:07.863000-05:00",
-            "url": "https://gtfs.transmilenio.gov.co/tripupdates.pb"
+            "url": "GTFS-Realtime de TRANSMILENIO S.A., datos abiertos"
           }
         ]
       }

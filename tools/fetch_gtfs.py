@@ -1,6 +1,7 @@
 """Snapshot the published GTFS package and reduce it to the trunk and dual trips.
 
-TRANSMILENIO S.A. publishes an open GTFS at https://gtfs.transmilenio.gov.co/, rebuilt daily.
+TRANSMILENIO S.A. publishes an open GTFS, rebuilt daily; its address is configured locally, in
+tools/gtfs.local.json, which is not versioned —see gtfs_rt.py.
 The package is 121 MB and `stop_times.txt` alone is 580 MB uncompressed, so it is not versioned:
 what stays in the repository is the manifest with the SHA-256 of the exact bytes read, the small
 tables, one row per trunk or dual trip, and one row per stretch between two consecutive stops.
@@ -28,8 +29,16 @@ from pathlib import Path
 from statistics import median
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGE = 'https://gtfs.transmilenio.gov.co/GTFS.zip'
-MANIFEST = 'https://gtfs.transmilenio.gov.co/manifest.json'
+# Lo que se guarda como procedencia es el nombre de la fuente, no su dirección: el dato derivado
+# viaja a los dos repositorios y tiene que ser idéntico en ambos.
+FUENTE = 'GTFS de TRANSMILENIO S.A., datos abiertos'
+
+
+def direccion(nombre):
+    """La dirección sale de tools/gtfs.local.json, que no se versiona. Perezosa a propósito: así
+    `--archive`, que no descarga nada, sigue corriendo sin configuración local."""
+    import gtfs_rt
+    return getattr(gtfs_rt, nombre)
 # 1 troncal, 6 dual. El simulador es BRT: alimentadores, zonales y cable quedan fuera del recorte,
 # aunque el paquete los traiga.
 SCOPE = ('1', '6')
@@ -65,7 +74,7 @@ def download(url, destination):
             read += len(chunk)
             print(f'\r  {read / 1e6:,.0f} MB', end='', flush=True)
     print()
-    return {'url': url, 'retrieved_at_utc': now(), 'published_header': published,
+    return {'url': FUENTE, 'retrieved_at_utc': now(), 'published_header': published,
             'sha256': digest.hexdigest(), 'bytes': read}
 
 
@@ -168,7 +177,7 @@ def digest_of(path):
         while chunk := handle.read(1 << 20):
             digest.update(chunk)
             read += len(chunk)
-    return {'url': PACKAGE, 'retrieved_at_utc': now(), 'published_header': None,
+    return {'url': FUENTE, 'retrieved_at_utc': now(), 'published_header': None,
             'sha256': digest.hexdigest(), 'bytes': read, 'reused_archive': str(path)}
 
 
@@ -187,16 +196,18 @@ def main():
         print(f'Reutilizando {archive}')
         evidence = digest_of(archive)
     else:
-        print(f'Descargando {PACKAGE}')
-        evidence = download(PACKAGE, archive)
+        paquete = direccion('GTFS')
+        print(f'Descargando {paquete}')
+        evidence = download(paquete, archive)
     print(f"  SHA-256 {evidence['sha256']}")
 
     sources = [evidence]
     try:
-        request = urllib.request.Request(MANIFEST, headers={'User-Agent': 'BogotaTransmi-local-research/0.2'})
+        request = urllib.request.Request(direccion('MANIFEST'),
+                                         headers={'User-Agent': 'BogotaTransmi-local-research/0.2'})
         with urllib.request.urlopen(request, timeout=40) as response:
             raw = response.read()
-        sources.append({'url': MANIFEST, 'retrieved_at_utc': now(),
+        sources.append({'url': FUENTE, 'retrieved_at_utc': now(),
                         'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw)})
         (folder / 'manifest_publicado.json').write_bytes(raw)
     except OSError as error:

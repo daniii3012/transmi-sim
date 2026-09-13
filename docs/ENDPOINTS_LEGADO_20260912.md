@@ -21,7 +21,9 @@ Son las que citan los artículos y los catálogos de terceros cuando hablan del 
 TransMilenio, y las que este proyecto tenía anotadas en `docs/FUENTES.md` como «probadas, devolvieron
 500». Las cinco siguen devolviendo 500: no es una caída pasajera, es un host abandonado.
 
-**Lo que las reemplaza** es `gtfs.transmilenio.gov.co`, con su propio índice en `manifest.json`. Ver
+**Lo que las reemplaza** es el alimentador vigente de TRANSMILENIO S.A., con su propio índice en
+`manifest.json`; su dirección se configura en `tools/gtfs.local.json` y queda anotada en el
+repositorio privado. Ver
 [Captura del alimentador en vivo](CAPTURA_RT_20260912.md) y
 [Horario publicado](HORARIO_GTFS_20260912.md).
 
@@ -39,14 +41,14 @@ otras cosas.
 
 Estos responden. No se usan, y conviene que quede escrito por qué, para no «descubrirlos» otra vez.
 
-**`gtfs.transmilenio.gov.co/alerts.pb`** — 310 alertas vigentes, todas con efecto `DESVÍO`.
+**`alerts.pb` del alimentador vigente** — 310 alertas vigentes, todas con efecto `DESVÍO`.
 **Ninguna toca troncal ni dual**: las rutas mencionadas son 1.629 de zonal urbano, 44 de alimentador
 y 8 de zonal especial. Además no son incidentes vivos: la vigencia mediana es de 498 horas, el máximo
 6.789, y la más antigua arranca el 22/12/2025. Son planes de manejo de tráfico de obra con cabeceras
 escritas para despachadores (`PMT CLL 54SUR CRA80.`). En una vista troncal el panel saldría vacío
 siempre.
 
-**`gtfs.transmilenio.gov.co/tripupdates.pb`** — cada viaje trae **una sola** `StopTimeUpdate`, la de
+**`tripupdates.pb` del alimentador vigente** — cada viaje trae **una sola** `StopTimeUpdate`, la de
 la próxima parada, y sin campo `delay`. Peor: en dos lecturas separadas, todas las llegadas estaban
 ya en el pasado, con una antigüedad mediana de unos 209 s. No es una hora estimada de llegada; parece
 el registro de un evento anterior. No se presenta como ETA mientras no se valide su semántica
