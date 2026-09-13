@@ -8,6 +8,32 @@ Repo: `/Users/daniel/Documents/Codex/2026-09-08/ho/outputs/BogotaTransmi`, rama 
 
 Estimaciones ajustables y QA de navegador autorizadas; dos carriles por sentido como abstracción y paso expreso independiente de atención. Daniel autorizó servir por LAN, pero no publicar una versión jugable en internet. Investigación acotada con agentes ligeros autorizada por AGENTS; la investigación de plataformas terminó. La captura semafórica se revisó y completó localmente después de que el agente alcanzara su límite; no hay trabajo pendiente que esperar de agentes ni automatizaciones.
 
+## Más de una sesión escribiendo en este árbol
+
+El 13 de septiembre de 2026 hubo dos sesiones trabajando a la vez sobre esta carpeta y se pisaron dos
+veces: un `git add -A` mezcló media edición ajena en un commit, y una fusión archivo por archivo se
+llevó por delante la línea que carga `speed_profiles.json` en `app.mjs` —el motor se habría quedado
+sin campo de velocidad, cayendo al respaldo en todos los tramos, sin avisar—. Nada llegó a GitHub
+roto, pero conviene no repetirlo.
+
+- **Preparar por nombre, nunca `git add -A`** en este árbol, y comprobar antes que cada archivo solo
+  traiga lo propio.
+- **Resolver conflictos por trozo y no por archivo.** Quedarse con un lado entero es lo que borró
+  aquella línea.
+- **`services.json`, `speed_profiles.json` y `schedule.json` no se editan ni se fusionan a mano**: se
+  regeneran con `build_services.py`, `build_speed_field.py` y `build_schedule.py`, que es lo único
+  que deja coherentes sus hashes de procedencia. Igual con `tools/` y `data/curated/`.
+- **El motor y la interfaz se reparten**: `tools/`, `data/curated/`, `operation.mjs`, `signals.mjs`,
+  `travel.mjs`, `vehicles.mjs`, `app/tests/` y `docs/` por un lado; `app.mjs`, `shell.mjs`,
+  `explorer.mjs`, `map.mjs`, los estilos e `index.html` por el otro.
+- **La cadena `?v=` la sube una sola sesión** y tiene que ser idéntica en todo `app/dist`. Un cambio
+  de motor también la necesita: sin el salto, el navegador sigue ejecutando el código anterior.
+- `operation.mjs` y `signals.mjs` son un par que no se puede separar. Con uno de cada versión,
+  `limitAt` recibe el argumento equivocado y revienta en `travelProfile`.
+
+El árbol privado `/Users/daniel/Documents/Codex/2026-09-12/hola-respecto-a-lo-que-es/outputs/TransmiLive`,
+rama `en-vivo-al-dia`, fusiona este y guarda lo mismo en `docs/RAMAS_Y_FUSIONES.md`.
+
 ## Ejecutar y desarrollar
 
 - Fuentes estáticas editables `app/dist`, Three.js 0.186.0 local y cámara ortográfica. No hace falta npm ni bundler.
