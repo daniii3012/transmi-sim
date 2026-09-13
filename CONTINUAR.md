@@ -268,3 +268,23 @@ ruta (ML82 = M82/L82, MK86 = M86/K86).
   soltar la selección para mover la hora. La hoja sigue cediendo el sitio; el reloj no. La ficha se
   apoya donde acabe el reloj mediante `--sheet-bottom`, y donde la pestaña no lo muestra llega hasta
   abajo del todo.
+
+13/09/2026 — Identificar el bus que se está mirando.
+
+- **La instantánea de toda la red ya trae el número de flota.** El alimentador lo publica en
+  `VehicleDescriptor.label` —«E0022», el mismo formato que rotula la lectura por servicio— y
+  `live_network.py` no lo reenviaba, así que la ficha de un bus de esa vista caía al destino por
+  falta de número. Ahora las dos vistas dicen lo mismo: insignia del servicio, número del bus y
+  destino debajo.
+- **Las dos fuentes no comparten el identificador, comparten el número.** El id del alimentador es
+  interno («7022») y el de la lectura por servicio es otro («45502»); lo que coincide es la etiqueta
+  de flota. `realBus` busca ahora también por ella, así que una selección sigue al mismo bus al
+  cambiar de vista en vez de perderse —o, peor, de engancharse a otro que comparta el id por azar—.
+  Y el descarte de duplicados, que se anotaba por id y por eso **no descartaba nada**, pasa a la
+  etiqueta: con F23 en foco la red pasa de repetir sus 8 buses a mostrar solo el que no está dibujado.
+- **La ficha plegada identifica la selección.** Junto al título aparece la insignia del servicio, en
+  una línea. El título es el número del bus donde la fuente lo publica y el nombre del recorrido
+  donde no —en la simulación no hay número que valga—, así que la pareja basta sin abrir nada.
+- La nota de la vista general describía la instantánea del planificador, que se retiró el 12/09.
+  Hoy esa vista es el alimentador abierto: posición reportada, sellada con la hora del lote y no con
+  la del GPS de cada bus, y sin ocupación. El texto lo dice ya así.

@@ -125,7 +125,9 @@ class LiveNetwork:
                 if local_id is None:
                     unmatched += 1
                 x, y = aeqd(lon, lat, origin)
-                vehicles.append({'id': entry['bus'], 'line': code, 'line_id': local_id,
+                # La etiqueta es el número de flota rotulado en el bus, el mismo que publica la
+                # lectura por servicio; el id del alimentador es interno y no coincide con nada.
+                vehicles.append({'id': entry['bus'], 'label': entry['etiqueta'], 'line': code, 'line_id': local_id,
                                  'operator': component, 'destination': destination,
                                  'trip': entry['viaje'], 'route_id': entry['ruta'],
                                  'xy': [round(x, 2), round(y, 2)], 'lonlat': [lon, lat]})

@@ -119,14 +119,18 @@ export class NetworkMap {
   }
   positionLabels(){for(const {label,station} of this.labelEntries.values()){const [x,y]=this.worldToScreen(station.xy);label.style.transform=`translate3d(${x+10}px,${y-10}px,0)`;}}
   updateScale(){const approx=this.mpp*100;const power=10**Math.floor(Math.log10(approx));const step=[1,2,5,10].find(n=>n*power>=approx)*power;const el=document.querySelector('#scale');el.textContent=step>=1000?(step/1000)+' km':step+' m';el.style.width=step/this.mpp+'px';}
-  select(kind,id){this.selected={kind,id};this.updateMarker();this.updateLabels();}
+  select(kind,id,label){this.selected={kind,id,label};this.updateMarker();this.updateLabels();}
   // Un bus real se busca en las dos capas: la lectura GPS de un servicio y la instantánea de la
   // red. Comparten el identificador de viaje, así que el que esté a la vista responde.
-  realBus(id){return (this.liveVisual||[]).find(b=>b.id===id)||(this.networkVehicles||[]).find(v=>v.id===id)||null;}
+  // Las dos fuentes numeran distinto: el id del alimentador es interno y el de la lectura por
+  // servicio es otro, pero las dos rotulan el bus con su número de flota. Buscar también por ese
+  // número hace que una selección siga al mismo bus al cambiar de vista, en vez de perderlo —o,
+  // peor, de engancharse a otro que casualmente comparta el id.
+  realBus(id,label){const igual=b=>b.id===id||(!!label&&b.label===label);return (this.liveVisual||[]).find(igual)||(this.networkVehicles||[]).find(igual)||null;}
   selectedItem(){
     const chosen=this.selected;if(!chosen)return null;
     if(chosen.kind==='station')return this.data.stations.find(s=>s.id===chosen.id)||null;
-    if(chosen.kind==='realbus')return this.realBus(chosen.id);
+    if(chosen.kind==='realbus')return this.realBus(chosen.id,chosen.label);
     return this.busSamples.find(b=>b.id===chosen.id)||null;
   }
   updateMarker(){const item=this.selectedItem();if(!item){this.marker.visible=false;return;}this.marker.visible=true;this.marker.position.set(...item.xy,4);this.marker.scale.setScalar(Math.max(10,this.mpp*11));}
@@ -178,14 +182,14 @@ export class NetworkMap {
       // distancia y cada cosa se alcanza apuntándole.
       const station=this.data.stations, gps=nearest(this.liveVisual);
       const cerca=nearest(station), snapshot=nearest(this.networkVehicles);
-      if(gps&&(!cerca||distanceTo(gps)-4<=distanceTo(cerca)))chosen={kind:'realbus',id:gps.id};
-      else if(snapshot&&(!cerca||distanceTo(snapshot)<distanceTo(cerca)))chosen={kind:'realbus',id:snapshot.id};
+      if(gps&&(!cerca||distanceTo(gps)-4<=distanceTo(cerca)))chosen={kind:'realbus',id:gps.id,label:gps.label||''};
+      else if(snapshot&&(!cerca||distanceTo(snapshot)<distanceTo(cerca)))chosen={kind:'realbus',id:snapshot.id,label:snapshot.label||''};
       else if(cerca)chosen={kind:'station',id:cerca.id};
     }else{
       let limit=12;
       for(const [kind,items] of [['bus',this.busSamples],['station',this.data.stations]])for(const item of items){const d=distanceTo(item);if(d<limit){chosen={kind,id:item.id};limit=d;}}
     }
-    if(chosen){this.select(chosen.kind,chosen.id);this.onSelect(chosen);}
+    if(chosen){this.select(chosen.kind,chosen.id,chosen.label);this.onSelect(chosen);}
   }
   // Acepta un identificador o varios: los servicios numerados tienen un registro por sentido y se
   // resaltan juntos.

@@ -65,7 +65,12 @@ body[data-theme=dark]{--ink:#e0e8f1;--muted:#a2b0bf;--line:#394959;--shadow:0 5p
 #inspector-toggle>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 #inspector-toggle:before{content:'';width:8px;height:8px;border:solid currentColor;border-width:0 2px 2px 0;transform:translateY(-2px) rotate(45deg)}
 body[data-detail=closed] #inspector-toggle:before{transform:translateY(2px) rotate(225deg)}
-/* Plegado queda el rótulo de lo que sigue en foco, no una ficha en blanco. */
+/* Plegado queda el rótulo de lo que sigue en foco, no una ficha en blanco: la insignia del servicio
+   y el título, en una línea. El título es el número del bus cuando la fuente lo publica y el nombre
+   del recorrido cuando no —en la simulación no hay número que valga—, así que la pareja identifica
+   la selección sin abrir nada. */
 body[data-detail=closed] #inspector{bottom:auto;max-height:none;min-height:50px;padding:14px 92px 16px 24px}
+body[data-detail=closed] #selection{display:flex;align-items:center;gap:9px}
 body[data-detail=closed] #selection>*{display:none}
-body[data-detail=closed] #selection>h2:first-of-type{display:block;margin:0;font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body[data-detail=closed] #selection>.route-code{display:inline-flex;flex:none;margin-bottom:0}
+body[data-detail=closed] #selection>h2:first-of-type{display:block;margin:0;font-size:1rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

@@ -93,7 +93,7 @@ try{
   const fragment=document.createDocumentFragment();for(const r of routes){const b=el('button',undefined,'route-row'+(focusedRoute===r.id?' selected':''));b.dataset.routeId=r.id;b.setAttribute('aria-label',`${r.code} a ${r.name}, ${status(r)}`);b.append(badge(r));const text=el('div',undefined,'route-text');text.append(el('strong',r.name),el('small',status(r)));b.append(text,el('span',counts.get(r.id)||'','route-count'));b.onclick=()=>selectRoute(r.id);fragment.append(b);}$('#route-list').replaceChildren(fragment);
  }
  function selectRoute(id,{fit=true}={}){const r=routeById.get(id);if(!r)return;focusedRoute=id;following=false;selection={kind:'route',id};map.selected=null;map.updateMarker();map.setRoute(id);renderRoute(r);if(fit&&r.points.length)map.fitPoints(r.points);renderRoutes();}
- function onSelect(value){following=false;selection=value;$('#inspector').hidden=false;map.select(value.kind,value.id);if(value.kind==='realbus'){renderRealBus();$('#inspector').scrollTop=0;return;}if(value.kind==='station'){if(activePanel==='live')requestLiveStation({force:true});else requestStation();}else{const b=snap.buses.find(b=>b.id===value.id);if(b){selection.routeId=b.routeId;focusedRoute=b.routeId;map.setRoute(b.routeId,{subtle:true});}renderBus();renderRoutes();$('#inspector').scrollTop=0;}}
+ function onSelect(value){following=false;selection=value;$('#inspector').hidden=false;map.select(value.kind,value.id,value.label);if(value.kind==='realbus'){renderRealBus();$('#inspector').scrollTop=0;return;}if(value.kind==='station'){if(activePanel==='live')requestLiveStation({force:true});else requestStation();}else{const b=snap.buses.find(b=>b.id===value.id);if(b){selection.routeId=b.routeId;focusedRoute=b.routeId;map.setRoute(b.routeId,{subtle:true});}renderBus();renderRoutes();$('#inspector').scrollTop=0;}}
  function renderRoute(r){
   $('#inspector').scrollTop=0;const panel=$('#selection');panel.replaceChildren(badge(r),el('span','  SERVICIO','eyebrow'),el('h2',r.name));$('#inspector').hidden=false;
   row('Recorrido',r.length_m?(r.length_m/1000).toFixed(2)+' km':'Pendiente');row('Paradas',r.stops.length);row('Estado',status(r));
@@ -128,7 +128,7 @@ try{
  // ocupación y hora del reporte propias del bus, y la instantánea solo una posición que calcula
  // el planificador. Lo que no llega no se rellena con una estimación.
  function renderRealBus(){
-  const bus=map.realBus(selection?.id)||selection?.last;
+  const bus=map.realBus(selection?.id,selection?.label)||selection?.last;
   if(!bus){clearSelection();return;}
   selection.last=bus;
   const gps=Number.isFinite(bus.reported_age_s);
@@ -149,7 +149,7 @@ try{
    if(bus.accessibility)row('Accesibilidad',bus.accessibility);
   }else{
    row('Operador',bus.operator||'Sin dato');
-   p.append(el('p','Posición calculada por el planificador, no la lectura GPS del bus: a lo largo del corredor puede diferir hasta un kilómetro. Esta vista no publica ocupación ni hora de reporte.','muted'));
+   p.append(el('p','Posición reportada al alimentador de datos abiertos. Va sellada con la hora en que se reconstruyó el lote, no con la del GPS de cada bus, y esa fuente no publica ocupación.','muted'));
   }
   const seguir=el('button',following?'Dejar de seguir':'Seguir este bus','primary full');seguir.id='follow';
   seguir.onclick=()=>{following=!following;if(following)map.focusOn(bus.xy,Math.min(map.mpp,.9));renderRealBus();};
@@ -165,7 +165,7 @@ try{
    p.append(ver);
   }
   if(route){const paradas=el('button','Ver paradas de '+code,'full');paradas.onclick=()=>selectRoute(route.id);p.append(paradas);}
-  if(!map.realBus(selection.id))p.append(el('p','Este bus dejó de aparecer en la última lectura. Lo que se muestra es su último reporte.','muted'));
+  if(!map.realBus(selection.id,selection.label))p.append(el('p','Este bus dejó de aparecer en la última lectura. Lo que se muestra es su último reporte.','muted'));
  }
  // El punto de embarque que publica el tablero: "Calle 72 C - 4" es vagón C, puerta 4, y
  // "Portal Américas T5" la plataforma 5 de un portal. El terminal se prueba primero porque "T5"
@@ -374,7 +374,7 @@ try{
   if(phase==='error'){status.textContent=message;list.replaceChildren();map.setNetworkBuses([]);return;}
   if(phase!=='ok')return;
   const todos=payload.vehicles.map(v=>({...v,color:colorByCode.get(v.line)}));
-  const vehicles=liveScope==='route'?todos.filter(v=>!enFoco.has(v.id)):todos;
+  const vehicles=liveScope==='route'?todos.filter(v=>!v.label||!enFoco.has(v.label)):todos;
   map.setNetworkBuses(vehicles,{dimmed:liveScope==='route'});
   if(liveScope!=='route')$('#live-count').textContent=fmt(todos.length);
   const age=Number(payload.age_s)||0;
@@ -451,10 +451,10 @@ try{
   if(phase==='loading'){status.textContent='Consultando el servicio…';return;}
   const buses=payload.buses.map(b=>{const r=liveRouteFor(payload.code,b.destination);return {...b,code:payload.code,color:r?.color,routeId:r?.id};});
   map.setLiveBuses(buses);
-  // Las dos fuentes comparten los identificadores de vehículo, así que el mismo bus llegaría por
-  // partida doble: en foco desde el servicio y atenuado desde la red. Se anota cuál ya está dibujado
-  // para que la instantánea general no lo repita detrás.
-  enFoco=new Set(buses.map(b=>b.id).filter(Boolean));
+  // Las dos fuentes numeran los vehículos de forma distinta, pero las dos rotulan el bus con su
+  // número de flota: es lo único con lo que se puede saber que el que está en foco y el de la
+  // instantánea general son el mismo, y no dibujarlo dos veces.
+  enFoco=new Set(buses.map(b=>b.label).filter(Boolean));
   renderLiveNetwork(ultimaRed||{phase:'idle'});
   $('#live-count').textContent=fmt(buses.length);
   $('#live-stopped').textContent=fmt(buses.filter(atStop).length);
@@ -485,7 +485,7 @@ try{
     const text=el('div',undefined,'route-text');
     text.append(el('strong',bus.label||bus.id),el('small',`${occupancyText(bus.occupancy)} · ${ageText(bus.reported_age_s)}${Number.isFinite(bus.travelled_m)?' · km '+(bus.travelled_m/1000).toFixed(1)+' del recorrido':''}`));
     entry.append(dot,text);
-    entry.onclick=()=>{onSelect({kind:'realbus',id:bus.id});requestAnimationFrame(()=>map.focusOn(bus.xy,Math.min(map.mpp,1.4)));};
+    entry.onclick=()=>{onSelect({kind:'realbus',id:bus.id,label:bus.label||''});requestAnimationFrame(()=>map.focusOn(bus.xy,Math.min(map.mpp,1.4)));};
     entry.setAttribute('aria-label',`Bus ${bus.label||bus.id} hacia ${group.destination}, ${occupancyText(bus.occupancy)}. Ver su ficha y centrarlo en el mapa.`);
     section.append(entry);
    }
