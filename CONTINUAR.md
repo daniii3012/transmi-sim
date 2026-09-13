@@ -300,3 +300,9 @@ ruta (ML82 = M82/L82, MK86 = M86/K86).
   bordes —círculo y dos agujas—, que mide igual en cualquier fuente; su texto queda de etiqueta.
   Los indicadores nativos de los campos de fecha y hora se ocultan en el móvil: se llevaban veinte
   píxeles cada uno y tocar el campo sigue abriendo el selector.
+- Corrección sobre lo anterior: en dos filas quedaba apretado, así que el reloj del móvil va en
+  **tres**. Arriba el día, la hora y el salto al ahora —lo que se lee—; en medio los quince minutos,
+  la pausa y la velocidad —lo que se toca—; abajo la línea del día con sus extremos, como estaba.
+  Un chevron pliega las dos filas de mandos y deja la de arriba, que es la que dice qué momento se
+  está mirando: 128 px abiertos, 52 plegado. El alto sale de `--clock-height`, del que cuelgan el
+  borde inferior de la hoja, el de la ficha y el del aviso, para no repartir el mismo número a mano.

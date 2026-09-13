@@ -30,7 +30,7 @@ body[data-theme=dark] #sidebar,body[data-theme=dark] #inspector,body[data-theme=
  nav button.nav-active{background:#dce9f2;color:#164f79;border-bottom:0}body[data-theme=dark] nav button.nav-active{background:#334b60;color:#e6f1ff}
  #more-menu summary{min-height:48px;display:grid;place-items:center;padding:8px}.more-options{top:auto;bottom:60px;right:0;min-width:190px}
  main{height:calc(100dvh - 52px - env(safe-area-inset-top,0px) - var(--nav-height) - var(--safe-bottom));min-height:0;overflow:hidden}
- #sidebar,body[data-panel=live] #sidebar{top:auto;left:10px;right:10px;width:auto;height:min(39%,350px);bottom:118px;border-radius:16px;overflow:auto;overscroll-behavior:contain;padding:0}
+ #sidebar,body[data-panel=live] #sidebar{top:auto;left:10px;right:10px;width:auto;height:min(39%,350px);bottom:calc(var(--clock-height) + 20px);border-radius:16px;overflow:auto;overscroll-behavior:contain;padding:0}
  body[data-panel=live] #sidebar{bottom:10px;height:min(45%,440px)}
  body[data-panel=planner] #sidebar{bottom:10px;height:min(62%,580px)}
  #panel-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:48px;padding:13px 18px;border:0;border-radius:0;position:sticky;top:0;z-index:6;background:var(--surface);font-size:.85rem;text-align:left}
@@ -52,22 +52,31 @@ body[data-theme=dark] #sidebar,body[data-theme=dark] #inspector,body[data-theme=
  #metrics,body[data-panel=live] #metrics{left:12px;right:auto;top:66px;bottom:auto;max-width:calc(100% - 80px);padding:8px 0;overflow:hidden}
  #metrics>div{min-width:0;padding:0 10px}#metrics strong{font-size:.98rem}#metrics span{font-size:.58rem}
  .map-bottom,body[data-panel=live] .map-bottom{top:auto;bottom:8px;left:16px;max-width:calc(100% - 32px);pointer-events:none}.map-bottom small{font-size:.5rem}
- /* Dos filas repartidas por uso, no por lo que cupo primero. Arriba lo que mueve el tiempo —quince
-    minutos, pausa, quince minutos—, la velocidad y el día. Abajo la línea del día con la hora y el
-    salto al ahora. La fecha y «Ahora» dejan de vivir tras el menú Más, que no era sitio para ellas:
-    `shell.mjs` baja la hora y el botón a la segunda fila en un teléfono y los devuelve a la suya en
-    una pantalla ancha. */
- #timeline{bottom:10px;left:10px;right:10px;padding:8px 12px;height:98px;overflow:hidden;border-radius:14px}
+ /* Tres filas repartidas por uso, que en dos quedaba todo apretado. Arriba el día, la hora y el
+    salto al ahora: lo que se lee. En medio lo que mueve el tiempo —quince minutos, pausa, quince
+    minutos— y la velocidad: lo que se toca. Abajo la línea del día, como estaba. La fecha y
+    «Ahora» dejan de vivir tras el menú Más, que no era sitio para ellas: `shell.mjs` arma las tres
+    filas en un teléfono y devuelve cada control a la suya en una pantalla ancha. El chevron pliega
+    las dos filas de mandos y deja a la vista la que dice qué momento se está mirando. */
+ body{--clock-height:128px}
+ body[data-clock=closed]{--clock-height:52px}
+ #timeline{bottom:10px;left:10px;right:10px;padding:8px 12px;height:var(--clock-height);overflow:hidden;border-radius:14px;display:flex;flex-direction:column;gap:6px}
+ .date-controls{display:flex;align-items:center;gap:6px;margin:0}
  .time-main{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}
- .date-controls{display:contents}#day-type,.period{display:none}
- .time-main>button{min-width:34px;min-height:36px;padding:4px;order:0}
- .speed-controls{display:flex;gap:0;margin:0 0 0 auto;order:1}
- .speed-controls button{min-width:26px;padding:4px;font-size:.65rem;min-height:36px}
- .date-controls input,#date{order:2;flex:none;width:88px;min-width:0;border:0;padding:4px 0;font-size:.75rem!important;font-weight:650;text-align:right;-webkit-appearance:none;appearance:none}
- .scrub-row{display:flex;align-items:center;gap:8px;margin-top:6px}
- .scrub-row>span{display:none}
+ .scrub-row{display:flex;align-items:center;gap:10px;margin:0}
+ #day-type,.period{display:none}
+ body[data-clock=closed] .time-main,body[data-clock=closed] .scrub-row{display:none}
+ .date-controls input,#date{flex:none;width:96px;min-width:0;border:0;padding:4px 0;font-size:.8rem!important;font-weight:650;text-align:left;-webkit-appearance:none;appearance:none}
+ .time-main>button{min-width:38px;min-height:36px;padding:4px}
+ .speed-controls{display:flex;gap:2px;margin:0 0 0 auto}
+ .speed-controls button{min-width:32px;padding:4px;font-size:.7rem;min-height:36px}
+ .scrub-row>span{display:inline;font-size:.62rem}
  .scrub-row input[type=range],#scrub{flex:1;min-width:0;min-height:28px}
- .time-main input[type=time],#time{flex:none;min-width:96px!important;width:96px!important;font-size:.82rem!important;min-height:36px;text-align:center;padding:0}
+ .time-main input[type=time],#time{flex:none;min-width:104px!important;width:104px!important;font-size:.85rem!important;min-height:36px;text-align:center;padding:0}
+ /* El mismo galón dibujado que pliega la hoja y la ficha, aquí para el reloj. */
+ #timeline-toggle{display:grid;place-items:center;flex:none;margin-left:auto;min-width:38px;width:38px;min-height:36px;padding:0}
+ #timeline-toggle:before{content:'';width:8px;height:8px;border:solid currentColor;border-width:0 2px 2px 0;transform:translateY(-2px) rotate(45deg)}
+ body[data-clock=closed] #timeline-toggle:before{transform:translateY(2px) rotate(225deg)}
  /* «Ahora» se queda en un reloj dibujado: un círculo y dos agujas, que miden lo mismo en cualquier
     fuente y no dependen de que el sistema tenga el emoji. */
  #now{position:relative;flex:none;min-width:38px;width:38px;min-height:36px;padding:0;font-size:0}
@@ -81,7 +90,7 @@ body[data-theme=dark] #sidebar,body[data-theme=dark] #inspector,body[data-theme=
  /* La ficha se apoya donde acabe el reloj: si está a la vista le deja su franja, y si la pestaña
     no lo muestra llega hasta abajo del todo. */
  body{--sheet-bottom:10px}
- body[data-inspect=true]{--sheet-bottom:116px}
+ body[data-inspect=true]{--sheet-bottom:calc(var(--clock-height) + 18px)}
  body[data-inspect=true][data-panel=live],body[data-inspect=true][data-panel=planner]{--sheet-bottom:10px}
  #inspector,body[data-panel=live] #inspector{top:auto;bottom:var(--sheet-bottom,10px);left:10px;right:10px;width:auto;max-height:48%;padding:24px 20px;border-radius:16px;z-index:8}
  /* La hoja sí cede el sitio a la ficha, pero el reloj no: con una estación o un bus en foco es el
@@ -89,7 +98,7 @@ body[data-theme=dark] #sidebar,body[data-theme=dark] #inspector,body[data-theme=
     para volver a mover la hora. */
  body[data-inspect=true] #sidebar{visibility:hidden}#inspector .close,#inspector #inspector-toggle{width:44px;min-width:44px;height:44px;min-height:44px}#inspector #inspector-toggle{right:60px}
  #loading{left:12px;top:182px;max-width:calc(100% - 24px);width:auto;font-size:.75rem;padding:8px 12px}#error{top:18%;font-size:.8rem}
- #toast{bottom:120px;max-width:calc(100% - 40px);width:max-content;text-align:center}
+ #toast{bottom:calc(var(--clock-height) + 22px);max-width:calc(100% - 40px);width:max-content;text-align:center}
 }
 @media(max-width:380px){.speed-controls button{min-width:25px;font-size:.65rem}.time-main>button{min-width:28px}.map-caption span{display:none}}
 @media(max-width:950px) and (max-height:500px){
@@ -121,3 +130,4 @@ body[data-detail=closed] #inspector,body[data-detail=closed][data-panel=live] #i
 @media(max-width:800px){
  body[data-detail=closed] #inspector,body[data-detail=closed][data-panel=live] #inspector{top:auto;bottom:var(--sheet-bottom,10px);height:auto;max-height:none;min-height:64px;padding:20px 112px 20px 20px}
 }
+

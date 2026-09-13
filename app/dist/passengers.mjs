@@ -1,5 +1,5 @@
 /** Aggregate, deterministic synthetic passenger demand. Not an OD survey. */
-import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260913.3';
+import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260913.4';
 export const DEMAND_BASELINE=2.25; // User-calibrated reference; 1× means this scenario baseline.
 export const EMPLOYMENT_CENTER=[6960,-300]; // Approx. Centro Internacional, projected metres; scenario assumption.
 export function centrality(xy){return Math.exp(-Math.hypot(xy[0]-EMPLOYMENT_CENTER[0],xy[1]-EMPLOYMENT_CENTER[1])/6500);}

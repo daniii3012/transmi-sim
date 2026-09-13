@@ -7,18 +7,25 @@ export function mountShell(){
  const menu=document.createElement('div');menu.className='more-options';more.append(menu);
  for(const button of document.querySelectorAll('[data-panel="depots"],[data-panel="settings"],[data-panel="data"],[data-panel="sources"]'))menu.append(button);
  document.querySelector('nav').append(more);
- // La hora y el salto al ahora bajan a la fila de la línea del día en un teléfono, donde el reloj
- // se reparte en dos filas por uso; en una pantalla ancha vuelven a la suya. Antes la fecha y
- // «Ahora» vivían escondidas tras el menú Más, que no era sitio para ellas.
- const timeMain=document.querySelector('.time-main'),scrubRow=document.querySelector('.scrub-row');
+ // En un teléfono el reloj se reparte en tres filas: arriba el día, la hora y el salto al ahora —lo
+ // que se lee—, en medio lo que mueve el tiempo y la velocidad —lo que se toca—, abajo la línea del
+ // día. Antes la fecha y «Ahora» vivían escondidas tras el menú Más, que no era sitio para ellas.
+ // En una pantalla ancha cada control vuelve a la fila única de siempre.
+ const timeline=document.querySelector('#timeline'),timeMain=document.querySelector('.time-main');
  const timeInput=document.querySelector('#time'),nowButton=document.querySelector('#now');
  const dateControls=document.querySelector('.date-controls'),speeds=timeMain.querySelector('.speed-controls');
+ // El chevron pliega las dos filas de mandos y deja la de arriba, que es la que dice qué momento se
+ // está mirando.
+ const clockToggle=document.createElement('button');clockToggle.id='timeline-toggle';clockToggle.type='button';
+ let clockOpen=true;
+ const setClock=value=>{clockOpen=value;body.dataset.clock=value?'open':'closed';clockToggle.setAttribute('aria-expanded',String(value));clockToggle.setAttribute('aria-label',(value?'Ocultar':'Mostrar')+' los controles del reloj');};
+ clockToggle.addEventListener('click',()=>setClock(!clockOpen));
  const estrechoReloj=matchMedia('(max-width:800px)');
  const colocarReloj=()=>{
-  if(estrechoReloj.matches)scrubRow.append(timeInput,nowButton);
-  else{timeMain.insertBefore(timeInput,speeds);dateControls.append(nowButton);}
+  if(estrechoReloj.matches){timeline.insertBefore(dateControls,timeMain);dateControls.append(timeInput,nowButton,clockToggle);}
+  else{timeMain.insertBefore(dateControls,timeMain.firstChild);timeMain.insertBefore(timeInput,speeds);dateControls.append(nowButton);clockToggle.remove();}
  };
- estrechoReloj.addEventListener('change',colocarReloj);colocarReloj();
+ estrechoReloj.addEventListener('change',colocarReloj);colocarReloj();setClock(true);
  let expanded=true;
  const setExpanded=value=>{expanded=value;body.dataset.sheet=value?'open':'closed';toggle.setAttribute('aria-expanded',String(value));};
  toggle.addEventListener('click',()=>setExpanded(!expanded));
