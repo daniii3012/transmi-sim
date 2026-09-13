@@ -83,36 +83,39 @@ Central 41,2 y 10 %, Américas 30,4 y 13 %, **Caracas 20,9 km/h y 24 %**.
    velocidad y el rojo que toca cambia al cambiarla. La variación de ±5 km/h por bus se pliega dentro
    del factor, así que el perfil de un tramo depende de un solo número y la caché no guarda cinco
    copias casi iguales.
-3. **Todo el sobrante se gasta rodando más despacio.** Solo lo que no quepa ahí —el 0,5 % de los
-   tramos, donde el factor toca su piso— se convierte en espera, y esa espera va entera a la
-   aproximación a la estación siguiente, en trozos de 45 s, nunca por delante del último semáforo del
-   tramo: si no queda aproximación libre, la cola se forma en el propio semáforo.
-4. Las esperas se resuelven junto con los semáforos y no después: pararse antes de un rojo cambia la
-   hora a la que se llega a él y por tanto su fase.
+3. **El sobrante no se convierte nunca en espera.** En calzada segregada un bus no se planta en
+   mitad del corredor. Si va sobrado llega antes, y lo que se adelanta viaja con el viaje y se lo
+   devuelve al tramo siguiente rodando más despacio, hasta 90 s por tramo. El factor se redondea
+   siempre al escalón de arriba, así que el tramo sale corto antes que largo y el adelanto se
+   reabsorbe solo. Detenerse queda para lo que de verdad detiene a un bus: el rojo, que resuelve el
+   modelo de semáforos, y el andén ocupado, que sale de la cola por vagón.
+En calzada mixta —Séptima, Av. 68, los tramos de calle— se conserva el modelo anterior: ahí el bus
+va dentro del tráfico, se detiene con él, y el sobrante sí se gasta parado en la aproximación.
 
 ## Resultado
 
 | | Antes | Ahora | Referencia real |
 |---|---|---|---|
-| Detenidos en tráfico, jueves 6:40 | 558 (33 %) | **106 (6 %)** | — |
-| Flota quieta en total | 51 % | **25 %** | ≤ 28 % |
-| Parte del tiempo entre paradas detenido | 39 % | **7 %** | — |
-| Horas rodando / detenido | 10.891 / 7.673 | **17.237 / 1.467** | — |
-| Espera por tramo: mediana · p90 · máximo | 77 · 257 · 1.883 s | **16 · 55 · 443 s** | — |
-| Espera individual: mediana · p99 · máximo | bloques de 45 s | **21 · 44 · 80 s** | — |
-| Velocidad comercial del simulador | 21,4 km/h | 21,4 km/h | 20,5–21,1 km/h |
+| Detenidos en tráfico, jueves 6:40 | 558 (33 %) | **9 (1 %)** | — |
+| Flota quieta en total | 51 % | **20 %** | ≤ 28 % |
+| Tramos con alguna espera fabricada | 82 % | **6 %**, todos de calzada mixta | — |
+| Espera individual: mediana · máximo | bloques de 45 s | **22 · 45 s** | — |
+| Velocidad media rodando | 60 km/h fijos | p10 16,7 · p50 23,4 · p90 31,5 km/h | 26 km/h rodando |
 
-Cada espera que queda está en la aproximación a una estación o en un semáforo, y ninguna pasa de 80
-segundos.
+Ninguna espera queda en calzada segregada: las 16.543 que sobreviven son de tramos de calle, con una
+mediana de 22 s y un máximo de 45. En un A60 completo de Portal Américas a Calle 72 —el recorrido en
+el que se veía el bus dar ocho tirones seguidos llegando a Distrito Grafiti— ya no hay ni una: solo
+semáforos.
 
-**Puntualidad.** El viaje completo dura de mediana **2,1 minutos más** que el horario publicado
+**Puntualidad.** El viaje completo dura de mediana **1,5 minutos más** que el horario publicado
 —antes eran 1,2— y ningún viaje se adelanta más de cinco minutos. El desfase se concentra en los
 tramos cuyo tiempo publicado no se alcanza ni rodando al crucero, que son los mismos que ya se
 quedaban cortos antes: un 19,5 % de los tramos pediría ir a más de 1,6 veces la velocidad medida el
 sábado, y un 3,9 % a más de tres veces.
 
-**Banco de referencia:** preparación 14,0 s (antes 11,0), muestreo **0,79 ms** por lectura (antes
-1,32), caché de perfiles 128.229 entradas, heap 746 MB (antes 560). Ir y volver en el reloj devuelve
+**Banco de referencia:** preparación 15,5 s (antes 11,0), muestreo 1,0–1,3 ms por lectura, caché de
+perfiles 126.859 entradas, heap 674 MB (antes 560). El máximo de buses detenidos en tráfico a la vez
+baja de 629 a **21**. Ir y volver en el reloj devuelve
 exactamente el mismo estado.
 
 ## Lo que asume, a sabiendas
@@ -127,7 +130,9 @@ exactamente el mismo estado.
 5. La atención medida son 170 h, menos de lo esperable: cuando un bus abre puertas el alimentador ya
    puede apuntar a la parada siguiente. El descuento por andén, que no depende de eso, la cubre.
 6. Sin término de densidad.
-7. El factor llega hasta 3,0. En los tramos que lo tocan, la velocidad la marca el crucero del
+7. El adelanto se devuelve a razón de 90 s por tramo: más que eso haría que el bus pareciera
+   arrastrarse en el tramo siguiente.
+8. El factor llega hasta 3,0. En los tramos que lo tocan, la velocidad la marca el crucero del
    vehículo y el campo deja de decidir: son tramos cuyo tiempo publicado no cuadra con lo observado.
 
 La semana que viene, con la captura completa, el trabajo es **volver a correr solo la fase del

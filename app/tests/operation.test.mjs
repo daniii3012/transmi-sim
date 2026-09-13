@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
-import {Operation,DEFAULTS,parameters,motion,motionAt,programmedSpeed,TRAFFIC,FIELD,routeField,fieldLimit,berthQueue} from '../dist/operation.mjs';
+import {Operation,DEFAULTS,parameters,motion,motionAt,programmedSpeed,TRAFFIC,FIELD,routeField,fieldLimit} from '../dist/operation.mjs';
 import {vehicleSpec} from '../dist/vehicles.mjs';
 import {MetricPath} from '../dist/simulation.mjs';
 import {travelProfile,travelAt} from '../dist/travel.mjs';
@@ -95,43 +95,39 @@ test('The measured speed of each stretch sets the pace and the schedule still se
  assert.ok(lento<rapido-10,`el trecho medido lento (${lento.toFixed(1)}) va por debajo del rápido (${rapido.toFixed(1)})`);
  assert.ok(move.profile.v.some(v=>v>0),'el bus se mueve');
 });
-test('A trunk bus only stands still at its station queue or at a red, never mid-corridor',()=>{
- // Sobre el catálogo real y su horario: ninguna espera puede quedar lejos de la estación siguiente,
- // salvo que la empuje hasta ahí el último semáforo del tramo.
+test('A trunk bus never stands still mid-corridor: what it has to spare it gives back rolling slower',()=>{
+ // Sobre el catálogo real y su horario: en los tramos con velocidad medida no puede haber ni una
+ // espera fabricada. Detenerse queda para el rojo y para la cola por el andén.
  const perfiles=JSON.parse(fs.readFileSync(new URL('../dist/speed_profiles.json',import.meta.url)));
  const activos=gtfsServices(horario,'2026-09-12');
  const ids=Object.keys(horario.routes).filter(k=>horario.routes[k].segments&&perfiles.routes[k]&&programmedDepartures(horario,k,activos).length>20).slice(0,4);
  assert.ok(ids.length,'hay servicios con horario y con campo medido');
  const s=new Operation({...source,routes:source.routes.filter(r=>ids.includes(r.id)),schedule:horario,speed_profiles:perfiles},{date:'2026-09-12'});
- const alcance=TRAFFIC.margin+11*TRAFFIC.spacing;
- let esperas=0;
+ let tramos=0,rodando=0;
  for(const t of s.trips){
   const ruta=s.routes.get(t.routeId);
   t.moves.forEach((m,i)=>{
-   const fin=ruta.visits[i+1]?.at_m;if(fin===undefined)return;
-   const ultimo=ruta.signals.filter(g=>g.at_m>m.from+.1&&g.at_m<fin-.1).reduce((a,g)=>Math.max(a,g.at_m),0);
-   for(const h of m.holds.filter(h=>h.congestion)){
-    esperas++;
-    assert.ok(h.at_m>=fin-alcance-.5||h.at_m>=ultimo-.5,
-     `espera a ${(fin-h.at_m).toFixed(0)} m de la parada, con el último semáforo en ${ultimo.toFixed(0)}`);
-   }
+   if(!ruta.visits[i+1]||ruta.visits[i].kind==='street'||ruta.visits[i+1].kind==='street')return;
+   tramos++;
+   assert.equal(m.holds.filter(h=>h.congestion).length,0,'un tramo con campo medido no fabrica esperas');
+   if(m.profile.v.some(v=>v>1))rodando++;
   });
  }
- assert.ok(esperas>0,'alguna cola de andén se forma');
+ assert.ok(tramos>100,`se revisaron ${tramos} tramos`);
+ assert.equal(rodando,tramos,'el bus se mueve en todos ellos');
 });
-test('The station queue forms in the approach, never ahead of the last red of the stretch',()=>{
- const sinSemaforo=berthQueue(0,1000,[],120);
- assert.ok(sinSemaforo.length>1,'una espera larga avanza a trozos');
- assert.ok(Math.abs(sinSemaforo.reduce((a,h)=>a+h.seconds,0)-120)<1e-9);
- assert.ok(sinSemaforo.every(h=>h.at_m<=1000-TRAFFIC.margin+1e-9));
- assert.deepEqual(sinSemaforo.map(h=>h.at_m),[...sinSemaforo.map(h=>h.at_m)].sort((a,b)=>a-b));
- const conSemaforo=berthQueue(0,1000,[{at_m:980}],120);
- assert.ok(conSemaforo.every(h=>h.at_m>=980),'la cola se forma en el semáforo si no queda aproximación');
- assert.equal(berthQueue(0,1000,[],0).length,0);
- const field=routeField({coverage:1,profile:[[0,200,50],[500,400,10]]});
- assert.equal(Math.round(fieldLimit(field,1)(10)*3.6),20);
- assert.equal(Math.round(fieldLimit(field,.5)(600)*3.6),20);
- assert.equal(routeField(null),null);
+test('Running ahead is paid back on the next stretch, and the trip never arrives early by much',()=>{
+ const perfiles=JSON.parse(fs.readFileSync(new URL('../dist/speed_profiles.json',import.meta.url)));
+ const activos=gtfsServices(horario,'2026-09-12');
+ const id=Object.keys(horario.routes).find(k=>horario.routes[k].segments&&perfiles.routes[k]&&programmedDepartures(horario,k,activos).length>20);
+ const ruta=source.routes.find(r=>r.id===id);
+ const s=new Operation({...source,routes:[ruta],schedule:horario,speed_profiles:perfiles},{date:'2026-09-12'});
+ const objetivo=horario.routes[id].segments.reduce((a,x)=>a+(x[3]||x[0]),0);
+ const duraciones=s.trips.filter(t=>t.start>=DAY&&t.start<2*DAY).map(t=>t.end-t.start).sort((a,b)=>a-b);
+ assert.ok(duraciones.length,'hay viajes ese día');
+ const mediana=duraciones[Math.floor(duraciones.length/2)];
+ assert.ok(mediana>objetivo*.85,`el viaje no se adelanta de más: ${(mediana/60).toFixed(1)} min frente a ${(objetivo/60).toFixed(1)}`);
+ assert.ok(mediana<objetivo*1.25,`ni se retrasa de más: ${(mediana/60).toFixed(1)} min`);
 });
 test('Vehicle cruise variation is stable and bounded by ±5 km/h',()=>{const values=Array.from({length:50},(_,i)=>vehicleSpec({code:'1'},DEFAULTS,i).speedOffset);assert.ok(new Set(values).size>1);assert.ok(values.every(v=>v>=-5&&v<=5));assert.equal(DEFAULTS.cruiseKmh,60);assert.equal(DEFAULTS.streetKmh,50);});
 test('Irregular departures and bounded peak reinforcements are deterministic',()=>{const d=fixture();d.stations=d.stations.map(s=>({...s,demand_profile:{hourly:Array(24).fill(100000)}}));const a=new Operation(d),b=new Operation(d),plain=new Operation(d,{params:{reinforcements:false}});assert.deepEqual(a.trips.map(t=>t.id),b.trips.map(t=>t.id));assert.ok(a.trips.some(t=>t.reinforcement));assert.ok(a.trips.length>plain.trips.length);assert.ok(a.trips.length<plain.trips.length*1.25);});

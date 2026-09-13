@@ -61,7 +61,7 @@ export function congestionHolds(profile,from,to,departure,signals,signalDelay,su
 // Lo importante de que la velocidad sea del lugar y no del vehículo: dos servicios distintos que
 // pasan por el mismo trecho van igual de rápido. Antes cada bus calculaba su sobrante y se detenía
 // por su cuenta, así que en el mismo punto uno se paraba y otro le pasaba al lado.
-export const FIELD=Object.freeze({minFactor:.45,maxFactor:3,step:.05});
+export const FIELD=Object.freeze({minFactor:.35,maxFactor:3,step:.05,giveBack:90});
 
 /** Perfil de una ruta, de [abscisa, km/h×10, % detenido] a arreglos en metros y m/s. */
 export function routeField(entry){
@@ -78,21 +78,6 @@ export function fieldLimit(field,factor){
   const i=upperBound(field.at,at,x=>x)-1;
   return (i<0?field.v[0]:field.v[i])*factor;
  };
-}
-
-/** La espera que no cabe bajando la velocidad, formada en la cola de entrada a la estación.
- *
- * Nunca por delante del último semáforo del tramo: si no queda aproximación libre, la cola se forma
- * en el propio semáforo, que es donde se forma de verdad. Trozos de TRAFFIC.chunk como mucho, que
- * es lo que una cola avanza antes de dar un paso.
- */
-export function berthQueue(from,to,signals,total){
- if(!(total>0))return [];
- let last=0;for(const s of signals)if(s.at_m>from+.1&&s.at_m<to-.1)last=Math.max(last,s.at_m-from);
- const distance=to-from,count=Math.max(1,Math.min(12,Math.ceil(total/TRAFFIC.chunk))),each=total/count;
- const far=Math.max(last,distance-TRAFFIC.margin),near=Math.max(last,far-(count-1)*TRAFFIC.spacing);
- const step=count>1?(far-near)/(count-1):0;
- return Array.from({length:count},(_,i)=>({at_m:from+near+step*i,seconds:each}));
 }
 
 // Velocidad de crucero que hace durar un tramo lo que dura en el horario publicado.
@@ -242,52 +227,46 @@ export class Operation {
    const field=isStreet?null:r.field;
    let holds,duration,standing=0,moveProfile=null;
    if(field){
-    // El campo medido manda la forma. Primera pasada a su velocidad tal cual, para saber cuánto se
-    // rueda y cuánto dice ese trecho que se está quieto.
-    // La variación de ±5 km/h por bus se pliega dentro del factor en vez de ir en el techo: así el
-    // perfil de un tramo depende de un solo número y la caché no guarda cinco copias casi iguales.
-    // El factor se cuantiza en pasos de 0,05 por lo mismo; el ajuste fino lo hace la última espera.
-    // Hacia arriba y no al más cercano: así el tramo nunca sale largo por el redondeo. Lo que sobre
-    // se convierte en cola de andén, que es una espera que sí ocurre.
+    // El campo medido manda la velocidad y el horario publicado el tiempo del tramo. Entre los dos
+    // hay un solo número por tramo: el factor que estira o encoge la velocidad hasta que el tramo
+    // dura lo publicado. La variación de ±5 km/h por bus se pliega dentro de él en vez de ir en el
+    // techo, así el perfil depende de un único valor y la caché no guarda cinco copias casi iguales;
+    // y el factor se cuantiza en pasos de 0,05 por lo mismo.
+    //
+    // Lo que el redondeo deja corto NO se convierte en espera. En calzada segregada un bus no se
+    // planta en mitad del corredor: si va sobrado llega antes, y lo que se adelanta se lo devuelve
+    // al tramo siguiente rodando más despacio. Por eso el adelanto viaja con el viaje —`ahead`— y
+    // entra en el presupuesto del tramo que viene. Detenerse queda para lo que de verdad detiene a
+    // un bus: el rojo, que resuelve el modelo de semáforos, y el andén ocupado, que sale de la cola
+    // por vagón.
+    // Al escalón de arriba y no al más cercano: el tramo sale corto antes que largo, y lo que se
+    // adelanta se devuelve solo en el siguiente. Redondear al más cercano dejaba la mitad de los
+    // tramos largos y el viaje acumulaba retraso que ya no había forma de recuperar.
     const paso=f=>Math.min(FIELD.maxFactor,Math.max(FIELD.minFactor,Math.ceil(f/FIELD.step)*FIELD.step));
-    const viaje=(f,congestion)=>signalTravel(r.path,s.at_m,next.at_m,cap,this.params.acceleration,this.params.braking,
-      close,r.signals,this.motionCache,r.id+'/'+e.index+'/'+f.toFixed(2),congestion,fieldLimit(field,f));
-    const m1=viaje(1,[]),demora1=m1.holds.reduce((a,h)=>a+(h.end-h.start),0);
-    // Un solo factor por tramo ajusta la velocidad medida al tiempo publicado. Todo el sobrante se
-    // gasta rodando más despacio mientras el factor tenga recorrido; solo lo que no quepa ahí se
-    // convierte en espera, y esa espera va a la cola de la estación siguiente.
-    const crudo=(budget>0?m1.profile.duration/Math.max(1,budget-demora1):1)*(1+speedOffset/60);
-    let factor=paso(crudo),m=Math.abs(factor-1)<1e-9?m1:viaje(factor,[]);
+    const viaje=f=>signalTravel(r.path,s.at_m,next.at_m,cap,this.params.acceleration,this.params.braking,
+      close,r.signals,this.motionCache,r.id+'/'+e.index+'/'+f.toFixed(2),fieldLimit(field,f));
+    const m1=viaje(1),demora1=m1.holds.reduce((a,h)=>a+(h.end-h.start),0);
+    // El adelanto acumulado se devuelve aquí, repartido: alarga el presupuesto de este tramo hasta
+    // FIELD.giveBack segundos, que es lo que un bus puede aflojar sin parecer que se arrastra.
+    const devuelve=Math.max(0,Math.min(FIELD.giveBack,trip.ahead||0));
+    const objetivo=budget>0?Math.max(1,budget+devuelve-demora1):0;
+    let factor=paso((budget>0?m1.profile.duration/objetivo:1)*(1+speedOffset/60));
+    let m=Math.abs(factor-1)<1e-9?m1:viaje(factor);
     // Arrancar y frenar no escalan con la velocidad, y el rojo que toca cambia al cambiarla, así que
-    // rodar al factor no cuesta exactamente lo previsto. Se corrige con el tiempo ya medido hasta
-    // que el tramo cabe en su presupuesto; dos pasadas bastan casi siempre y cada escalón repetido
-    // sale de la caché.
-    for(let intento=0;budget>0&&intento<3;intento++){
-     const demoraActual=m.holds.reduce((a,h)=>a+(h.end-h.start),0),margen=Math.max(1,budget-demoraActual);
-     if(m.profile.duration<=margen+.5)break;
+    // rodar al factor no cuesta exactamente lo previsto. Dos correcciones con el tiempo ya medido
+    // bastan casi siempre, y cada escalón repetido sale de la caché.
+    for(let intento=0;budget>0&&intento<2;intento++){
+     const demoraActual=m.holds.reduce((a,h)=>a+(h.end-h.start),0);
+     const margen=Math.max(1,budget+devuelve-demoraActual);
      const corregido=paso(factor*m.profile.duration/margen);
      if(Math.abs(corregido-factor)<1e-9)break;
-     factor=corregido;m=viaje(factor,[]);
+     factor=corregido;m=viaje(factor);
     }
-    const demora=m.holds.reduce((a,h)=>a+(h.end-h.start),0);
-    standing=budget>0?Math.max(0,budget-m.profile.duration-demora):0;
-    const previstas=berthQueue(s.at_m,next.at_m,r.signals,standing);
-    // Las detenciones se resuelven junto con los semáforos: pararse antes de uno cambia su fase.
-    const resuelto=previstas.length?viaje(factor,previstas):m;
-    holds=resuelto.holds;duration=resuelto.duration;moveProfile=resuelto.profile;
-    // Los rojos pueden salir distintos al intercalar las esperas; el resto se ajusta en la última
-    // detención, que no tiene nada detrás y por tanto no mueve ninguna fase.
+    holds=m.holds;duration=m.duration;moveProfile=m.profile;
     if(budget>0){
-     const resto=budget-duration,ultima=holds.length?holds[holds.length-1]:null;
-     if(resto>.5){
-      if(ultima?.congestion)ultima.end+=resto;
-      else holds=[...holds,{at_m:Math.max(s.at_m,next.at_m-TRAFFIC.margin),start:close+duration,end:close+duration+resto,congestion:true}];
-      standing+=resto;duration=budget;
-     }else if(resto<-.5&&ultima?.congestion){
-      const recorte=Math.min(-resto,ultima.end-ultima.start);ultima.end-=recorte;duration-=recorte;standing-=recorte;
-     }
+     trip.ahead=(trip.ahead||0)-devuelve+(budget-duration);
+     if(e.time>=DAY&&duration<budget-.5){this.trafficHolds++;this.trafficSeconds+=budget-duration;}
     }
-    if(e.time>=DAY&&standing>0){this.trafficHolds++;this.trafficSeconds+=standing;}
    }else{
     const profileKey=r.id+'/'+e.index+'/'+period+'/'+speedOffset+'/'+v;
     const m=signalTravel(r.path,s.at_m,next.at_m,v,this.params.acceleration,this.params.braking,close,r.signals,this.motionCache,profileKey);

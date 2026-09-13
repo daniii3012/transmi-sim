@@ -41,10 +41,12 @@ Estimaciones ajustables y QA de navegador autorizadas; dos carriles por sentido 
   pasa de largo— y `build_services.py` lo resuelve a `app/dist/speed_profiles.json` (117 servicios, cobertura 98 %).
   Del denominador de esa velocidad se descuentan la atención, lo quieto en cualquier andén y la espera junto a un
   semáforo corroborado, porque el motor ya modela las tres: contarlas dos veces sacaba los viajes siete minutos tarde.
-  **Un bus solo se detiene por cola de andén o por rojo**; el resto del sobrante se gasta rodando más despacio, y solo
-  el 0,5 % de los tramos, donde el factor toca su piso, genera espera. Detenidos en tráfico 33 % → 6 %; flota quieta
-  51 % → 25 %; espera individual mediana 21 s y máxima 80 s. El viaje dura 2,1 min más que el horario publicado
-  (antes 1,2) y ninguno se adelanta más de 5 min. Banco: preparación 14,0 s, muestreo 0,79 ms, heap 746 MB.
+  **Un bus solo se detiene por rojo o por andén ocupado**: en calzada segregada no se fabrica ninguna espera. Lo que
+  sobra se gasta rodando más despacio y, si aun así llega antes, el adelanto viaja con el viaje y se devuelve en el
+  tramo siguiente (hasta 90 s por tramo). Detenidos en tráfico 33 % → 1 %; flota quieta 51 % → 20 %; tramos con espera
+  82 % → 6 %, y esos son todos de calzada mixta, con máximo 45 s. El viaje dura 1,5 min más que el horario publicado
+  y ninguno se adelanta más de 5 min. Banco: preparación 15,5 s, muestreo 1,0–1,3 ms, heap 674 MB, máximo de buses
+  detenidos a la vez 629 → 21.
   Evidencia, siete suposiciones y pendientes en docs/VELOCIDAD_POR_LUGAR_20260913.md.
   **Pendiente:** rehacer solo el campo con la semana capturada, añadir hora y tipo de día, revisar los tramos cuyo
   tiempo publicado no se alcanza ni al crucero, y decidir el término de densidad, que hoy no se implementa porque
