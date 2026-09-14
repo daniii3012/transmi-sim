@@ -316,7 +316,9 @@ try{
  // a que llegue otra.
  const live=new LiveFeed({onState:state=>{if(state.phase==='ok')ultimoServicio=state;renderLive(state);}});
  let liveFitted=null,liveScope='network',liveUsable=false,livePerService=false,ultimoServicio=null;
- const liveNetwork=new LiveFeed({onState:state=>{ultimaRed=state;renderLiveNetwork(state);},url:()=>'./api/en-vivo/red'});
+ // Apagado al recargar: no es parte del escenario, es una forma de mirar más lejos por un rato.
+ let showZonal=false;
+ const liveNetwork=new LiveFeed({onState:state=>{ultimaRed=state;renderLiveNetwork(state);},url:()=>`./api/en-vivo/red?zonal=${showZonal?1:0}`});
  // Identificadores que la vista por servicio ya dibuja, y el último estado de la red, para poder
  // repintarla sin volver a pedirla cuando cambia lo que está en foco.
  let enFoco=new Set(),ultimaRed=null;
@@ -380,11 +382,12 @@ try{
   const age=Number(payload.age_s)||0;
   const lote=Number(payload.build_age_s);
   const reloj=readingClock(payload.queried_at);
-  status.textContent=`${fmt(todos.length)} ${todos.length===1?'bus troncal o dual':'buses troncales y duales'} · consultado ${reloj?`a las ${reloj}`:ageText(age)}${reloj&&age>=2?` (${ageText(age)})`:''}`
+  status.textContent=`${fmt(todos.length)} ${todos.length===1?'bus':'buses'} · consultado ${reloj?`a las ${reloj}`:ageText(age)}${reloj&&age>=2?` (${ageText(age)})`:''}`
    // El lote viejo es la única forma de saber que lo dibujado dejó de moverse hace rato. Se dice a
    // partir de minuto y medio, que es seis veces lo que el alimentador tarda en reconstruirse.
    +(Number.isFinite(lote)&&lote>=90?` · el alimentador no se reconstruye desde hace ${ageText(lote)}`:'')
-   +(payload.unmatched?` · ${fmt(payload.unmatched)} ${payload.unmatched===1?'bus':'buses'} de servicios que el simulador todavía no tiene`:'');
+   +(payload.unmatched?` · ${fmt(payload.unmatched)} ${payload.unmatched===1?'bus':'buses'} de servicios que el simulador todavía no tiene`:'')
+   +(!showZonal&&payload.zonal_seen?` · ${fmt(payload.zonal_seen)} zonales/alimentadores ocultos`:'');
   const porLinea=new Map();
   for(const v of vehicles)porLinea.set(v.line,(porLinea.get(v.line)||0)+1);
   const filas=[...porLinea].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'es',{numeric:true}));
@@ -612,6 +615,7 @@ try{
   if(trazados.length){liveFitted=code;map.fitPoints(trazados.flatMap(r=>r.points));}
  };
  $('#live-refresh').onclick=()=>live.refresh();
+ $('#live-show-zonal').onchange=e=>{showZonal=e.target.checked;liveNetwork.refresh({interrupt:true});};
  $$('[data-live-scope]').forEach(b=>b.onclick=()=>setLiveScope(b.dataset.liveScope));
  liveNetwork.select('red');
  setUpLive();

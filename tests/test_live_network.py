@@ -71,13 +71,14 @@ class Snapshot(unittest.TestCase):
     def setUp(self):
         self.net = live_network.LiveNetwork()
         self.net.routes = {'13307': ('Troncal', 'B12', 'P. Norte', '349'),
-                           '13999': ('Dual', 'M82', 'CLL134 - KR 7', None)}
+                           '13999': ('Dual', 'M82', 'CLL134 - KR 7', None),
+                           '20001': ('Alimentador', 'A12', 'Suba', None)}
         self.net.origin = (-74.136, 4.63027)
 
-    def serve(self, raw):
+    def serve(self, raw, include_zonal=False):
         self.net.fetch = lambda: raw
         self.net.cache = None
-        return self.net.snapshot()
+        return self.net.snapshot(include_zonal=include_zonal)
 
     def test_only_trunk_and_dual_survive_and_the_rest_is_not_counted_as_an_error(self):
         state, payload = self.serve(feed(vehicle(route='13307'), vehicle(bus='9', route='40000')))
@@ -85,6 +86,18 @@ class Snapshot(unittest.TestCase):
         self.assertEqual(len(payload['vehicles']), 1)
         self.assertEqual(payload['seen'], 2)
         self.assertEqual(payload['dropped'], 0)
+
+    def test_a_zonal_vehicle_is_hidden_by_default_and_shown_when_asked(self):
+        state, payload = self.serve(feed(vehicle(route='13307'), vehicle(bus='9', route='20001')))
+        self.assertEqual(len(payload['vehicles']), 1, 'oculto por defecto')
+        self.assertEqual(payload['zonal_seen'], 1, 'pero contado igual, para poder avisar')
+        state, payload = self.serve(feed(vehicle(route='13307'), vehicle(bus='9', route='20001')), include_zonal=True)
+        self.assertEqual(len(payload['vehicles']), 2)
+        zonal = next(v for v in payload['vehicles'] if v['id'] == '9')
+        self.assertEqual(zonal['operator'], 'Alimentador')
+        self.assertEqual(zonal['line'], 'A12')
+        # Un zonal sin línea local no es un troncal que el simulador no tenga: no debe inflar `unmatched`.
+        self.assertEqual(payload['unmatched'], 0)
 
     def test_a_route_outside_the_local_catalogue_is_drawn_and_counted_apart(self):
         """Circula de verdad: esconderlo mentiría, y contarlo callando también."""

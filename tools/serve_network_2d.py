@@ -47,8 +47,10 @@ class LocalHandler(http.server.SimpleHTTPRequestHandler):
                 return self.json(200, LIVE.status(NETWORK.ready()))
             if url.path == '/api/en-vivo/red':
                 # La instantánea de toda la red sale del alimentador abierto: no necesita la
-                # configuración local, así que responde aunque esa no exista.
-                state, payload = NETWORK.snapshot()
+                # configuración local, así que responde aunque esa no exista. Zonal/alimentador es
+                # opt-in: por defecto la respuesta es la misma de siempre.
+                include_zonal = (query.get('zonal') or [''])[0] == '1'
+                state, payload = NETWORK.snapshot(include_zonal=include_zonal)
             elif url.path == '/api/en-vivo/buses':
                 code = (query.get('ruta') or [''])[0].strip().upper()[:8]
                 state, payload = LIVE.buses(code)
