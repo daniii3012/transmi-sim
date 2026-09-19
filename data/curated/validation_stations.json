@@ -1,0 +1,6 @@
+{
+  "reviewed_at":"2026-09-10",
+  "note":"Correspondencias explícitas de identificadores de recaudo a estación lógica del mapa. Los accesos, ampliaciones y estaciones temporales se agregan a su estación lógica; no se afirma la misma coordenada física. Prioridad a código numérico coincidente; estas son excepciones revisadas por nombre y localización del sistema.",
+  "aliases":{"09000":"90004","50008":"6000","09126":"9118","09127":"9121","09125":"9119","57503":"7503","09130":"9116","09128":"9110","03011":"90007","09005":"90008","04100":"4004","12003":"7111","15002":"90010","09129":"9113","15001":"90009","15003":"90011","50003":"9001","02305":"2000"},
+  "excluded":{"08100":"Acceso Portal Tunal Cable; fuera del alcance troncal"}
+}

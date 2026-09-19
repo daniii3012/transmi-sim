@@ -1,0 +1,103 @@
+# Publica únicamente app/dist en GitHub Pages.
+#
+# Se dispara a mano (Actions -> Publicar simulador en Pages -> Run workflow). NO se
+# ejecuta al hacer push: el despliegue es una decisión explícita, no un efecto de
+# guardar trabajo. Para publicar en cada push a main, añadir aquí:
+#
+#   push:
+#     branches: [main]
+#     paths: ['app/dist/**', '.github/workflows/pages.yml']
+#
+# La raíz del repositorio y docs/ no sirven como origen: docs/ es la documentación del
+# proyecto y la raíz trae las herramientas y los datos, no la aplicación.
+name: Publicar simulador en Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un despliegue a la vez; no se cancela el que ya esté corriendo.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  comprobar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Pruebas del motor
+        run: node --test app/tests/*.test.mjs
+
+      - name: Comprobar que lo publicado está completo y es coherente
+        run: |
+          set -euo pipefail
+          test -f app/dist/index.html
+          test -f app/dist/.nojekyll
+          for f in services context demand station_layouts busway_signals busway_lanes station_wagons network schedule; do
+            test -s "app/dist/$f.json" || { echo "Falta app/dist/$f.json"; exit 1; }
+            python3 -c "import json;json.load(open('app/dist/$f.json'))"
+          done
+          # El horario publicado manda las salidas y la duración de cada tramo: sin rutas dentro, la
+          # aplicación arrancaría con la regla sintética sin decirlo, que es peor que no publicar.
+          python3 -c "import json; h=json.load(open('app/dist/schedule.json')); r=h.get('routes') or {}; \
+            assert len(r)>=100, f'schedule.json trae {len(r)} servicios'; \
+            assert sum(1 for v in r.values() if v.get('segments'))>=100, 'faltan tiempos por tramo'; \
+            assert h['source']['sha256'], 'schedule.json no declara de qué paquete salió'; \
+            print(f\"schedule.json: {len(r)} servicios, paquete {h['source']['sha256'][:12]}\")" 
+          # Los JSON curados y su copia web tienen que ser idénticos byte a byte.
+          for f in station_layouts busway_signals busway_lanes station_wagons; do
+            a=$(sha256sum "data/curated/$f.json" | cut -d' ' -f1)
+            b=$(sha256sum "app/dist/$f.json" | cut -d' ' -f1)
+            [ "$a" = "$b" ] || { echo "$f.json difiere entre data/curated y app/dist"; exit 1; }
+          done
+          # Una sola versión de caché: servir una mezcla rompe la aplicación.
+          versiones=$(grep -oh '?v=[0-9.]*' app/dist/*.mjs app/dist/index.html | sort -u | wc -l | tr -d ' ')
+          [ "$versiones" = "1" ] || { echo "Hay $versiones versiones ?v= distintas"; exit 1; }
+          # Rutas absolutas romperían bajo el subdirectorio /transmi-sim/.
+          ! grep -rn "fetch('/\|src=\"/\|href=\"/" app/dist/*.mjs app/dist/index.html
+          echo "Comprobaciones superadas"
+
+  publicar:
+    needs: comprobar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Empaquetar solo app/dist
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/dist
+
+      - name: Desplegar
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Verificar que .mjs se sirve como JavaScript
+        run: |
+          set -euo pipefail
+          url="${{ steps.deployment.outputs.page_url }}"
+          echo "Publicado en $url"
+          sleep 20
+          tipo=$(curl -sSI "${url%/}/app.mjs" | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print tolower($2)}')
+          echo "Content-Type de app.mjs: $tipo"
+          case "$tipo" in
+            *javascript*|*ecmascript*) echo "Correcto: los módulos cargarán." ;;
+            *) echo "AVISO: .mjs se sirve como '$tipo'. Los módulos no cargarán; habría que renombrar a .js."; exit 1 ;;
+          esac

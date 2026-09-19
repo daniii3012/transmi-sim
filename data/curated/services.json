@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-09-11",
+  "excluded": {
+    "366": {
+      "code": "C15",
+      "reason": "Chapinero Ciclovía pertenece al componente zonal, que este simulador no modela. El catálogo genérico la etiqueta TransMilenio, por lo que ese campo no basta para delimitar el alcance.",
+      "source": "user_correction_20260910"
+    },
+    "10082": {
+      "code": "F23",
+      "reason": "Variante Banderas duplicada: F23 termina únicamente en Portal Américas, así que se conserva el registro ID396 y se excluye esta.",
+      "source": "user_correction_20260911"
+    }
+  },
+  "pairs": [
+    [
+      "3915",
+      "367"
+    ],
+    [
+      "5450",
+      "5451"
+    ],
+    [
+      "1315",
+      "1316"
+    ],
+    [
+      "1185",
+      "629"
+    ]
+  ],
+  "pair_note": "Los pares relacionan sentidos del servicio; nunca copian geometría ni habilitan registros pendientes. C15/H15 y F63/Z63 contrastados con fuentes y solicitud. M85/P85 y M86/K86 verificados aparte."
+}

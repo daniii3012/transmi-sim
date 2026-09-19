@@ -1,0 +1,5284 @@
+{
+  "source": {
+    "folder": "20260912T192133Z",
+    "sha256": "43c0c82de709e8bd1e3c6a170084ee696e5283553bb38b1235fe59551586a14d",
+    "retrieved_at_utc": "2026-09-12T19:21:33.083257+00:00",
+    "feed_info": {
+      "feed_publisher_name": "Transmilenio S.A.",
+      "feed_start_date": "20260101",
+      "feed_version": "1",
+      "feed_end_date": "20261231",
+      "feed_lang": "es",
+      "feed_publisher_url": "https://www.transmilenio.gov.co/",
+      "feed_contact_email": "radicacion@transmilenio.gov.co"
+    },
+    "url": "GTFS de TRANSMILENIO S.A., datos abiertos"
+  },
+  "matched": 115,
+  "pending": 2,
+  "combined_records": [
+    {
+      "route_id": "11488",
+      "short": "M86-K86",
+      "long": "K86 Aeropuerto El Dorado || K86 Portal Eldorado Ciclovía"
+    },
+    {
+      "route_id": "12297",
+      "short": "ML82",
+      "long": "M82 CLL134 KR 7 || L82  Portal 20 de Julio"
+    },
+    {
+      "route_id": "12299",
+      "short": "M82",
+      "long": "CLL134 KR 7 || L82 Portal 20 de Julio"
+    },
+    {
+      "route_id": "12466",
+      "short": "M82",
+      "long": "CLL134 KR 7 || L82 Portal 20 de Julio Ciclovía"
+    },
+    {
+      "route_id": "12771",
+      "short": "P85-M85",
+      "long": "P85 AV 68 Calle 9 || M85 Museo Nacional"
+    },
+    {
+      "route_id": "12772",
+      "short": "P85-M85",
+      "long": "P85 AV 68 Calle 9 || M85 Museo Nacional Ciclovía"
+    },
+    {
+      "route_id": "12773",
+      "short": "P85-M85",
+      "long": "P85 AV 68 Calle 9 || M85 Museo Nacional"
+    },
+    {
+      "route_id": "12984",
+      "short": "MC84",
+      "long": "M84 KR 7 CLL 73 || C84 Av. Suba K114 D"
+    },
+    {
+      "route_id": "12991",
+      "short": "M82",
+      "long": "CLL134 KR 7 || L82 Portal 20 de Julio Ciclovía"
+    },
+    {
+      "route_id": "12992",
+      "short": "M82-L82",
+      "long": "M82 CLL134 KR 7 || L82 Portal 20 de Julio Ciclovía"
+    },
+    {
+      "route_id": "13027",
+      "short": "K86",
+      "long": "Aeropuerto ||  Portal ElDorado"
+    },
+    {
+      "route_id": "13040",
+      "short": "K86",
+      "long": "Aeropuerto ||  Portal ElDorado"
+    },
+    {
+      "route_id": "13179",
+      "short": "MK86",
+      "long": "M86 KR 7 CLL 107A || K86 Portal ElDorado"
+    },
+    {
+      "route_id": "13180",
+      "short": "MK86",
+      "long": "M86 KR 7 CLL 107A || K86  Portal ElDorado"
+    },
+    {
+      "route_id": "13182",
+      "short": "M86",
+      "long": "KR 7 CLL 107A || K86 Portal ElDorado"
+    },
+    {
+      "route_id": "13183",
+      "short": "MK86",
+      "long": "M86 KR 7 CLL 107A || K86 Portal ElDorado"
+    },
+    {
+      "route_id": "13184",
+      "short": "M86",
+      "long": "KR 7 CLL 107A || K86 Portal ElDorado Ciclovía"
+    },
+    {
+      "route_id": "13185",
+      "short": "M86",
+      "long": "KR 7 CLL 107A || K86 Portal ElDorado Ciclovía"
+    },
+    {
+      "route_id": "13186",
+      "short": "M86",
+      "long": "KR 7 CLL 107A || K86 Portal ElDorado Ciclovía"
+    },
+    {
+      "route_id": "13226",
+      "short": "FZ63",
+      "long": "F63 Pradera || Z63 Tibanica"
+    }
+  ],
+  "split_records": [
+    {
+      "route_id": "12297",
+      "short": "ML82",
+      "long": "M82 CLL134 KR 7 || L82  Portal 20 de Julio",
+      "segments": 33,
+      "loop_closing_seconds": null,
+      "turn_segment": 16,
+      "turn_seconds": 74,
+      "trips": 560,
+      "halves": [
+        {
+          "route_id": "12297#a",
+          "local_id": "12297",
+          "code": "M82",
+          "name": "CLL134 - KR 7",
+          "segments": 16,
+          "metres": 0,
+          "share_of_trip": 0.4922
+        },
+        {
+          "route_id": "12297#b",
+          "local_id": "622",
+          "code": "L82",
+          "name": "Portal 20 de Julio",
+          "segments": 16,
+          "metres": 17796,
+          "share_of_trip": 0.4993
+        }
+      ]
+    },
+    {
+      "route_id": "12299",
+      "short": "M82",
+      "long": "CLL134 KR 7 || L82 Portal 20 de Julio",
+      "segments": 33,
+      "loop_closing_seconds": null,
+      "turn_segment": 16,
+      "turn_seconds": 60,
+      "trips": 71,
+      "halves": [
+        {
+          "route_id": "12299#a",
+          "local_id": "12297",
+          "code": "M82",
+          "name": "CLL134 - KR 7",
+          "segments": 16,
+          "metres": 0,
+          "share_of_trip": 0.4922
+        },
+        {
+          "route_id": "12299#b",
+          "local_id": "622",
+          "code": "L82",
+          "name": "Portal 20 de Julio",
+          "segments": 16,
+          "metres": 17796,
+          "share_of_trip": 0.4993
+        }
+      ]
+    },
+    {
+      "route_id": "12771",
+      "short": "P85-M85",
+      "long": "P85 AV 68 Calle 9 || M85 Museo Nacional",
+      "segments": 17,
+      "loop_closing_seconds": null,
+      "turn_segment": 7,
+      "turn_seconds": 68,
+      "trips": 244,
+      "halves": [
+        {
+          "route_id": "12771#a",
+          "local_id": "1316",
+          "code": "P85",
+          "name": "AV 68 Calle 9",
+          "segments": 7,
+          "metres": 0,
+          "share_of_trip": 0.4417
+        },
+        {
+          "route_id": "12771#b",
+          "local_id": "1315",
+          "code": "M85",
+          "name": "Museo Nacional",
+          "segments": 9,
+          "metres": 8705,
+          "share_of_trip": 0.5423
+        }
+      ]
+    },
+    {
+      "route_id": "12773",
+      "short": "P85-M85",
+      "long": "P85 AV 68 Calle 9 || M85 Museo Nacional",
+      "segments": 17,
+      "loop_closing_seconds": null,
+      "turn_segment": 7,
+      "turn_seconds": 52,
+      "trips": 59,
+      "halves": [
+        {
+          "route_id": "12773#a",
+          "local_id": "1316",
+          "code": "P85",
+          "name": "AV 68 Calle 9",
+          "segments": 7,
+          "metres": 0,
+          "share_of_trip": 0.4415
+        },
+        {
+          "route_id": "12773#b",
+          "local_id": "1315",
+          "code": "M85",
+          "name": "Museo Nacional",
+          "segments": 9,
+          "metres": 8705,
+          "share_of_trip": 0.5422
+        }
+      ]
+    },
+    {
+      "route_id": "12984",
+      "short": "MC84",
+      "long": "M84 KR 7 CLL 73 || C84 Av. Suba K114 D",
+      "segments": 15,
+      "loop_closing_seconds": null,
+      "turn_segment": 8,
+      "turn_seconds": 125,
+      "trips": 453,
+      "halves": [
+        {
+          "route_id": "12984#a",
+          "local_id": "624",
+          "code": "M84",
+          "name": "KR 7 - CLL 73",
+          "segments": 8,
+          "metres": 0,
+          "share_of_trip": 0.4999
+        },
+        {
+          "route_id": "12984#b",
+          "local_id": "623",
+          "code": "C84",
+          "name": "Av. Suba - K114 D",
+          "segments": 6,
+          "metres": 14296,
+          "share_of_trip": 0.4796
+        }
+      ]
+    },
+    {
+      "route_id": "13179",
+      "short": "MK86",
+      "long": "M86 KR 7 CLL 107A || K86 Portal ElDorado",
+      "segments": 47,
+      "loop_closing_seconds": 326,
+      "turn_segment": 21,
+      "turn_seconds": 120,
+      "trips": 497,
+      "halves": [
+        {
+          "route_id": "13179#a",
+          "local_id": "1185",
+          "code": "M86",
+          "name": "KR 7 - CLL 107A",
+          "segments": 21,
+          "metres": 0,
+          "share_of_trip": 0.4407
+        },
+        {
+          "route_id": "13179#b",
+          "local_id": "629",
+          "code": "K86",
+          "name": "Portal ElDorado",
+          "segments": 25,
+          "metres": 20634,
+          "share_of_trip": 0.5454
+        }
+      ]
+    },
+    {
+      "route_id": "13182",
+      "short": "M86",
+      "long": "KR 7 CLL 107A || K86 Portal ElDorado",
+      "segments": 47,
+      "loop_closing_seconds": 281,
+      "turn_segment": 21,
+      "turn_seconds": 103,
+      "trips": 59,
+      "halves": [
+        {
+          "route_id": "13182#a",
+          "local_id": "1185",
+          "code": "M86",
+          "name": "KR 7 - CLL 107A",
+          "segments": 21,
+          "metres": 0,
+          "share_of_trip": 0.4406
+        },
+        {
+          "route_id": "13182#b",
+          "local_id": "629",
+          "code": "K86",
+          "name": "Portal ElDorado",
+          "segments": 25,
+          "metres": 20634,
+          "share_of_trip": 0.5454
+        }
+      ]
+    },
+    {
+      "route_id": "13226",
+      "short": "FZ63",
+      "long": "F63 Pradera || Z63 Tibanica",
+      "segments": 13,
+      "loop_closing_seconds": 115,
+      "turn_segment": 6,
+      "turn_seconds": 257,
+      "trips": 347,
+      "halves": [
+        {
+          "route_id": "13226#a",
+          "local_id": "5450",
+          "code": "F63",
+          "name": "Pradera",
+          "segments": 6,
+          "metres": 0,
+          "share_of_trip": 0.4672
+        },
+        {
+          "route_id": "13226#b",
+          "local_id": "5451",
+          "code": "Z63",
+          "name": "Tibanica",
+          "segments": 6,
+          "metres": 11647,
+          "share_of_trip": 0.4852
+        }
+      ]
+    }
+  ],
+  "split_refused": [
+    {
+      "route_id": "11488",
+      "short": "M86-K86",
+      "long": "K86 Aeropuerto El Dorado || K86 Portal Eldorado Ciclovía",
+      "reason": "sin servicio local utilizable para: K86 Aeropuerto El Dorado, K86 Portal Eldorado Ciclovía",
+      "trips": 44
+    },
+    {
+      "route_id": "12466",
+      "short": "M82",
+      "long": "CLL134 KR 7 || L82 Portal 20 de Julio Ciclovía",
+      "reason": "sin servicio local utilizable para: L82 Portal 20 de Julio Ciclovía",
+      "trips": 8
+    },
+    {
+      "route_id": "12772",
+      "short": "P85-M85",
+      "long": "P85 AV 68 Calle 9 || M85 Museo Nacional Ciclovía",
+      "reason": "sin servicio local utilizable para: M85 Museo Nacional Ciclovía",
+      "trips": 41
+    },
+    {
+      "route_id": "12991",
+      "short": "M82",
+      "long": "CLL134 KR 7 || L82 Portal 20 de Julio Ciclovía",
+      "reason": "sin servicio local utilizable para: L82 Portal 20 de Julio Ciclovía",
+      "trips": 5
+    },
+    {
+      "route_id": "12992",
+      "short": "M82-L82",
+      "long": "M82 CLL134 KR 7 || L82 Portal 20 de Julio Ciclovía",
+      "reason": "sin servicio local utilizable para: L82 Portal 20 de Julio Ciclovía",
+      "trips": 52
+    },
+    {
+      "route_id": "13027",
+      "short": "K86",
+      "long": "Aeropuerto ||  Portal ElDorado",
+      "reason": "el catálogo local cuenta 3 + giro + 25 tramos y el paquete 7",
+      "trips": 195
+    },
+    {
+      "route_id": "13040",
+      "short": "K86",
+      "long": "Aeropuerto ||  Portal ElDorado",
+      "reason": "el catálogo local cuenta 3 + giro + 25 tramos y el paquete 7",
+      "trips": 18
+    },
+    {
+      "route_id": "13180",
+      "short": "MK86",
+      "long": "M86 KR 7 CLL 107A || K86  Portal ElDorado",
+      "reason": "el catálogo local cuenta 21 + giro + 25 tramos y el paquete 40 más el cierre del bucle",
+      "trips": 15
+    },
+    {
+      "route_id": "13183",
+      "short": "MK86",
+      "long": "M86 KR 7 CLL 107A || K86 Portal ElDorado",
+      "reason": "el catálogo local cuenta 21 + giro + 25 tramos y el paquete 40 más el cierre del bucle",
+      "trips": 6
+    },
+    {
+      "route_id": "13184",
+      "short": "M86",
+      "long": "KR 7 CLL 107A || K86 Portal ElDorado Ciclovía",
+      "reason": "sin servicio local utilizable para: K86 Portal ElDorado Ciclovía",
+      "trips": 8
+    },
+    {
+      "route_id": "13185",
+      "short": "M86",
+      "long": "KR 7 CLL 107A || K86 Portal ElDorado Ciclovía",
+      "reason": "sin servicio local utilizable para: K86 Portal ElDorado Ciclovía",
+      "trips": 43
+    },
+    {
+      "route_id": "13186",
+      "short": "M86",
+      "long": "KR 7 CLL 107A || K86 Portal ElDorado Ciclovía",
+      "reason": "sin servicio local utilizable para: K86 Portal ElDorado Ciclovía",
+      "trips": 5
+    }
+  ],
+  "routes": [
+    {
+      "id": "684",
+      "code": "1",
+      "name": "Portal Eldorado",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13171",
+          "agency_id": "1",
+          "short": "1",
+          "long": "Portal Eldorado"
+        }
+      ],
+      "trips": 697,
+      "by_service": {
+        "1": 211,
+        "2": 185,
+        "4": 301
+      },
+      "duration_min": {
+        "1": {
+          "p10": 27.5,
+          "p50": 29.5,
+          "p90": 31.0,
+          "n": 211
+        },
+        "2": {
+          "p10": 25.2,
+          "p50": 28.2,
+          "p90": 29.2,
+          "n": 185
+        },
+        "4": {
+          "p10": 25.0,
+          "p50": 26.2,
+          "p90": 28.0,
+          "n": 301
+        }
+      },
+      "metres_median": 11782,
+      "local_length_m": 11597.927,
+      "segments": 13,
+      "segments_total_s": 1680
+    },
+    {
+      "id": "697",
+      "code": "1",
+      "name": "Universidades",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11231",
+          "agency_id": "1",
+          "short": "1",
+          "long": "Universidades"
+        }
+      ],
+      "trips": 709,
+      "by_service": {
+        "1": 221,
+        "2": 185,
+        "4": 303
+      },
+      "duration_min": {
+        "1": {
+          "p10": 22.0,
+          "p50": 23.8,
+          "p90": 27.0,
+          "n": 221
+        },
+        "2": {
+          "p10": 22.2,
+          "p50": 23.2,
+          "p90": 24.0,
+          "n": 185
+        },
+        "4": {
+          "p10": 22.0,
+          "p50": 23.2,
+          "p90": 26.5,
+          "n": 303
+        }
+      },
+      "metres_median": 10675,
+      "local_length_m": 10636.734,
+      "segments": 13,
+      "segments_total_s": 1410
+    },
+    {
+      "id": "698",
+      "code": "2",
+      "name": "Museo Nacional",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "10056",
+          "agency_id": "1",
+          "short": "2",
+          "long": "Museo Nacional"
+        }
+      ],
+      "trips": 555,
+      "by_service": {
+        "1": 195,
+        "2": 191,
+        "4": 169
+      },
+      "duration_min": {
+        "1": {
+          "p10": 22.8,
+          "p50": 25.8,
+          "p90": 26.8,
+          "n": 195
+        },
+        "2": {
+          "p10": 24.8,
+          "p50": 26.5,
+          "p90": 28.2,
+          "n": 191
+        },
+        "4": {
+          "p10": 23.8,
+          "p50": 25.8,
+          "p90": 27.8,
+          "n": 169
+        }
+      },
+      "metres_median": 7205,
+      "local_length_m": 6895.017,
+      "segments": 10,
+      "segments_total_s": 1560
+    },
+    {
+      "id": "685",
+      "code": "2",
+      "name": "Portal 20 de Julio",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "10070",
+          "agency_id": "1",
+          "short": "2",
+          "long": "Portal 20 de Julio"
+        }
+      ],
+      "trips": 548,
+      "by_service": {
+        "1": 193,
+        "2": 186,
+        "4": 169
+      },
+      "duration_min": {
+        "1": {
+          "p10": 26.8,
+          "p50": 30.2,
+          "p90": 33.2,
+          "n": 193
+        },
+        "2": {
+          "p10": 24.0,
+          "p50": 25.8,
+          "p90": 28.8,
+          "n": 186
+        },
+        "4": {
+          "p10": 23.2,
+          "p50": 25.8,
+          "p90": 28.5,
+          "n": 169
+        }
+      },
+      "metres_median": 7303,
+      "local_length_m": 6979.806,
+      "segments": 10,
+      "segments_total_s": 1605
+    },
+    {
+      "id": "699",
+      "code": "3",
+      "name": "Corferias",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11885",
+          "agency_id": "1",
+          "short": "3",
+          "long": "Corferias"
+        }
+      ],
+      "trips": 581,
+      "by_service": {
+        "1": 213,
+        "2": 193,
+        "4": 175
+      },
+      "duration_min": {
+        "1": {
+          "p10": 49.2,
+          "p50": 52.0,
+          "p90": 59.2,
+          "n": 213
+        },
+        "2": {
+          "p10": 48.5,
+          "p50": 52.2,
+          "p90": 54.2,
+          "n": 193
+        },
+        "4": {
+          "p10": 48.5,
+          "p50": 51.0,
+          "p90": 53.5,
+          "n": 175
+        }
+      },
+      "metres_median": 14195,
+      "local_length_m": 14153.399,
+      "segments": 16,
+      "segments_total_s": 3120
+    },
+    {
+      "id": "686",
+      "code": "3",
+      "name": "Portal Tunal",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13162",
+          "agency_id": "1",
+          "short": "3",
+          "long": "Portal Tunal"
+        }
+      ],
+      "trips": 604,
+      "by_service": {
+        "1": 216,
+        "2": 193,
+        "4": 195
+      },
+      "duration_min": {
+        "1": {
+          "p10": 47.5,
+          "p50": 52.5,
+          "p90": 66.2,
+          "n": 216
+        },
+        "2": {
+          "p10": 43.2,
+          "p50": 49.8,
+          "p90": 55.5,
+          "n": 193
+        },
+        "4": {
+          "p10": 45.0,
+          "p50": 47.0,
+          "p90": 48.8,
+          "n": 195
+        }
+      },
+      "metres_median": 13315,
+      "local_length_m": 13291.019,
+      "segments": 16,
+      "segments_total_s": 2962
+    },
+    {
+      "id": "688",
+      "code": "4",
+      "name": "Héroes",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11747",
+          "agency_id": "1",
+          "short": "4",
+          "long": "Héroes"
+        }
+      ],
+      "trips": 583,
+      "by_service": {
+        "1": 215,
+        "2": 192,
+        "4": 176
+      },
+      "duration_min": {
+        "1": {
+          "p10": 53.2,
+          "p50": 58.5,
+          "p90": 70.5,
+          "n": 215
+        },
+        "2": {
+          "p10": 52.2,
+          "p50": 56.5,
+          "p90": 58.2,
+          "n": 192
+        },
+        "4": {
+          "p10": 52.2,
+          "p50": 55.2,
+          "p90": 56.5,
+          "n": 176
+        }
+      },
+      "metres_median": 19313,
+      "local_length_m": 19275.473,
+      "segments": 23,
+      "segments_total_s": 3390
+    },
+    {
+      "id": "687",
+      "code": "4",
+      "name": "Portal Sur",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11853",
+          "agency_id": "1",
+          "short": "4",
+          "long": "Portal Sur"
+        }
+      ],
+      "trips": 578,
+      "by_service": {
+        "1": 210,
+        "2": 194,
+        "4": 174
+      },
+      "duration_min": {
+        "1": {
+          "p10": 52.8,
+          "p50": 55.2,
+          "p90": 70.2,
+          "n": 210
+        },
+        "2": {
+          "p10": 50.5,
+          "p50": 54.0,
+          "p90": 58.2,
+          "n": 194
+        },
+        "4": {
+          "p10": 48.8,
+          "p50": 51.0,
+          "p90": 51.2,
+          "n": 174
+        }
+      },
+      "metres_median": 19018,
+      "local_length_m": 18958.859,
+      "segments": 23,
+      "segments_total_s": 3240
+    },
+    {
+      "id": "690",
+      "code": "5",
+      "name": "Av. Jiménez",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12639",
+          "agency_id": "1",
+          "short": "5",
+          "long": "Av. Jiménez"
+        }
+      ],
+      "trips": 657,
+      "by_service": {
+        "1": 232,
+        "2": 210,
+        "4": 215
+      },
+      "duration_min": {
+        "1": {
+          "p10": 41.8,
+          "p50": 47.8,
+          "p90": 54.0,
+          "n": 232
+        },
+        "2": {
+          "p10": 40.5,
+          "p50": 45.8,
+          "p90": 49.0,
+          "n": 210
+        },
+        "4": {
+          "p10": 40.0,
+          "p50": 43.0,
+          "p90": 45.0,
+          "n": 215
+        }
+      },
+      "metres_median": 13611,
+      "local_length_m": 13199.049,
+      "segments": 16,
+      "segments_total_s": 2700
+    },
+    {
+      "id": "689",
+      "code": "5",
+      "name": "Portal Américas",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12841",
+          "agency_id": "1",
+          "short": "5",
+          "long": "Portal Américas"
+        }
+      ],
+      "trips": 673,
+      "by_service": {
+        "1": 246,
+        "2": 209,
+        "4": 218
+      },
+      "duration_min": {
+        "1": {
+          "p10": 44.2,
+          "p50": 50.8,
+          "p90": 60.2,
+          "n": 246
+        },
+        "2": {
+          "p10": 40.0,
+          "p50": 47.2,
+          "p90": 50.0,
+          "n": 209
+        },
+        "4": {
+          "p10": 43.0,
+          "p50": 45.0,
+          "p90": 47.5,
+          "n": 218
+        }
+      },
+      "metres_median": 13712,
+      "local_length_m": 13107.755,
+      "segments": 17,
+      "segments_total_s": 2835
+    },
+    {
+      "id": "5709",
+      "code": "6",
+      "name": "Calle 72",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13305",
+          "agency_id": "1",
+          "short": "6",
+          "long": "Calle 72"
+        }
+      ],
+      "trips": 601,
+      "by_service": {
+        "1": 192,
+        "2": 187,
+        "4": 222
+      },
+      "duration_min": {
+        "1": {
+          "p10": 26.0,
+          "p50": 28.2,
+          "p90": 31.2,
+          "n": 192
+        },
+        "2": {
+          "p10": 22.5,
+          "p50": 25.0,
+          "p90": 26.0,
+          "n": 187
+        },
+        "4": {
+          "p10": 22.2,
+          "p50": 24.0,
+          "p90": 24.5,
+          "n": 222
+        }
+      },
+      "metres_median": 8684,
+      "local_length_m": 8436.027,
+      "segments": 13,
+      "segments_total_s": 1485
+    },
+    {
+      "id": "691",
+      "code": "6",
+      "name": "Portal 80",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13306",
+          "agency_id": "1",
+          "short": "6",
+          "long": "Portal 80"
+        }
+      ],
+      "trips": 614,
+      "by_service": {
+        "1": 190,
+        "2": 191,
+        "4": 233
+      },
+      "duration_min": {
+        "1": {
+          "p10": 27.0,
+          "p50": 30.2,
+          "p90": 35.2,
+          "n": 190
+        },
+        "2": {
+          "p10": 23.5,
+          "p50": 25.5,
+          "p90": 26.8,
+          "n": 191
+        },
+        "4": {
+          "p10": 23.0,
+          "p50": 23.8,
+          "p90": 25.5,
+          "n": 233
+        }
+      },
+      "metres_median": 8485,
+      "local_length_m": 8442.489,
+      "segments": 13,
+      "segments_total_s": 1530
+    },
+    {
+      "id": "693",
+      "code": "7",
+      "name": "Polo FINCOMERCIO",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11627",
+          "agency_id": "1",
+          "short": "7",
+          "long": "Polo FINCOMERCIO"
+        }
+      ],
+      "trips": 579,
+      "by_service": {
+        "1": 197,
+        "2": 185,
+        "4": 197
+      },
+      "duration_min": {
+        "1": {
+          "p10": 29.5,
+          "p50": 33.5,
+          "p90": 36.5,
+          "n": 197
+        },
+        "2": {
+          "p10": 30.0,
+          "p50": 32.2,
+          "p90": 33.5,
+          "n": 185
+        },
+        "4": {
+          "p10": 29.2,
+          "p50": 30.5,
+          "p90": 31.5,
+          "n": 197
+        }
+      },
+      "metres_median": 10974,
+      "local_length_m": 10751.861,
+      "segments": 15,
+      "segments_total_s": 1874
+    },
+    {
+      "id": "694",
+      "code": "7",
+      "name": "Portal suba",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11856",
+          "agency_id": "1",
+          "short": "7",
+          "long": "Portal suba"
+        }
+      ],
+      "trips": 603,
+      "by_service": {
+        "1": 204,
+        "2": 190,
+        "4": 209
+      },
+      "duration_min": {
+        "1": {
+          "p10": 30.8,
+          "p50": 33.5,
+          "p90": 38.5,
+          "n": 204
+        },
+        "2": {
+          "p10": 30.0,
+          "p50": 32.8,
+          "p90": 34.5,
+          "n": 190
+        },
+        "4": {
+          "p10": 30.5,
+          "p50": 31.5,
+          "p90": 33.5,
+          "n": 209
+        }
+      },
+      "metres_median": 11415,
+      "local_length_m": 10945.125,
+      "segments": 15,
+      "segments_total_s": 1950
+    },
+    {
+      "id": "695",
+      "code": "8",
+      "name": "Guatoque",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13307",
+          "agency_id": "1",
+          "short": "8",
+          "long": "Guatoque"
+        }
+      ],
+      "trips": 568,
+      "by_service": {
+        "1": 197,
+        "2": 180,
+        "4": 191
+      },
+      "duration_min": {
+        "1": {
+          "p10": 70.0,
+          "p50": 79.2,
+          "p90": 96.0,
+          "n": 197
+        },
+        "2": {
+          "p10": 66.8,
+          "p50": 75.5,
+          "p90": 77.0,
+          "n": 180
+        },
+        "4": {
+          "p10": 61.0,
+          "p50": 65.5,
+          "p90": 67.2,
+          "n": 191
+        }
+      },
+      "metres_median": 21078,
+      "local_length_m": 20976.226,
+      "segments": 26,
+      "segments_total_s": 4350
+    },
+    {
+      "id": "696",
+      "code": "8",
+      "name": "Terminal",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13308",
+          "agency_id": "1",
+          "short": "8",
+          "long": "Terminal"
+        }
+      ],
+      "trips": 599,
+      "by_service": {
+        "1": 216,
+        "2": 188,
+        "4": 195
+      },
+      "duration_min": {
+        "1": {
+          "p10": 32.2,
+          "p50": 74.2,
+          "p90": 82.2,
+          "n": 216
+        },
+        "2": {
+          "p10": 63.8,
+          "p50": 70.5,
+          "p90": 74.2,
+          "n": 188
+        },
+        "4": {
+          "p10": 61.2,
+          "p50": 65.8,
+          "p90": 70.0,
+          "n": 195
+        }
+      },
+      "metres_median": 21195,
+      "local_length_m": 21078.277,
+      "segments": 26,
+      "segments_total_s": 4199
+    },
+    {
+      "id": "295",
+      "code": "A52",
+      "name": "Flores Temporal",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12931",
+          "agency_id": "1",
+          "short": "A52",
+          "long": "Flores Temporal"
+        }
+      ],
+      "trips": 53,
+      "by_service": {
+        "1": 53
+      },
+      "duration_min": {
+        "1": {
+          "p10": 52.8,
+          "p50": 60.5,
+          "p90": 64.5,
+          "n": 53
+        }
+      },
+      "metres_median": 20817,
+      "local_length_m": 20517.533,
+      "segments": 9,
+      "segments_total_s": 3630
+    },
+    {
+      "id": "5711",
+      "code": "A60",
+      "name": "Calle 72",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13309",
+          "agency_id": "1",
+          "short": "A60",
+          "long": "Calle 72"
+        }
+      ],
+      "trips": 608,
+      "by_service": {
+        "1": 217,
+        "2": 199,
+        "4": 192
+      },
+      "duration_min": {
+        "1": {
+          "p10": 64.5,
+          "p50": 70.5,
+          "p90": 80.8,
+          "n": 217
+        },
+        "2": {
+          "p10": 63.0,
+          "p50": 65.0,
+          "p90": 68.0,
+          "n": 199
+        },
+        "4": {
+          "p10": 59.8,
+          "p50": 61.2,
+          "p90": 63.5,
+          "n": 192
+        }
+      },
+      "metres_median": 19673,
+      "local_length_m": 19272.247,
+      "segments": 9,
+      "segments_total_s": 3900
+    },
+    {
+      "id": "334",
+      "code": "B10",
+      "name": "Portal Norte",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "10075",
+          "agency_id": "1",
+          "short": "B10",
+          "long": "Portal Norte"
+        }
+      ],
+      "trips": 431,
+      "by_service": {
+        "1": 184,
+        "2": 152,
+        "4": 95
+      },
+      "duration_min": {
+        "1": {
+          "p10": 38.5,
+          "p50": 41.0,
+          "p90": 45.8,
+          "n": 184
+        },
+        "2": {
+          "p10": 38.5,
+          "p50": 39.5,
+          "p90": 40.2,
+          "n": 152
+        },
+        "4": {
+          "p10": 36.5,
+          "p50": 37.8,
+          "p90": 38.5,
+          "n": 95
+        }
+      },
+      "metres_median": 17501,
+      "local_length_m": 17433.885,
+      "segments": 14,
+      "segments_total_s": 2385
+    },
+    {
+      "id": "346",
+      "code": "B11",
+      "name": "Terminal",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13007",
+          "agency_id": "1",
+          "short": "B11",
+          "long": "Terminal"
+        }
+      ],
+      "trips": 318,
+      "by_service": {
+        "1": 176,
+        "2": 142
+      },
+      "duration_min": {
+        "1": {
+          "p10": 70.2,
+          "p50": 72.2,
+          "p90": 84.5,
+          "n": 176
+        },
+        "2": {
+          "p10": 61.8,
+          "p50": 64.8,
+          "p90": 66.2,
+          "n": 142
+        }
+      },
+      "metres_median": 30694,
+      "local_length_m": 30595.179,
+      "segments": 16,
+      "segments_total_s": 4214
+    },
+    {
+      "id": "349",
+      "code": "B12",
+      "name": "P. Norte",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11876",
+          "agency_id": "1",
+          "short": "B12",
+          "long": "P. Norte"
+        },
+        {
+          "route_id": "12874",
+          "agency_id": "1",
+          "short": "B12",
+          "long": "P. Norte"
+        }
+      ],
+      "trips": 702,
+      "by_service": {
+        "1": 269,
+        "2": 213,
+        "4": 220
+      },
+      "duration_min": {
+        "1": {
+          "p10": 55.2,
+          "p50": 59.2,
+          "p90": 71.8,
+          "n": 269
+        },
+        "2": {
+          "p10": 58.2,
+          "p50": 60.5,
+          "p90": 62.0,
+          "n": 213
+        },
+        "4": {
+          "p10": 58.2,
+          "p50": 59.2,
+          "p90": 61.8,
+          "n": 220
+        }
+      },
+      "metres_median": 27353,
+      "local_length_m": 27011.149,
+      "segments": 15,
+      "segments_total_s": 3600
+    },
+    {
+      "id": "282",
+      "code": "B13",
+      "name": "Portal Norte",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12814",
+          "agency_id": "1",
+          "short": "B13",
+          "long": "Portal Norte"
+        }
+      ],
+      "trips": 370,
+      "by_service": {
+        "1": 208,
+        "2": 162
+      },
+      "duration_min": {
+        "1": {
+          "p10": 79.5,
+          "p50": 86.5,
+          "p90": 97.0,
+          "n": 208
+        },
+        "2": {
+          "p10": 74.0,
+          "p50": 78.8,
+          "p90": 81.0,
+          "n": 162
+        }
+      },
+      "metres_median": 27447,
+      "local_length_m": 26583.551,
+      "segments": 15,
+      "segments_total_s": 4906
+    },
+    {
+      "id": "355",
+      "code": "B16",
+      "name": "Terminal",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13271",
+          "agency_id": "1",
+          "short": "B16",
+          "long": "Terminal"
+        }
+      ],
+      "trips": 305,
+      "by_service": {
+        "1": 197,
+        "2": 108
+      },
+      "duration_min": {
+        "1": {
+          "p10": 48.8,
+          "p50": 52.5,
+          "p90": 58.5,
+          "n": 197
+        },
+        "2": {
+          "p10": 49.5,
+          "p50": 51.2,
+          "p90": 52.2,
+          "n": 108
+        }
+      },
+      "metres_median": 26789,
+      "local_length_m": 26599.383,
+      "segments": 15,
+      "segments_total_s": 3119
+    },
+    {
+      "id": "318",
+      "code": "B18",
+      "name": "Terminal",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13017",
+          "agency_id": "1",
+          "short": "B18",
+          "long": "Terminal"
+        }
+      ],
+      "trips": 494,
+      "by_service": {
+        "1": 201,
+        "2": 153,
+        "4": 140
+      },
+      "duration_min": {
+        "1": {
+          "p10": 70.8,
+          "p50": 81.0,
+          "p90": 91.2,
+          "n": 201
+        },
+        "2": {
+          "p10": 68.8,
+          "p50": 74.8,
+          "p90": 77.2,
+          "n": 153
+        },
+        "4": {
+          "p10": 65.8,
+          "p50": 69.2,
+          "p90": 71.0,
+          "n": 140
+        }
+      },
+      "metres_median": 25427,
+      "local_length_m": 25310.432,
+      "segments": 15,
+      "segments_total_s": 4485
+    },
+    {
+      "id": "320",
+      "code": "B23",
+      "name": "Alcalá",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12819",
+          "agency_id": "1",
+          "short": "B23",
+          "long": "Alcalá"
+        }
+      ],
+      "trips": 297,
+      "by_service": {
+        "1": 193,
+        "2": 104
+      },
+      "duration_min": {
+        "1": {
+          "p10": 61.2,
+          "p50": 65.8,
+          "p90": 73.8,
+          "n": 193
+        },
+        "2": {
+          "p10": 55.5,
+          "p50": 57.2,
+          "p90": 59.5,
+          "n": 104
+        }
+      },
+      "metres_median": 23032,
+      "local_length_m": 22934.312,
+      "segments": 16,
+      "segments_total_s": 3735
+    },
+    {
+      "id": "1191",
+      "code": "B26",
+      "name": "Alcalá",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12621",
+          "agency_id": "1",
+          "short": "B26",
+          "long": "Alcalá"
+        }
+      ],
+      "trips": 128,
+      "by_service": {
+        "1": 79,
+        "2": 49
+      },
+      "duration_min": {
+        "1": {
+          "p10": 60.5,
+          "p50": 70.5,
+          "p90": 82.5,
+          "n": 79
+        },
+        "2": {
+          "p10": 62.2,
+          "p50": 63.8,
+          "p90": 65.0,
+          "n": 49
+        }
+      },
+      "metres_median": 27584,
+      "local_length_m": 27503.124,
+      "segments": 11,
+      "segments_total_s": 3914
+    },
+    {
+      "id": "287",
+      "code": "B27",
+      "name": "Portal Norte",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12970",
+          "agency_id": "1",
+          "short": "B27",
+          "long": "Portal Norte"
+        }
+      ],
+      "trips": 102,
+      "by_service": {
+        "1": 102
+      },
+      "duration_min": {
+        "1": {
+          "p10": 82.0,
+          "p50": 91.5,
+          "p90": 97.5,
+          "n": 102
+        }
+      },
+      "metres_median": 27397,
+      "local_length_m": 26583.55,
+      "segments": 9,
+      "segments_total_s": 5490
+    },
+    {
+      "id": "383",
+      "code": "B28",
+      "name": "Portal Norte",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12612",
+          "agency_id": "1",
+          "short": "B28",
+          "long": "Portal Norte"
+        }
+      ],
+      "trips": 432,
+      "by_service": {
+        "1": 194,
+        "2": 238
+      },
+      "duration_min": {
+        "1": {
+          "p10": 64.0,
+          "p50": 68.0,
+          "p90": 80.8,
+          "n": 194
+        },
+        "2": {
+          "p10": 63.5,
+          "p50": 66.0,
+          "p90": 71.2,
+          "n": 238
+        }
+      },
+      "metres_median": 29275,
+      "local_length_m": 28970.102,
+      "segments": 12,
+      "segments_total_s": 4020
+    },
+    {
+      "id": "5656",
+      "code": "B46",
+      "name": "P Norte",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13268",
+          "agency_id": "1",
+          "short": "B46",
+          "long": "P Norte"
+        }
+      ],
+      "trips": 256,
+      "by_service": {
+        "1": 144,
+        "2": 112
+      },
+      "duration_min": {
+        "1": {
+          "p10": 63.0,
+          "p50": 69.2,
+          "p90": 83.8,
+          "n": 144
+        },
+        "2": {
+          "p10": 57.0,
+          "p50": 61.2,
+          "p90": 63.5,
+          "n": 112
+        }
+      },
+      "metres_median": 31864,
+      "local_length_m": 30912.272,
+      "segments": 8,
+      "segments_total_s": 3795
+    },
+    {
+      "id": "363",
+      "code": "B50",
+      "name": "Calle 161",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11272",
+          "agency_id": "1",
+          "short": "B50",
+          "long": "Calle 161"
+        }
+      ],
+      "trips": 35,
+      "by_service": {
+        "1": 35
+      },
+      "duration_min": {
+        "1": {
+          "p10": 47.0,
+          "p50": 52.8,
+          "p90": 60.5,
+          "n": 35
+        }
+      },
+      "metres_median": 20314,
+      "local_length_m": 20138.609,
+      "segments": 12,
+      "segments_total_s": 3165
+    },
+    {
+      "id": "336",
+      "code": "B55",
+      "name": "Terminal",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13036",
+          "agency_id": "1",
+          "short": "B55",
+          "long": "Terminal"
+        }
+      ],
+      "trips": 53,
+      "by_service": {
+        "1": 53
+      },
+      "duration_min": {
+        "1": {
+          "p10": 42.5,
+          "p50": 50.5,
+          "p90": 58.0,
+          "n": 53
+        }
+      },
+      "metres_median": 19176,
+      "local_length_m": 19099.36,
+      "segments": 15,
+      "segments_total_s": 3030
+    },
+    {
+      "id": "338",
+      "code": "B72",
+      "name": "Toberín",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12879",
+          "agency_id": "1",
+          "short": "B72",
+          "long": "Toberín"
+        },
+        {
+          "route_id": "13475",
+          "agency_id": "1",
+          "short": "B72",
+          "long": "Toberín"
+        }
+      ],
+      "trips": 617,
+      "by_service": {
+        "1": 278,
+        "2": 194,
+        "4": 145
+      },
+      "duration_min": {
+        "1": {
+          "p10": 67.0,
+          "p50": 71.8,
+          "p90": 77.8,
+          "n": 278
+        },
+        "2": {
+          "p10": 63.5,
+          "p50": 66.2,
+          "p90": 69.8,
+          "n": 194
+        },
+        "4": {
+          "p10": 60.0,
+          "p50": 62.8,
+          "p90": 64.5,
+          "n": 145
+        }
+      },
+      "metres_median": 29691,
+      "local_length_m": 29548.621,
+      "segments": 14,
+      "segments_total_s": 4088
+    },
+    {
+      "id": "344",
+      "code": "B74",
+      "name": "Portal Norte",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12933",
+          "agency_id": "1",
+          "short": "B74",
+          "long": "Portal Norte"
+        }
+      ],
+      "trips": 276,
+      "by_service": {
+        "1": 174,
+        "2": 102
+      },
+      "duration_min": {
+        "1": {
+          "p10": 42.5,
+          "p50": 46.5,
+          "p90": 52.5,
+          "n": 174
+        },
+        "2": {
+          "p10": 45.5,
+          "p50": 47.5,
+          "p90": 48.8,
+          "n": 102
+        }
+      },
+      "metres_median": 17292,
+      "local_length_m": 17166.996,
+      "segments": 11,
+      "segments_total_s": 2835
+    },
+    {
+      "id": "280",
+      "code": "B75",
+      "name": "Portal Norte",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12842",
+          "agency_id": "1",
+          "short": "B75",
+          "long": "Portal Norte"
+        },
+        {
+          "route_id": "13501",
+          "agency_id": "1",
+          "short": "B75",
+          "long": "Portal Norte"
+        }
+      ],
+      "trips": 613,
+      "by_service": {
+        "1": 222,
+        "2": 195,
+        "4": 196
+      },
+      "duration_min": {
+        "1": {
+          "p10": 80.8,
+          "p50": 91.5,
+          "p90": 105.0,
+          "n": 222
+        },
+        "2": {
+          "p10": 86.0,
+          "p50": 92.0,
+          "p90": 96.5,
+          "n": 195
+        },
+        "4": {
+          "p10": 87.0,
+          "p50": 92.8,
+          "p90": 98.0,
+          "n": 196
+        }
+      },
+      "metres_median": 29301,
+      "local_length_m": 28447.98,
+      "segments": 20,
+      "segments_total_s": 5535
+    },
+    {
+      "id": "3915",
+      "code": "C15",
+      "name": "Portal Suba",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13311",
+          "agency_id": "1",
+          "short": "C15",
+          "long": "Portal Suba"
+        }
+      ],
+      "trips": 650,
+      "by_service": {
+        "1": 211,
+        "2": 233,
+        "4": 206
+      },
+      "duration_min": {
+        "1": {
+          "p10": 88.0,
+          "p50": 95.0,
+          "p90": 105.0,
+          "n": 211
+        },
+        "2": {
+          "p10": 82.8,
+          "p50": 90.8,
+          "p90": 94.0,
+          "n": 233
+        },
+        "4": {
+          "p10": 84.2,
+          "p50": 90.0,
+          "p90": 93.2,
+          "n": 206
+        }
+      },
+      "metres_median": 28717,
+      "local_length_m": 27848.801,
+      "segments": 18,
+      "segments_total_s": 5491
+    },
+    {
+      "id": "297",
+      "code": "C17",
+      "name": "Portal Suba",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11909",
+          "agency_id": "1",
+          "short": "C17",
+          "long": "Portal Suba"
+        },
+        {
+          "route_id": "13494",
+          "agency_id": "1",
+          "short": "C17",
+          "long": "Portal Suba"
+        }
+      ],
+      "trips": 346,
+      "by_service": {
+        "1": 219,
+        "2": 127
+      },
+      "duration_min": {
+        "1": {
+          "p10": 77.2,
+          "p50": 82.1,
+          "p90": 90.9,
+          "n": 219
+        },
+        "2": {
+          "p10": 75.2,
+          "p50": 78.2,
+          "p90": 81.8,
+          "n": 127
+        }
+      },
+      "metres_median": 30688,
+      "local_length_m": 30609.176,
+      "segments": 21,
+      "segments_total_s": 4696
+    },
+    {
+      "id": "157",
+      "code": "C19",
+      "name": "P.SUBA",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13300",
+          "agency_id": "1",
+          "short": "C19",
+          "long": "P.SUBA"
+        }
+      ],
+      "trips": 363,
+      "by_service": {
+        "1": 198,
+        "2": 165
+      },
+      "duration_min": {
+        "1": {
+          "p10": 95.2,
+          "p50": 101.8,
+          "p90": 116.2,
+          "n": 198
+        },
+        "2": {
+          "p10": 94.5,
+          "p50": 97.2,
+          "p90": 100.0,
+          "n": 165
+        }
+      },
+      "metres_median": 32563,
+      "local_length_m": 31829.216,
+      "segments": 19,
+      "segments_total_s": 5956
+    },
+    {
+      "id": "777",
+      "code": "C25",
+      "name": "Portal Suba",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "10073",
+          "agency_id": "1",
+          "short": "C25",
+          "long": "Portal Suba"
+        }
+      ],
+      "trips": 510,
+      "by_service": {
+        "1": 215,
+        "2": 148,
+        "4": 147
+      },
+      "duration_min": {
+        "1": {
+          "p10": 64.2,
+          "p50": 68.8,
+          "p90": 73.5,
+          "n": 215
+        },
+        "2": {
+          "p10": 64.5,
+          "p50": 67.5,
+          "p90": 70.2,
+          "n": 148
+        },
+        "4": {
+          "p10": 60.5,
+          "p50": 65.2,
+          "p90": 66.2,
+          "n": 147
+        }
+      },
+      "metres_median": 25088,
+      "local_length_m": 24694.727,
+      "segments": 19,
+      "segments_total_s": 4020
+    },
+    {
+      "id": "369",
+      "code": "C30",
+      "name": "PORTAL SUBA",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11908",
+          "agency_id": "1",
+          "short": "C30",
+          "long": "PORTAL SUBA"
+        }
+      ],
+      "trips": 194,
+      "by_service": {
+        "1": 109,
+        "2": 85
+      },
+      "duration_min": {
+        "1": {
+          "p10": 61.8,
+          "p50": 68.2,
+          "p90": 74.8,
+          "n": 109
+        },
+        "2": {
+          "p10": 65.5,
+          "p50": 67.0,
+          "p90": 70.8,
+          "n": 85
+        }
+      },
+      "metres_median": 27238,
+      "local_length_m": 27017.785,
+      "segments": 14,
+      "segments_total_s": 4035
+    },
+    {
+      "id": "364",
+      "code": "C50",
+      "name": "P. Suba",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11932",
+          "agency_id": "1",
+          "short": "C50",
+          "long": "P. Suba"
+        }
+      ],
+      "trips": 35,
+      "by_service": {
+        "1": 35
+      },
+      "duration_min": {
+        "1": {
+          "p10": 44.5,
+          "p50": 53.0,
+          "p90": 57.0,
+          "n": 35
+        }
+      },
+      "metres_median": 20319,
+      "local_length_m": 20109.149,
+      "segments": 12,
+      "segments_total_s": 3180
+    },
+    {
+      "id": "375",
+      "code": "C73",
+      "name": "P.SUBA",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11914",
+          "agency_id": "1",
+          "short": "C73",
+          "long": "P.SUBA"
+        }
+      ],
+      "trips": 53,
+      "by_service": {
+        "1": 53
+      },
+      "duration_min": {
+        "1": {
+          "p10": 11.2,
+          "p50": 13.9,
+          "p90": 19.5,
+          "n": 53
+        }
+      },
+      "metres_median": 5436,
+      "local_length_m": 22869.119,
+      "segments": 0,
+      "segments_total_s": 0
+    },
+    {
+      "id": "623",
+      "code": "C84",
+      "name": "Av. Suba - K114 D",
+      "dual": true,
+      "gtfs": [
+        {
+          "route_id": "12984#b",
+          "agency_id": "6",
+          "short": "C84",
+          "long": "Av. Suba K114 D"
+        }
+      ],
+      "trips": 453,
+      "by_service": {
+        "1": 209,
+        "2": 151,
+        "4": 93
+      },
+      "duration_min": {
+        "1": {
+          "p10": 43.3,
+          "p50": 52.5,
+          "p90": 60.9,
+          "n": 209
+        },
+        "2": {
+          "p10": 41.9,
+          "p50": 47.2,
+          "p90": 51.7,
+          "n": 151
+        },
+        "4": {
+          "p10": 38.1,
+          "p50": 41.9,
+          "p90": 44.7,
+          "n": 93
+        }
+      },
+      "metres_median": 14296,
+      "local_length_m": 14901.035,
+      "segments": 6,
+      "segments_total_s": 2932
+    },
+    {
+      "id": "335",
+      "code": "D10",
+      "name": "Portal 80",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "10076",
+          "agency_id": "1",
+          "short": "D10",
+          "long": "Portal 80"
+        }
+      ],
+      "trips": 406,
+      "by_service": {
+        "1": 179,
+        "2": 142,
+        "4": 85
+      },
+      "duration_min": {
+        "1": {
+          "p10": 44.2,
+          "p50": 46.8,
+          "p90": 51.8,
+          "n": 179
+        },
+        "2": {
+          "p10": 39.8,
+          "p50": 43.0,
+          "p90": 44.2,
+          "n": 142
+        },
+        "4": {
+          "p10": 38.8,
+          "p50": 41.0,
+          "p90": 41.8,
+          "n": 85
+        }
+      },
+      "metres_median": 18121,
+      "local_length_m": 17877.945,
+      "segments": 14,
+      "segments_total_s": 2610
+    },
+    {
+      "id": "302",
+      "code": "D20",
+      "name": "Portal 80",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12066",
+          "agency_id": "1",
+          "short": "D20",
+          "long": "Portal 80"
+        },
+        {
+          "route_id": "13497",
+          "agency_id": "1",
+          "short": "D20",
+          "long": "Portal 80"
+        }
+      ],
+      "trips": 360,
+      "by_service": {
+        "1": 203,
+        "2": 157
+      },
+      "duration_min": {
+        "1": {
+          "p10": 83.5,
+          "p50": 89.8,
+          "p90": 102.8,
+          "n": 203
+        },
+        "2": {
+          "p10": 83.5,
+          "p50": 85.5,
+          "p90": 89.2,
+          "n": 157
+        }
+      },
+      "metres_median": 26592,
+      "local_length_m": 26525.265,
+      "segments": 15,
+      "segments_total_s": 5258
+    },
+    {
+      "id": "313",
+      "code": "D21",
+      "name": "PORTAL 80",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11382",
+          "agency_id": "1",
+          "short": "D21",
+          "long": "PORTAL 80"
+        }
+      ],
+      "trips": 373,
+      "by_service": {
+        "1": 203,
+        "2": 170
+      },
+      "duration_min": {
+        "1": {
+          "p10": 67.0,
+          "p50": 72.5,
+          "p90": 81.2,
+          "n": 203
+        },
+        "2": {
+          "p10": 64.2,
+          "p50": 71.0,
+          "p90": 74.2,
+          "n": 170
+        }
+      },
+      "metres_median": 24995,
+      "local_length_m": 24707.724,
+      "segments": 14,
+      "segments_total_s": 4290
+    },
+    {
+      "id": "379",
+      "code": "D22",
+      "name": "Portal 80",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12871",
+          "agency_id": "1",
+          "short": "D22",
+          "long": "Portal 80"
+        }
+      ],
+      "trips": 504,
+      "by_service": {
+        "1": 209,
+        "2": 162,
+        "4": 133
+      },
+      "duration_min": {
+        "1": {
+          "p10": 52.8,
+          "p50": 59.2,
+          "p90": 69.5,
+          "n": 209
+        },
+        "2": {
+          "p10": 55.8,
+          "p50": 58.8,
+          "p90": 59.8,
+          "n": 162
+        },
+        "4": {
+          "p10": 54.2,
+          "p50": 56.0,
+          "p90": 57.5,
+          "n": 133
+        }
+      },
+      "metres_median": 23692,
+      "local_length_m": 23649.637,
+      "segments": 15,
+      "segments_total_s": 3481
+    },
+    {
+      "id": "310",
+      "code": "D24",
+      "name": "P. 80",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13313",
+          "agency_id": "1",
+          "short": "D24",
+          "long": "P. 80"
+        }
+      ],
+      "trips": 511,
+      "by_service": {
+        "1": 181,
+        "2": 151,
+        "4": 179
+      },
+      "duration_min": {
+        "1": {
+          "p10": 46.5,
+          "p50": 51.5,
+          "p90": 62.8,
+          "n": 181
+        },
+        "2": {
+          "p10": 42.8,
+          "p50": 47.5,
+          "p90": 49.2,
+          "n": 151
+        },
+        "4": {
+          "p10": 45.8,
+          "p50": 48.0,
+          "p90": 49.2,
+          "n": 179
+        }
+      },
+      "metres_median": 14960,
+      "local_length_m": 14913.697,
+      "segments": 11,
+      "segments_total_s": 2895
+    },
+    {
+      "id": "1246",
+      "code": "D55",
+      "name": "Portal 80",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13035",
+          "agency_id": "1",
+          "short": "D55",
+          "long": "Portal 80"
+        }
+      ],
+      "trips": 57,
+      "by_service": {
+        "1": 57
+      },
+      "duration_min": {
+        "1": {
+          "p10": 46.2,
+          "p50": 50.8,
+          "p90": 54.2,
+          "n": 57
+        }
+      },
+      "metres_median": 19138,
+      "local_length_m": 19037.136,
+      "segments": 15,
+      "segments_total_s": 3045
+    },
+    {
+      "id": "619",
+      "code": "D81",
+      "name": "AV CL80 - KR114",
+      "dual": true,
+      "gtfs": [
+        {
+          "route_id": "12980",
+          "agency_id": "6",
+          "short": "D81",
+          "long": "AV CL80 KR114"
+        },
+        {
+          "route_id": "12987",
+          "agency_id": "6",
+          "short": "D81",
+          "long": "AV CL80 KR114"
+        }
+      ],
+      "trips": 606,
+      "by_service": {
+        "1": 299,
+        "2": 238,
+        "4": 69
+      },
+      "duration_min": {
+        "1": {
+          "p10": 62.8,
+          "p50": 86.0,
+          "p90": 102.2,
+          "n": 299
+        },
+        "2": {
+          "p10": 69.0,
+          "p50": 78.5,
+          "p90": 82.8,
+          "n": 238
+        },
+        "4": {
+          "p10": 62.0,
+          "p50": 71.0,
+          "p90": 74.5,
+          "n": 69
+        }
+      },
+      "metres_median": 23593,
+      "local_length_m": 23519.916,
+      "segments": 24,
+      "segments_total_s": 4535
+    },
+    {
+      "id": "5279",
+      "code": "D81",
+      "name": "AV CL80 - KR114 Ciclovía",
+      "dual": true,
+      "gtfs": [
+        {
+          "route_id": "12985",
+          "agency_id": "6",
+          "short": "D81",
+          "long": "AV CL80 KR114 Ciclovía"
+        }
+      ],
+      "trips": 61,
+      "by_service": {
+        "4": 61
+      },
+      "duration_min": {
+        "4": {
+          "p10": 70.2,
+          "p50": 76.5,
+          "p90": 80.8,
+          "n": 61
+        }
+      },
+      "metres_median": 25088,
+      "local_length_m": 25010.534,
+      "segments": 21,
+      "segments_total_s": 4589
+    },
+    {
+      "id": "353",
+      "code": "E32",
+      "name": "NQS Calle 75",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13273",
+          "agency_id": "1",
+          "short": "E32",
+          "long": "NQS Calle 75"
+        }
+      ],
+      "trips": 500,
+      "by_service": {
+        "1": 204,
+        "2": 163,
+        "4": 133
+      },
+      "duration_min": {
+        "1": {
+          "p10": 45.8,
+          "p50": 49.8,
+          "p90": 60.0,
+          "n": 204
+        },
+        "2": {
+          "p10": 45.5,
+          "p50": 48.8,
+          "p90": 51.0,
+          "n": 163
+        },
+        "4": {
+          "p10": 44.0,
+          "p50": 46.8,
+          "p90": 48.2,
+          "n": 133
+        }
+      },
+      "metres_median": 18916,
+      "local_length_m": 18588.111,
+      "segments": 11,
+      "segments_total_s": 2910
+    },
+    {
+      "id": "1174",
+      "code": "E42",
+      "name": "7 de Agosto",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13264",
+          "agency_id": "1",
+          "short": "E42",
+          "long": "7 de Agosto"
+        }
+      ],
+      "trips": 658,
+      "by_service": {
+        "1": 255,
+        "2": 218,
+        "4": 185
+      },
+      "duration_min": {
+        "1": {
+          "p10": 40.0,
+          "p50": 44.0,
+          "p90": 60.5,
+          "n": 255
+        },
+        "2": {
+          "p10": 42.8,
+          "p50": 45.0,
+          "p90": 47.8,
+          "n": 218
+        },
+        "4": {
+          "p10": 41.8,
+          "p50": 43.0,
+          "p90": 44.2,
+          "n": 185
+        }
+      },
+      "metres_median": 19032,
+      "local_length_m": 18945.168,
+      "segments": 9,
+      "segments_total_s": 2625
+    },
+    {
+      "id": "12444",
+      "code": "E48",
+      "name": "CAD",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13266",
+          "agency_id": "1",
+          "short": "E48",
+          "long": "CAD"
+        }
+      ],
+      "trips": 158,
+      "by_service": {
+        "1": 91,
+        "2": 67
+      },
+      "duration_min": {
+        "1": {
+          "p10": 37.5,
+          "p50": 45.0,
+          "p90": 52.2,
+          "n": 91
+        },
+        "2": {
+          "p10": 36.2,
+          "p50": 37.0,
+          "p90": 38.2,
+          "n": 67
+        }
+      },
+      "metres_median": 15259,
+      "local_length_m": 15024.334,
+      "segments": 10,
+      "segments_total_s": 2280
+    },
+    {
+      "id": "5466",
+      "code": "F19",
+      "name": "P. Américas",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13175",
+          "agency_id": "1",
+          "short": "F19",
+          "long": "P. Américas"
+        }
+      ],
+      "trips": 360,
+      "by_service": {
+        "1": 187,
+        "2": 173
+      },
+      "duration_min": {
+        "1": {
+          "p10": 94.8,
+          "p50": 101.8,
+          "p90": 122.2,
+          "n": 187
+        },
+        "2": {
+          "p10": 91.2,
+          "p50": 95.5,
+          "p90": 97.8,
+          "n": 173
+        }
+      },
+      "metres_median": 31671,
+      "local_length_m": 31471.775,
+      "segments": 19,
+      "segments_total_s": 5865
+    },
+    {
+      "id": "396",
+      "code": "F23",
+      "name": "P. Américas",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11163",
+          "agency_id": "1",
+          "short": "F23",
+          "long": "P. Américas"
+        }
+      ],
+      "trips": 660,
+      "by_service": {
+        "1": 266,
+        "2": 231,
+        "4": 163
+      },
+      "duration_min": {
+        "1": {
+          "p10": 46.8,
+          "p50": 52.0,
+          "p90": 63.5,
+          "n": 266
+        },
+        "2": {
+          "p10": 44.5,
+          "p50": 49.8,
+          "p90": 51.2,
+          "n": 231
+        },
+        "4": {
+          "p10": 45.5,
+          "p50": 47.2,
+          "p90": 48.8,
+          "n": 163
+        }
+      },
+      "metres_median": 14483,
+      "local_length_m": 14374.702,
+      "segments": 11,
+      "segments_total_s": 2985
+    },
+    {
+      "id": "1192",
+      "code": "F26",
+      "name": "Portal Américas",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11875",
+          "agency_id": "1",
+          "short": "F26",
+          "long": "Portal Américas"
+        }
+      ],
+      "trips": 108,
+      "by_service": {
+        "1": 60,
+        "2": 48
+      },
+      "duration_min": {
+        "1": {
+          "p10": 67.0,
+          "p50": 78.5,
+          "p90": 85.8,
+          "n": 60
+        },
+        "2": {
+          "p10": 61.5,
+          "p50": 67.8,
+          "p90": 72.0,
+          "n": 48
+        }
+      },
+      "metres_median": 26955,
+      "local_length_m": 26860.825,
+      "segments": 11,
+      "segments_total_s": 4252
+    },
+    {
+      "id": "352",
+      "code": "F28",
+      "name": "Portal Américas",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12815",
+          "agency_id": "1",
+          "short": "F28",
+          "long": "Portal Américas"
+        }
+      ],
+      "trips": 381,
+      "by_service": {
+        "1": 182,
+        "2": 199
+      },
+      "duration_min": {
+        "1": {
+          "p10": 69.0,
+          "p50": 78.0,
+          "p90": 92.5,
+          "n": 182
+        },
+        "2": {
+          "p10": 68.0,
+          "p50": 70.2,
+          "p90": 72.5,
+          "n": 199
+        }
+      },
+      "metres_median": 29134,
+      "local_length_m": 28943.291,
+      "segments": 12,
+      "segments_total_s": 4245
+    },
+    {
+      "id": "354",
+      "code": "F32",
+      "name": "Portal Américas",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11868",
+          "agency_id": "1",
+          "short": "F32",
+          "long": "Portal Américas"
+        }
+      ],
+      "trips": 484,
+      "by_service": {
+        "1": 211,
+        "2": 148,
+        "4": 125
+      },
+      "duration_min": {
+        "1": {
+          "p10": 48.0,
+          "p50": 51.0,
+          "p90": 72.5,
+          "n": 211
+        },
+        "2": {
+          "p10": 46.2,
+          "p50": 48.2,
+          "p90": 52.8,
+          "n": 148
+        },
+        "4": {
+          "p10": 45.2,
+          "p50": 46.8,
+          "p90": 49.0,
+          "n": 125
+        }
+      },
+      "metres_median": 18357,
+      "local_length_m": 18217.759,
+      "segments": 11,
+      "segments_total_s": 2939
+    },
+    {
+      "id": "399",
+      "code": "F51",
+      "name": "PORTAL AMÉRICAS",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11725",
+          "agency_id": "1",
+          "short": "F51",
+          "long": "PORTAL AMÉRICAS"
+        }
+      ],
+      "trips": 329,
+      "by_service": {
+        "1": 176,
+        "2": 153
+      },
+      "duration_min": {
+        "1": {
+          "p10": 48.8,
+          "p50": 53.5,
+          "p90": 64.8,
+          "n": 176
+        },
+        "2": {
+          "p10": 46.2,
+          "p50": 51.8,
+          "p90": 55.8,
+          "n": 153
+        }
+      },
+      "metres_median": 15047,
+      "local_length_m": 14986.697,
+      "segments": 12,
+      "segments_total_s": 3203
+    },
+    {
+      "id": "3848",
+      "code": "F60",
+      "name": "Portal Américas",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13310",
+          "agency_id": "1",
+          "short": "F60",
+          "long": "Portal Américas"
+        }
+      ],
+      "trips": 573,
+      "by_service": {
+        "1": 201,
+        "2": 187,
+        "4": 185
+      },
+      "duration_min": {
+        "1": {
+          "p10": 59.2,
+          "p50": 62.5,
+          "p90": 82.0,
+          "n": 201
+        },
+        "2": {
+          "p10": 63.2,
+          "p50": 65.8,
+          "p90": 68.2,
+          "n": 187
+        },
+        "4": {
+          "p10": 58.8,
+          "p50": 60.2,
+          "p90": 61.0,
+          "n": 185
+        }
+      },
+      "metres_median": 19192,
+      "local_length_m": 19120.939,
+      "segments": 9,
+      "segments_total_s": 3720
+    },
+    {
+      "id": "5450",
+      "code": "F63",
+      "name": "Pradera",
+      "dual": true,
+      "gtfs": [
+        {
+          "route_id": "13167",
+          "agency_id": "6",
+          "short": "F63",
+          "long": "Pradera"
+        },
+        {
+          "route_id": "13226#a",
+          "agency_id": "6",
+          "short": "F63",
+          "long": "Pradera"
+        }
+      ],
+      "trips": 793,
+      "by_service": {
+        "1": 363,
+        "2": 239,
+        "4": 191
+      },
+      "duration_min": {
+        "1": {
+          "p10": 39.2,
+          "p50": 42.0,
+          "p90": 43.0,
+          "n": 363
+        },
+        "2": {
+          "p10": 37.0,
+          "p50": 38.0,
+          "p90": 40.0,
+          "n": 239
+        },
+        "4": {
+          "p10": 43.0,
+          "p50": 45.0,
+          "p90": 47.0,
+          "n": 191
+        }
+      },
+      "metres_median": 11732,
+      "local_length_m": 12855.692,
+      "segments": 6,
+      "segments_total_s": 2462
+    },
+    {
+      "id": "347",
+      "code": "G11",
+      "name": "Portal Sur",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13008",
+          "agency_id": "1",
+          "short": "G11",
+          "long": "Portal Sur"
+        }
+      ],
+      "trips": 310,
+      "by_service": {
+        "1": 179,
+        "2": 131
+      },
+      "duration_min": {
+        "1": {
+          "p10": 64.0,
+          "p50": 69.5,
+          "p90": 85.5,
+          "n": 179
+        },
+        "2": {
+          "p10": 61.0,
+          "p50": 65.2,
+          "p90": 66.8,
+          "n": 131
+        }
+      },
+      "metres_median": 30290,
+      "local_length_m": 30168.419,
+      "segments": 16,
+      "segments_total_s": 4050
+    },
+    {
+      "id": "1210",
+      "code": "G12",
+      "name": "G. Santander",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11463",
+          "agency_id": "1",
+          "short": "G12",
+          "long": "G. Santander"
+        }
+      ],
+      "trips": 9,
+      "by_service": {
+        "1": 9
+      },
+      "duration_min": {
+        "1": {
+          "p10": 49.2,
+          "p50": 51.0,
+          "p90": 52.0,
+          "n": 9
+        }
+      },
+      "metres_median": 22334,
+      "local_length_m": 22200.903,
+      "segments": 13,
+      "segments_total_s": 3060
+    },
+    {
+      "id": "350",
+      "code": "G12",
+      "name": "P. Sur",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12873",
+          "agency_id": "1",
+          "short": "G12",
+          "long": "P. Sur"
+        }
+      ],
+      "trips": 709,
+      "by_service": {
+        "1": 286,
+        "2": 214,
+        "4": 209
+      },
+      "duration_min": {
+        "1": {
+          "p10": 56.0,
+          "p50": 59.8,
+          "p90": 73.2,
+          "n": 286
+        },
+        "2": {
+          "p10": 54.2,
+          "p50": 57.5,
+          "p90": 59.0,
+          "n": 214
+        },
+        "4": {
+          "p10": 52.2,
+          "p50": 55.8,
+          "p90": 58.0,
+          "n": 209
+        }
+      },
+      "metres_median": 26906,
+      "local_length_m": 26731.78,
+      "segments": 15,
+      "segments_total_s": 3465
+    },
+    {
+      "id": "380",
+      "code": "G22",
+      "name": "Portal Sur",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12872",
+          "agency_id": "1",
+          "short": "G22",
+          "long": "Portal Sur"
+        }
+      ],
+      "trips": 496,
+      "by_service": {
+        "1": 207,
+        "2": 156,
+        "4": 133
+      },
+      "duration_min": {
+        "1": {
+          "p10": 53.0,
+          "p50": 57.8,
+          "p90": 68.5,
+          "n": 207
+        },
+        "2": {
+          "p10": 52.5,
+          "p50": 55.0,
+          "p90": 57.0,
+          "n": 156
+        },
+        "4": {
+          "p10": 51.2,
+          "p50": 54.2,
+          "p90": 57.0,
+          "n": 133
+        }
+      },
+      "metres_median": 23542,
+      "local_length_m": 23369.526,
+      "segments": 15,
+      "segments_total_s": 3360
+    },
+    {
+      "id": "370",
+      "code": "G30",
+      "name": "PORTAL SUR",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11907",
+          "agency_id": "1",
+          "short": "G30",
+          "long": "PORTAL SUR"
+        }
+      ],
+      "trips": 219,
+      "by_service": {
+        "1": 133,
+        "2": 86
+      },
+      "duration_min": {
+        "1": {
+          "p10": 63.0,
+          "p50": 65.5,
+          "p90": 81.2,
+          "n": 133
+        },
+        "2": {
+          "p10": 60.8,
+          "p50": 65.2,
+          "p90": 66.2,
+          "n": 86
+        }
+      },
+      "metres_median": 27020,
+      "local_length_m": 26690.702,
+      "segments": 14,
+      "segments_total_s": 3915
+    },
+    {
+      "id": "3929",
+      "code": "G45",
+      "name": "Portal Sur",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13239",
+          "agency_id": "1",
+          "short": "G45",
+          "long": "Portal Sur"
+        }
+      ],
+      "trips": 56,
+      "by_service": {
+        "1": 40,
+        "2": 16
+      },
+      "duration_min": {
+        "1": {
+          "p10": 11.8,
+          "p50": 12.8,
+          "p90": 16.0,
+          "n": 40
+        },
+        "2": {
+          "p10": 10.5,
+          "p50": 11.8,
+          "p90": 12.8,
+          "n": 16
+        }
+      },
+      "metres_median": 4694,
+      "local_length_m": 4553.872,
+      "segments": 5,
+      "segments_total_s": 750
+    },
+    {
+      "id": "385",
+      "code": "G47",
+      "name": "Portal Sur",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "10067",
+          "agency_id": "1",
+          "short": "G47",
+          "long": "Portal Sur"
+        }
+      ],
+      "trips": 514,
+      "by_service": {
+        "1": 180,
+        "2": 176,
+        "4": 158
+      },
+      "duration_min": {
+        "1": {
+          "p10": 39.5,
+          "p50": 43.0,
+          "p90": 50.5,
+          "n": 180
+        },
+        "2": {
+          "p10": 42.5,
+          "p50": 45.0,
+          "p90": 48.0,
+          "n": 176
+        },
+        "4": {
+          "p10": 38.2,
+          "p50": 42.2,
+          "p90": 46.5,
+          "n": 158
+        }
+      },
+      "metres_median": 13470,
+      "local_length_m": 13360.151,
+      "segments": 11,
+      "segments_total_s": 2625
+    },
+    {
+      "id": "296",
+      "code": "G52",
+      "name": "Portal Sur",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13314",
+          "agency_id": "1",
+          "short": "G52",
+          "long": "Portal Sur"
+        }
+      ],
+      "trips": 50,
+      "by_service": {
+        "1": 50
+      },
+      "duration_min": {
+        "1": {
+          "p10": 51.8,
+          "p50": 59.8,
+          "p90": 66.0,
+          "n": 50
+        }
+      },
+      "metres_median": 20430,
+      "local_length_m": 20102.556,
+      "segments": 9,
+      "segments_total_s": 3578
+    },
+    {
+      "id": "5662",
+      "code": "G53",
+      "name": "Portal Sur",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13275",
+          "agency_id": "1",
+          "short": "G53",
+          "long": "Portal Sur"
+        }
+      ],
+      "trips": 119,
+      "by_service": {
+        "1": 65,
+        "2": 54
+      },
+      "duration_min": {
+        "1": {
+          "p10": 39.8,
+          "p50": 50.2,
+          "p90": 52.5,
+          "n": 65
+        },
+        "2": {
+          "p10": 47.2,
+          "p50": 48.2,
+          "p90": 49.2,
+          "n": 54
+        }
+      },
+      "metres_median": 20684,
+      "local_length_m": 20604.785,
+      "segments": 11,
+      "segments_total_s": 2910
+    },
+    {
+      "id": "283",
+      "code": "H13",
+      "name": "P. TUNAL",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12558",
+          "agency_id": "1",
+          "short": "H13",
+          "long": "P. TUNAL"
+        }
+      ],
+      "trips": 421,
+      "by_service": {
+        "1": 237,
+        "2": 184
+      },
+      "duration_min": {
+        "1": {
+          "p10": 79.5,
+          "p50": 86.8,
+          "p90": 114.8,
+          "n": 237
+        },
+        "2": {
+          "p10": 74.5,
+          "p50": 79.0,
+          "p90": 81.2,
+          "n": 184
+        }
+      },
+      "metres_median": 25848,
+      "local_length_m": 25750.173,
+      "segments": 15,
+      "segments_total_s": 4861
+    },
+    {
+      "id": "367",
+      "code": "H15",
+      "name": "Portal Tunal",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13312",
+          "agency_id": "1",
+          "short": "H15",
+          "long": "Portal Tunal"
+        }
+      ],
+      "trips": 668,
+      "by_service": {
+        "1": 250,
+        "2": 216,
+        "4": 202
+      },
+      "duration_min": {
+        "1": {
+          "p10": 86.2,
+          "p50": 97.5,
+          "p90": 130.2,
+          "n": 250
+        },
+        "2": {
+          "p10": 85.2,
+          "p50": 89.2,
+          "p90": 92.5,
+          "n": 216
+        },
+        "4": {
+          "p10": 83.5,
+          "p50": 87.5,
+          "p90": 91.5,
+          "n": 202
+        }
+      },
+      "metres_median": 27740,
+      "local_length_m": 27592.016,
+      "segments": 18,
+      "segments_total_s": 5385
+    },
+    {
+      "id": "298",
+      "code": "H17",
+      "name": "Portal Usme",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11910",
+          "agency_id": "1",
+          "short": "H17",
+          "long": "Portal Usme"
+        },
+        {
+          "route_id": "13545",
+          "agency_id": "1",
+          "short": "H17",
+          "long": "Portal Usme"
+        }
+      ],
+      "trips": 322,
+      "by_service": {
+        "1": 212,
+        "2": 110
+      },
+      "duration_min": {
+        "1": {
+          "p10": 75.0,
+          "p50": 80.0,
+          "p90": 88.0,
+          "n": 212
+        },
+        "2": {
+          "p10": 80.2,
+          "p50": 82.2,
+          "p90": 85.5,
+          "n": 110
+        }
+      },
+      "metres_median": 30628,
+      "local_length_m": 30138.625,
+      "segments": 21,
+      "segments_total_s": 4868
+    },
+    {
+      "id": "303",
+      "code": "H20",
+      "name": "Portal Usme",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12067",
+          "agency_id": "1",
+          "short": "H20",
+          "long": "Portal Usme"
+        },
+        {
+          "route_id": "13498",
+          "agency_id": "1",
+          "short": "H20",
+          "long": "Portal Usme"
+        }
+      ],
+      "trips": 424,
+      "by_service": {
+        "1": 233,
+        "2": 191
+      },
+      "duration_min": {
+        "1": {
+          "p10": 79.0,
+          "p50": 91.5,
+          "p90": 114.0,
+          "n": 233
+        },
+        "2": {
+          "p10": 83.0,
+          "p50": 85.0,
+          "p90": 87.8,
+          "n": 191
+        }
+      },
+      "metres_median": 26101,
+      "local_length_m": 26010.486,
+      "segments": 15,
+      "segments_total_s": 5295
+    },
+    {
+      "id": "312",
+      "code": "H21",
+      "name": "PORTAL TUNAL",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13163",
+          "agency_id": "1",
+          "short": "H21",
+          "long": "PORTAL TUNAL"
+        }
+      ],
+      "trips": 361,
+      "by_service": {
+        "1": 201,
+        "2": 160
+      },
+      "duration_min": {
+        "1": {
+          "p10": 65.2,
+          "p50": 69.0,
+          "p90": 85.5,
+          "n": 201
+        },
+        "2": {
+          "p10": 64.2,
+          "p50": 69.2,
+          "p90": 72.8,
+          "n": 160
+        }
+      },
+      "metres_median": 24844,
+      "local_length_m": 24658.683,
+      "segments": 14,
+      "segments_total_s": 4141
+    },
+    {
+      "id": "288",
+      "code": "H27",
+      "name": "Portal Tunal",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12644",
+          "agency_id": "1",
+          "short": "H27",
+          "long": "Portal Tunal"
+        }
+      ],
+      "trips": 105,
+      "by_service": {
+        "1": 105
+      },
+      "duration_min": {
+        "1": {
+          "p10": 76.0,
+          "p50": 85.2,
+          "p90": 102.8,
+          "n": 105
+        }
+      },
+      "metres_median": 25898,
+      "local_length_m": 25799.788,
+      "segments": 9,
+      "segments_total_s": 5114
+    },
+    {
+      "id": "317",
+      "code": "H54",
+      "name": "Portal Usme",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12811",
+          "agency_id": "1",
+          "short": "H54",
+          "long": "Portal Usme"
+        },
+        {
+          "route_id": "13543",
+          "agency_id": "1",
+          "short": "H54",
+          "long": "Portal Usme"
+        }
+      ],
+      "trips": 439,
+      "by_service": {
+        "1": 175,
+        "2": 122,
+        "4": 142
+      },
+      "duration_min": {
+        "1": {
+          "p10": 59.2,
+          "p50": 64.5,
+          "p90": 80.0,
+          "n": 175
+        },
+        "2": {
+          "p10": 56.5,
+          "p50": 61.0,
+          "p90": 64.0,
+          "n": 122
+        },
+        "4": {
+          "p10": 56.5,
+          "p50": 59.8,
+          "p90": 63.5,
+          "n": 142
+        }
+      },
+      "metres_median": 21902,
+      "local_length_m": 21810.527,
+      "segments": 16,
+      "segments_total_s": 3712
+    },
+    {
+      "id": "339",
+      "code": "H72",
+      "name": "P. Usme",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12881",
+          "agency_id": "1",
+          "short": "H72",
+          "long": "P. Usme"
+        },
+        {
+          "route_id": "13476",
+          "agency_id": "1",
+          "short": "H72",
+          "long": "P. Usme"
+        }
+      ],
+      "trips": 575,
+      "by_service": {
+        "1": 241,
+        "2": 199,
+        "4": 135
+      },
+      "duration_min": {
+        "1": {
+          "p10": 63.5,
+          "p50": 68.2,
+          "p90": 98.0,
+          "n": 241
+        },
+        "2": {
+          "p10": 63.8,
+          "p50": 67.5,
+          "p90": 69.5,
+          "n": 199
+        },
+        "4": {
+          "p10": 60.5,
+          "p50": 65.2,
+          "p90": 66.2,
+          "n": 135
+        }
+      },
+      "metres_median": 29408,
+      "local_length_m": 29267.286,
+      "segments": 14,
+      "segments_total_s": 3998
+    },
+    {
+      "id": "281",
+      "code": "H75",
+      "name": "P.USME",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12646",
+          "agency_id": "1",
+          "short": "H75",
+          "long": "P.USME"
+        },
+        {
+          "route_id": "12648",
+          "agency_id": "1",
+          "short": "H75",
+          "long": "P.USME"
+        },
+        {
+          "route_id": "13547",
+          "agency_id": "1",
+          "short": "H75",
+          "long": "P.USME"
+        },
+        {
+          "route_id": "13552",
+          "agency_id": "1",
+          "short": "H75",
+          "long": "P.USME"
+        }
+      ],
+      "trips": 607,
+      "by_service": {
+        "1": 213,
+        "2": 183,
+        "4": 211
+      },
+      "duration_min": {
+        "1": {
+          "p10": 78.5,
+          "p50": 90.5,
+          "p90": 104.0,
+          "n": 213
+        },
+        "2": {
+          "p10": 73.8,
+          "p50": 85.2,
+          "p90": 91.8,
+          "n": 183
+        },
+        "4": {
+          "p10": 78.0,
+          "p50": 82.8,
+          "p90": 84.5,
+          "n": 211
+        }
+      },
+      "metres_median": 28416,
+      "local_length_m": 28272.829,
+      "segments": 20,
+      "segments_total_s": 5085
+    },
+    {
+      "id": "1213",
+      "code": "H76",
+      "name": "Portal Usme",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13363",
+          "agency_id": "1",
+          "short": "H76",
+          "long": "Portal Usme"
+        }
+      ],
+      "trips": 60,
+      "by_service": {
+        "1": 60
+      },
+      "duration_min": {
+        "1": {
+          "p10": 43.8,
+          "p50": 57.0,
+          "p90": 64.0,
+          "n": 60
+        }
+      },
+      "metres_median": null,
+      "local_length_m": 17951.09,
+      "segments": 9,
+      "segments_total_s": 3413
+    },
+    {
+      "id": "645",
+      "code": "H83",
+      "name": "Portal Usme",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12826",
+          "agency_id": "1",
+          "short": "H83",
+          "long": "Portal Usme"
+        },
+        {
+          "route_id": "13504",
+          "agency_id": "1",
+          "short": "H83",
+          "long": "Portal Usme"
+        }
+      ],
+      "trips": 505,
+      "by_service": {
+        "1": 226,
+        "2": 166,
+        "4": 113
+      },
+      "duration_min": {
+        "1": {
+          "p10": 38.2,
+          "p50": 43.5,
+          "p90": 50.2,
+          "n": 226
+        },
+        "2": {
+          "p10": 41.8,
+          "p50": 48.2,
+          "p90": 53.0,
+          "n": 166
+        },
+        "4": {
+          "p10": 40.2,
+          "p50": 45.0,
+          "p90": 50.0,
+          "n": 113
+        }
+      },
+      "metres_median": 13934,
+      "local_length_m": 13955.927,
+      "segments": 9,
+      "segments_total_s": 2752
+    },
+    {
+      "id": "397",
+      "code": "J23",
+      "name": "Aguas",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11712",
+          "agency_id": "1",
+          "short": "J23",
+          "long": "Aguas"
+        },
+        {
+          "route_id": "12070",
+          "agency_id": "1",
+          "short": "J23",
+          "long": "Aguas"
+        }
+      ],
+      "trips": 679,
+      "by_service": {
+        "1": 252,
+        "2": 253,
+        "4": 174
+      },
+      "duration_min": {
+        "1": {
+          "p10": 45.8,
+          "p50": 51.2,
+          "p90": 55.8,
+          "n": 252
+        },
+        "2": {
+          "p10": 47.5,
+          "p50": 49.5,
+          "p90": 52.0,
+          "n": 253
+        },
+        "4": {
+          "p10": 44.5,
+          "p50": 46.5,
+          "p90": 48.8,
+          "n": 174
+        }
+      },
+      "metres_median": 14643,
+      "local_length_m": 14362.58,
+      "segments": 11,
+      "segments_total_s": 2970
+    },
+    {
+      "id": "311",
+      "code": "J24",
+      "name": "Universidades",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12818",
+          "agency_id": "1",
+          "short": "J24",
+          "long": "Universidades"
+        }
+      ],
+      "trips": 527,
+      "by_service": {
+        "1": 201,
+        "2": 155,
+        "4": 171
+      },
+      "duration_min": {
+        "1": {
+          "p10": 46.5,
+          "p50": 51.0,
+          "p90": 60.5,
+          "n": 201
+        },
+        "2": {
+          "p10": 49.2,
+          "p50": 51.0,
+          "p90": 52.0,
+          "n": 155
+        },
+        "4": {
+          "p10": 46.0,
+          "p50": 48.2,
+          "p90": 49.5,
+          "n": 171
+        }
+      },
+      "metres_median": 15304,
+      "local_length_m": 15139.483,
+      "segments": 11,
+      "segments_total_s": 2985
+    },
+    {
+      "id": "342",
+      "code": "J70",
+      "name": "Aguas",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11453",
+          "agency_id": "1",
+          "short": "J70",
+          "long": "Aguas"
+        }
+      ],
+      "trips": 56,
+      "by_service": {
+        "1": 56
+      },
+      "duration_min": {
+        "1": {
+          "p10": 47.8,
+          "p50": 51.2,
+          "p90": 54.0,
+          "n": 56
+        }
+      },
+      "metres_median": 21908,
+      "local_length_m": 21669.368,
+      "segments": 11,
+      "segments_total_s": 3075
+    },
+    {
+      "id": "376",
+      "code": "J73",
+      "name": "UNIVERSIDADES",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11913",
+          "agency_id": "1",
+          "short": "J73",
+          "long": "UNIVERSIDADES"
+        }
+      ],
+      "trips": 35,
+      "by_service": {
+        "1": 35
+      },
+      "duration_min": {
+        "1": {
+          "p10": 55.0,
+          "p50": 57.5,
+          "p90": 60.0,
+          "n": 35
+        }
+      },
+      "metres_median": 23118,
+      "local_length_m": 22954.348,
+      "segments": 9,
+      "segments_total_s": 3450
+    },
+    {
+      "id": "289",
+      "code": "J74",
+      "name": "Universidades",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12576",
+          "agency_id": "1",
+          "short": "J74",
+          "long": "Universidades"
+        }
+      ],
+      "trips": 278,
+      "by_service": {
+        "1": 172,
+        "2": 106
+      },
+      "duration_min": {
+        "1": {
+          "p10": 46.2,
+          "p50": 50.0,
+          "p90": 56.2,
+          "n": 172
+        },
+        "2": {
+          "p10": 45.5,
+          "p50": 47.2,
+          "p90": 48.8,
+          "n": 106
+        }
+      },
+      "metres_median": 18063,
+      "local_length_m": 17750.154,
+      "segments": 11,
+      "segments_total_s": 2880
+    },
+    {
+      "id": "314",
+      "code": "K10",
+      "name": "P. ELDORADO",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12462",
+          "agency_id": "1",
+          "short": "K10",
+          "long": "P. ELDORADO"
+        }
+      ],
+      "trips": 369,
+      "by_service": {
+        "1": 207,
+        "2": 162
+      },
+      "duration_min": {
+        "1": {
+          "p10": 40.2,
+          "p50": 44.0,
+          "p90": 46.5,
+          "n": 207
+        },
+        "2": {
+          "p10": 44.8,
+          "p50": 48.8,
+          "p90": 50.5,
+          "n": 162
+        }
+      },
+      "metres_median": 17720,
+      "local_length_m": 17225.061,
+      "segments": 14,
+      "segments_total_s": 2715
+    },
+    {
+      "id": "356",
+      "code": "K16",
+      "name": "P ElDorado",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13272",
+          "agency_id": "1",
+          "short": "K16",
+          "long": "PElDorado"
+        }
+      ],
+      "trips": 326,
+      "by_service": {
+        "1": 218,
+        "2": 108
+      },
+      "duration_min": {
+        "1": {
+          "p10": 49.5,
+          "p50": 55.5,
+          "p90": 62.2,
+          "n": 218
+        },
+        "2": {
+          "p10": 53.0,
+          "p50": 56.0,
+          "p90": 57.2,
+          "n": 108
+        }
+      },
+      "metres_median": 25800,
+      "local_length_m": 25689.348,
+      "segments": 15,
+      "segments_total_s": 3345
+    },
+    {
+      "id": "321",
+      "code": "K23",
+      "name": "Portal Eldorado",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12820",
+          "agency_id": "1",
+          "short": "K23",
+          "long": "Portal Eldorado"
+        }
+      ],
+      "trips": 289,
+      "by_service": {
+        "1": 181,
+        "2": 108
+      },
+      "duration_min": {
+        "1": {
+          "p10": 54.0,
+          "p50": 57.5,
+          "p90": 66.5,
+          "n": 181
+        },
+        "2": {
+          "p10": 50.2,
+          "p50": 54.2,
+          "p90": 55.5,
+          "n": 108
+        }
+      },
+      "metres_median": 22012,
+      "local_length_m": 21869.596,
+      "segments": 16,
+      "segments_total_s": 3345
+    },
+    {
+      "id": "5663",
+      "code": "K43",
+      "name": "P. ElDorado",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13276",
+          "agency_id": "1",
+          "short": "K43",
+          "long": "P. ElDorado"
+        }
+      ],
+      "trips": 658,
+      "by_service": {
+        "1": 250,
+        "2": 235,
+        "4": 173
+      },
+      "duration_min": {
+        "1": {
+          "p10": 55.0,
+          "p50": 59.2,
+          "p90": 73.5,
+          "n": 250
+        },
+        "2": {
+          "p10": 56.2,
+          "p50": 58.8,
+          "p90": 60.5,
+          "n": 235
+        },
+        "4": {
+          "p10": 54.0,
+          "p50": 57.8,
+          "p90": 59.2,
+          "n": 173
+        }
+      },
+      "metres_median": 23834,
+      "local_length_m": 23802.955,
+      "segments": 14,
+      "segments_total_s": 3510
+    },
+    {
+      "id": "5661",
+      "code": "K53",
+      "name": "P. ElDorado",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13274",
+          "agency_id": "1",
+          "short": "K53",
+          "long": "P. ElDorado"
+        },
+        {
+          "route_id": "13719",
+          "agency_id": "1",
+          "short": "K53",
+          "long": "P. ElDorado"
+        }
+      ],
+      "trips": 99,
+      "by_service": {
+        "1": 54,
+        "2": 45
+      },
+      "duration_min": {
+        "1": {
+          "p10": 58.0,
+          "p50": 62.8,
+          "p90": 66.0,
+          "n": 54
+        },
+        "2": {
+          "p10": 48.2,
+          "p50": 48.8,
+          "p90": 49.2,
+          "n": 45
+        }
+      },
+      "metres_median": 20138,
+      "local_length_m": 20104.891,
+      "segments": 11,
+      "segments_total_s": 3345
+    },
+    {
+      "id": "316",
+      "code": "K54",
+      "name": "Portal Eldorado",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12877",
+          "agency_id": "1",
+          "short": "K54",
+          "long": "Portal Eldorado"
+        },
+        {
+          "route_id": "12878",
+          "agency_id": "1",
+          "short": "K54",
+          "long": "Portal Eldorado"
+        }
+      ],
+      "trips": 465,
+      "by_service": {
+        "1": 186,
+        "2": 137,
+        "4": 142
+      },
+      "duration_min": {
+        "1": {
+          "p10": 59.0,
+          "p50": 65.2,
+          "p90": 70.2,
+          "n": 186
+        },
+        "2": {
+          "p10": 70.2,
+          "p50": 76.0,
+          "p90": 81.5,
+          "n": 137
+        },
+        "4": {
+          "p10": 60.2,
+          "p50": 64.0,
+          "p90": 68.2,
+          "n": 142
+        }
+      },
+      "metres_median": 23714,
+      "local_length_m": 23255.455,
+      "segments": 16,
+      "segments_total_s": 3990
+    },
+    {
+      "id": "629",
+      "code": "K86",
+      "name": "Portal ElDorado",
+      "dual": true,
+      "gtfs": [
+        {
+          "route_id": "13179#b",
+          "agency_id": "6",
+          "short": "K86",
+          "long": "Portal ElDorado"
+        },
+        {
+          "route_id": "13182#b",
+          "agency_id": "6",
+          "short": "K86",
+          "long": "Portal ElDorado"
+        }
+      ],
+      "trips": 556,
+      "by_service": {
+        "1": 276,
+        "2": 221,
+        "4": 59
+      },
+      "duration_min": {
+        "1": {
+          "p10": 22.6,
+          "p50": 76.6,
+          "p90": 87.5,
+          "n": 276
+        },
+        "2": {
+          "p10": 60.6,
+          "p50": 66.2,
+          "p90": 73.0,
+          "n": 221
+        },
+        "4": {
+          "p10": 58.7,
+          "p50": 62.4,
+          "p90": 65.5,
+          "n": 59
+        }
+      },
+      "metres_median": 20634,
+      "local_length_m": 23974.346,
+      "segments": 25,
+      "segments_total_s": 4044
+    },
+    {
+      "id": "315",
+      "code": "L10",
+      "name": "P. 20 DE JULIO",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12030",
+          "agency_id": "1",
+          "short": "L10",
+          "long": "P. 20 DE JULIO"
+        }
+      ],
+      "trips": 347,
+      "by_service": {
+        "1": 191,
+        "2": 156
+      },
+      "duration_min": {
+        "1": {
+          "p10": 41.5,
+          "p50": 45.0,
+          "p90": 50.2,
+          "n": 191
+        },
+        "2": {
+          "p10": 42.2,
+          "p50": 45.8,
+          "p90": 48.0,
+          "n": 156
+        }
+      },
+      "metres_median": 16247,
+      "local_length_m": 16171.106,
+      "segments": 14,
+      "segments_total_s": 2730
+    },
+    {
+      "id": "319",
+      "code": "L18",
+      "name": "PORTAL 20 DE JULIO",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13018",
+          "agency_id": "1",
+          "short": "L18",
+          "long": "PORTAL 20 DE JULIO"
+        },
+        {
+          "route_id": "13021",
+          "agency_id": "1",
+          "short": "L18",
+          "long": "PORTAL 20 DE JULIO"
+        }
+      ],
+      "trips": 465,
+      "by_service": {
+        "1": 188,
+        "2": 136,
+        "4": 141
+      },
+      "duration_min": {
+        "1": {
+          "p10": 74.5,
+          "p50": 83.2,
+          "p90": 108.0,
+          "n": 188
+        },
+        "2": {
+          "p10": 70.5,
+          "p50": 77.2,
+          "p90": 79.5,
+          "n": 136
+        },
+        "4": {
+          "p10": 67.5,
+          "p50": 71.5,
+          "p90": 74.8,
+          "n": 141
+        }
+      },
+      "metres_median": 25850,
+      "local_length_m": 25691.08,
+      "segments": 15,
+      "segments_total_s": 4561
+    },
+    {
+      "id": "778",
+      "code": "L25",
+      "name": "Portal 20 de Julio",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "10074",
+          "agency_id": "1",
+          "short": "L25",
+          "long": "Portal 20 de Julio"
+        }
+      ],
+      "trips": 481,
+      "by_service": {
+        "1": 197,
+        "2": 156,
+        "4": 128
+      },
+      "duration_min": {
+        "1": {
+          "p10": 65.0,
+          "p50": 70.5,
+          "p90": 80.8,
+          "n": 197
+        },
+        "2": {
+          "p10": 68.0,
+          "p50": 72.0,
+          "p90": 75.5,
+          "n": 156
+        },
+        "4": {
+          "p10": 63.2,
+          "p50": 69.8,
+          "p90": 72.5,
+          "n": 128
+        }
+      },
+      "metres_median": 25397,
+      "local_length_m": 25234.048,
+      "segments": 19,
+      "segments_total_s": 4246
+    },
+    {
+      "id": "775",
+      "code": "L41",
+      "name": "Bicentenario",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13241",
+          "agency_id": "1",
+          "short": "L41",
+          "long": "Bicentenario"
+        }
+      ],
+      "trips": 333,
+      "by_service": {
+        "1": 187,
+        "2": 146
+      },
+      "duration_min": {
+        "1": {
+          "p10": 37.5,
+          "p50": 40.2,
+          "p90": 47.8,
+          "n": 187
+        },
+        "2": {
+          "p10": 36.5,
+          "p50": 38.5,
+          "p90": 39.2,
+          "n": 146
+        }
+      },
+      "metres_median": 15134,
+      "local_length_m": 14994.26,
+      "segments": 7,
+      "segments_total_s": 2325
+    },
+    {
+      "id": "620",
+      "code": "L81",
+      "name": "Portal 20 de Julio",
+      "dual": true,
+      "gtfs": [
+        {
+          "route_id": "12988",
+          "agency_id": "6",
+          "short": "L81",
+          "long": "Portal 20 de Julio"
+        },
+        {
+          "route_id": "13089",
+          "agency_id": "6",
+          "short": "L81",
+          "long": "Portal 20 de Julio"
+        }
+      ],
+      "trips": 594,
+      "by_service": {
+        "1": 295,
+        "2": 221,
+        "4": 78
+      },
+      "duration_min": {
+        "1": {
+          "p10": 70.0,
+          "p50": 100.2,
+          "p90": 108.2,
+          "n": 295
+        },
+        "2": {
+          "p10": 83.8,
+          "p50": 95.8,
+          "p90": 101.5,
+          "n": 221
+        },
+        "4": {
+          "p10": 72.0,
+          "p50": 80.0,
+          "p90": 82.8,
+          "n": 78
+        }
+      },
+      "metres_median": 25554,
+      "local_length_m": 25370.423,
+      "segments": 25,
+      "segments_total_s": 5367
+    },
+    {
+      "id": "622",
+      "code": "L82",
+      "name": "Portal 20 de Julio",
+      "dual": true,
+      "gtfs": [
+        {
+          "route_id": "12297#b",
+          "agency_id": "6",
+          "short": "L82",
+          "long": "Portal 20 de Julio"
+        },
+        {
+          "route_id": "12299#b",
+          "agency_id": "6",
+          "short": "L82",
+          "long": "Portal 20 de Julio"
+        }
+      ],
+      "trips": 631,
+      "by_service": {
+        "1": 314,
+        "2": 246,
+        "4": 71
+      },
+      "duration_min": {
+        "1": {
+          "p10": 29.0,
+          "p50": 82.3,
+          "p90": 94.1,
+          "n": 314
+        },
+        "2": {
+          "p10": 55.9,
+          "p50": 65.2,
+          "p90": 76.4,
+          "n": 246
+        },
+        "4": {
+          "p10": 51.8,
+          "p50": 58.4,
+          "p90": 61.4,
+          "n": 71
+        }
+      },
+      "metres_median": 17796,
+      "local_length_m": 19187.852,
+      "segments": 16,
+      "segments_total_s": 3925
+    },
+    {
+      "id": "384",
+      "code": "M47",
+      "name": "Museo Nacional",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "10039",
+          "agency_id": "1",
+          "short": "M47",
+          "long": "Museo Nacional"
+        }
+      ],
+      "trips": 518,
+      "by_service": {
+        "1": 195,
+        "2": 169,
+        "4": 154
+      },
+      "duration_min": {
+        "1": {
+          "p10": 41.8,
+          "p50": 46.5,
+          "p90": 55.8,
+          "n": 195
+        },
+        "2": {
+          "p10": 38.0,
+          "p50": 41.8,
+          "p90": 43.2,
+          "n": 169
+        },
+        "4": {
+          "p10": 40.5,
+          "p50": 42.5,
+          "p90": 43.2,
+          "n": 154
+        }
+      },
+      "metres_median": 13995,
+      "local_length_m": 13683.17,
+      "segments": 11,
+      "segments_total_s": 2565
+    },
+    {
+      "id": "398",
+      "code": "M51",
+      "name": "Museo Nacional",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "11724",
+          "agency_id": "1",
+          "short": "M51",
+          "long": "Museo Nacional"
+        }
+      ],
+      "trips": 332,
+      "by_service": {
+        "1": 171,
+        "2": 161
+      },
+      "duration_min": {
+        "1": {
+          "p10": 49.2,
+          "p50": 53.2,
+          "p90": 63.5,
+          "n": 171
+        },
+        "2": {
+          "p10": 45.8,
+          "p50": 48.2,
+          "p90": 51.0,
+          "n": 161
+        }
+      },
+      "metres_median": 15338,
+      "local_length_m": 15275.63,
+      "segments": 12,
+      "segments_total_s": 3001
+    },
+    {
+      "id": "12297",
+      "code": "M82",
+      "name": "CLL134 - KR 7",
+      "dual": true,
+      "gtfs": [
+        {
+          "route_id": "12298",
+          "agency_id": "6",
+          "short": "M82",
+          "long": "CLL134 KR 7"
+        },
+        {
+          "route_id": "12300",
+          "agency_id": "6",
+          "short": "M82",
+          "long": "CLL134 KR 7"
+        },
+        {
+          "route_id": "12297#a",
+          "agency_id": "6",
+          "short": "M82",
+          "long": "CLL134 KR 7"
+        },
+        {
+          "route_id": "12299#a",
+          "agency_id": "6",
+          "short": "M82",
+          "long": "CLL134 KR 7"
+        }
+      ],
+      "trips": 645,
+      "by_service": {
+        "1": 319,
+        "2": 252,
+        "4": 74
+      },
+      "duration_min": {
+        "1": {
+          "p10": 28.6,
+          "p50": 81.0,
+          "p90": 92.8,
+          "n": 319
+        },
+        "2": {
+          "p10": 53.6,
+          "p50": 64.2,
+          "p90": 75.3,
+          "n": 252
+        },
+        "4": {
+          "p10": 51.1,
+          "p50": 57.6,
+          "p90": 60.5,
+          "n": 74
+        }
+      },
+      "metres_median": 18986,
+      "local_length_m": 18915.025,
+      "segments": 16,
+      "segments_total_s": 3542
+    },
+    {
+      "id": "646",
+      "code": "M83",
+      "name": "Museo Nacional",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "12825",
+          "agency_id": "1",
+          "short": "M83",
+          "long": "Museo Nacional"
+        },
+        {
+          "route_id": "13503",
+          "agency_id": "1",
+          "short": "M83",
+          "long": "Museo Nacional"
+        }
+      ],
+      "trips": 500,
+      "by_service": {
+        "1": 214,
+        "2": 170,
+        "4": 116
+      },
+      "duration_min": {
+        "1": {
+          "p10": 43.8,
+          "p50": 45.5,
+          "p90": 49.2,
+          "n": 214
+        },
+        "2": {
+          "p10": 44.5,
+          "p50": 46.5,
+          "p90": 48.8,
+          "n": 170
+        },
+        "4": {
+          "p10": 41.2,
+          "p50": 44.8,
+          "p90": 47.0,
+          "n": 116
+        }
+      },
+      "metres_median": 14464,
+      "local_length_m": 13926.386,
+      "segments": 9,
+      "segments_total_s": 2752
+    },
+    {
+      "id": "624",
+      "code": "M84",
+      "name": "KR 7 - CLL 73",
+      "dual": true,
+      "gtfs": [
+        {
+          "route_id": "12984#a",
+          "agency_id": "6",
+          "short": "M84",
+          "long": "KR 7 CLL 73"
+        }
+      ],
+      "trips": 453,
+      "by_service": {
+        "1": 209,
+        "2": 151,
+        "4": 93
+      },
+      "duration_min": {
+        "1": {
+          "p10": 45.1,
+          "p50": 54.7,
+          "p90": 63.5,
+          "n": 209
+        },
+        "2": {
+          "p10": 43.6,
+          "p50": 49.2,
+          "p90": 53.9,
+          "n": 151
+        },
+        "4": {
+          "p10": 39.8,
+          "p50": 43.6,
+          "p90": 46.6,
+          "n": 93
+        }
+      },
+      "metres_median": null,
+      "local_length_m": 15540.915,
+      "segments": 8,
+      "segments_total_s": 3056
+    },
+    {
+      "id": "1315",
+      "code": "M85",
+      "name": "Museo Nacional",
+      "dual": true,
+      "gtfs": [
+        {
+          "route_id": "12771#b",
+          "agency_id": "6",
+          "short": "M85",
+          "long": "Museo Nacional"
+        },
+        {
+          "route_id": "12773#b",
+          "agency_id": "6",
+          "short": "M85",
+          "long": "Museo Nacional"
+        }
+      ],
+      "trips": 303,
+      "by_service": {
+        "1": 113,
+        "2": 131,
+        "4": 59
+      },
+      "duration_min": {
+        "1": {
+          "p10": 31.4,
+          "p50": 40.5,
+          "p90": 46.6,
+          "n": 113
+        },
+        "2": {
+          "p10": 29.7,
+          "p50": 35.4,
+          "p90": 41.1,
+          "n": 131
+        },
+        "4": {
+          "p10": 24.7,
+          "p50": 28.7,
+          "p90": 38.6,
+          "n": 59
+        }
+      },
+      "metres_median": 8705,
+      "local_length_m": 11366.255,
+      "segments": 9,
+      "segments_total_s": 2015
+    },
+    {
+      "id": "1185",
+      "code": "M86",
+      "name": "KR 7 - CLL 107A",
+      "dual": true,
+      "gtfs": [
+        {
+          "route_id": "13181",
+          "agency_id": "6",
+          "short": "M86",
+          "long": "KR 7 CLL 107A"
+        },
+        {
+          "route_id": "13179#a",
+          "agency_id": "6",
+          "short": "M86",
+          "long": "KR 7 CLL 107A"
+        },
+        {
+          "route_id": "13182#a",
+          "agency_id": "6",
+          "short": "M86",
+          "long": "KR 7 CLL 107A"
+        }
+      ],
+      "trips": 568,
+      "by_service": {
+        "1": 282,
+        "2": 227,
+        "4": 59
+      },
+      "duration_min": {
+        "1": {
+          "p10": 19.6,
+          "p50": 66.4,
+          "p90": 75.7,
+          "n": 282
+        },
+        "2": {
+          "p10": 52.2,
+          "p50": 57.5,
+          "p90": 63.5,
+          "n": 227
+        },
+        "4": {
+          "p10": 51.0,
+          "p50": 54.2,
+          "p90": 56.8,
+          "n": 59
+        }
+      },
+      "metres_median": 19685,
+      "local_length_m": 19685.0,
+      "segments": 21,
+      "segments_total_s": 3253
+    },
+    {
+      "id": "1316",
+      "code": "P85",
+      "name": "AV 68 Calle 9",
+      "dual": true,
+      "gtfs": [
+        {
+          "route_id": "12771#a",
+          "agency_id": "6",
+          "short": "P85",
+          "long": "AV 68 Calle 9"
+        },
+        {
+          "route_id": "12773#a",
+          "agency_id": "6",
+          "short": "P85",
+          "long": "AV 68 Calle 9"
+        }
+      ],
+      "trips": 303,
+      "by_service": {
+        "1": 113,
+        "2": 131,
+        "4": 59
+      },
+      "duration_min": {
+        "1": {
+          "p10": 25.6,
+          "p50": 33.0,
+          "p90": 38.0,
+          "n": 113
+        },
+        "2": {
+          "p10": 24.2,
+          "p50": 28.8,
+          "p90": 33.5,
+          "n": 131
+        },
+        "4": {
+          "p10": 20.1,
+          "p50": 23.4,
+          "p90": 31.4,
+          "n": 59
+        }
+      },
+      "metres_median": null,
+      "local_length_m": 9265.423,
+      "segments": 7,
+      "segments_total_s": 1641
+    },
+    {
+      "id": "5591",
+      "code": "S41",
+      "name": "San Mateo",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13240",
+          "agency_id": "1",
+          "short": "S41",
+          "long": "San Mateo"
+        }
+      ],
+      "trips": 325,
+      "by_service": {
+        "1": 181,
+        "2": 144
+      },
+      "duration_min": {
+        "1": {
+          "p10": 37.0,
+          "p50": 40.5,
+          "p90": 51.2,
+          "n": 181
+        },
+        "2": {
+          "p10": 39.0,
+          "p50": 41.5,
+          "p90": 43.0,
+          "n": 144
+        }
+      },
+      "metres_median": 15262,
+      "local_length_m": 15173.171,
+      "segments": 7,
+      "segments_total_s": 2445
+    },
+    {
+      "id": "5653",
+      "code": "S42",
+      "name": "San Mateo",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13265",
+          "agency_id": "1",
+          "short": "S42",
+          "long": "San Mateo"
+        }
+      ],
+      "trips": 640,
+      "by_service": {
+        "1": 235,
+        "2": 227,
+        "4": 178
+      },
+      "duration_min": {
+        "1": {
+          "p10": 42.0,
+          "p50": 44.8,
+          "p90": 55.0,
+          "n": 235
+        },
+        "2": {
+          "p10": 41.0,
+          "p50": 43.2,
+          "p90": 44.5,
+          "n": 227
+        },
+        "4": {
+          "p10": 39.2,
+          "p50": 41.0,
+          "p90": 43.5,
+          "n": 178
+        }
+      },
+      "metres_median": 19099,
+      "local_length_m": 18969.79,
+      "segments": 9,
+      "segments_total_s": 2595
+    },
+    {
+      "id": "5665",
+      "code": "S43",
+      "name": "San Mateo",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13277",
+          "agency_id": "1",
+          "short": "S43",
+          "long": "San Mateo"
+        },
+        {
+          "route_id": "13278",
+          "agency_id": "1",
+          "short": "S43",
+          "long": "San Mateo"
+        },
+        {
+          "route_id": "13279",
+          "agency_id": "1",
+          "short": "S43",
+          "long": "San Mateo"
+        }
+      ],
+      "trips": 686,
+      "by_service": {
+        "1": 225,
+        "2": 275,
+        "4": 186
+      },
+      "duration_min": {
+        "1": {
+          "p10": 54.5,
+          "p50": 56.8,
+          "p90": 74.5,
+          "n": 225
+        },
+        "2": {
+          "p10": 54.5,
+          "p50": 56.5,
+          "p90": 58.8,
+          "n": 275
+        },
+        "4": {
+          "p10": 52.0,
+          "p50": 55.5,
+          "p90": 57.2,
+          "n": 186
+        }
+      },
+      "metres_median": 24741,
+      "local_length_m": 24736.413,
+      "segments": 14,
+      "segments_total_s": 3368
+    },
+    {
+      "id": "5587",
+      "code": "S45",
+      "name": "San Mateo",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13238",
+          "agency_id": "1",
+          "short": "S45",
+          "long": "San Mateo"
+        }
+      ],
+      "trips": 65,
+      "by_service": {
+        "1": 49,
+        "2": 16
+      },
+      "duration_min": {
+        "1": {
+          "p10": 12.8,
+          "p50": 13.5,
+          "p90": 15.8,
+          "n": 49
+        },
+        "2": {
+          "p10": 11.8,
+          "p50": 12.2,
+          "p90": 13.5,
+          "n": 16
+        }
+      },
+      "metres_median": 4474,
+      "local_length_m": 4290.47,
+      "segments": 5,
+      "segments_total_s": 810
+    },
+    {
+      "id": "5658",
+      "code": "S46",
+      "name": "San Mateo",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13269",
+          "agency_id": "1",
+          "short": "S46",
+          "long": "San Mateo"
+        },
+        {
+          "route_id": "13270",
+          "agency_id": "1",
+          "short": "S46",
+          "long": "San Mateo"
+        }
+      ],
+      "trips": 223,
+      "by_service": {
+        "1": 138,
+        "2": 85
+      },
+      "duration_min": {
+        "1": {
+          "p10": 62.5,
+          "p50": 70.5,
+          "p90": 86.5,
+          "n": 138
+        },
+        "2": {
+          "p10": 59.0,
+          "p50": 60.5,
+          "p90": 62.2,
+          "n": 85
+        }
+      },
+      "metres_median": 30916,
+      "local_length_m": 30888.049,
+      "segments": 8,
+      "segments_total_s": 3828
+    },
+    {
+      "id": "5655",
+      "code": "S48",
+      "name": "San Mateo",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13267",
+          "agency_id": "1",
+          "short": "S48",
+          "long": "San Mateo"
+        }
+      ],
+      "trips": 192,
+      "by_service": {
+        "1": 101,
+        "2": 91
+      },
+      "duration_min": {
+        "1": {
+          "p10": 34.2,
+          "p50": 45.0,
+          "p90": 49.5,
+          "n": 101
+        },
+        "2": {
+          "p10": 33.5,
+          "p50": 34.8,
+          "p90": 35.8,
+          "n": 91
+        }
+      },
+      "metres_median": 15226,
+      "local_length_m": 15030.468,
+      "segments": 10,
+      "segments_total_s": 2138
+    },
+    {
+      "id": "5467",
+      "code": "Z61",
+      "name": "Tibanica",
+      "dual": false,
+      "gtfs": [
+        {
+          "route_id": "13173",
+          "agency_id": "1",
+          "short": "Z61",
+          "long": "Tibanica"
+        }
+      ],
+      "trips": 161,
+      "by_service": {
+        "1": 94,
+        "2": 67
+      },
+      "duration_min": {
+        "1": {
+          "p10": 86.0,
+          "p50": 97.2,
+          "p90": 108.8,
+          "n": 94
+        },
+        "2": {
+          "p10": 78.2,
+          "p50": 84.2,
+          "p90": 105.2,
+          "n": 67
+        }
+      },
+      "metres_median": 25019,
+      "local_length_m": 24893.342,
+      "segments": 13,
+      "segments_total_s": 5685
+    },
+    {
+      "id": "5451",
+      "code": "Z63",
+      "name": "Tibanica",
+      "dual": true,
+      "gtfs": [
+        {
+          "route_id": "13168",
+          "agency_id": "6",
+          "short": "Z63",
+          "long": "Tibanica"
+        },
+        {
+          "route_id": "13226#b",
+          "agency_id": "6",
+          "short": "Z63",
+          "long": "Tibanica"
+        }
+      ],
+      "trips": 794,
+      "by_service": {
+        "1": 362,
+        "2": 248,
+        "4": 184
+      },
+      "duration_min": {
+        "1": {
+          "p10": 39.0,
+          "p50": 42.2,
+          "p90": 42.7,
+          "n": 362
+        },
+        "2": {
+          "p10": 38.0,
+          "p50": 41.0,
+          "p90": 43.0,
+          "n": 248
+        },
+        "4": {
+          "p10": 43.0,
+          "p50": 47.0,
+          "p90": 47.0,
+          "n": 184
+        }
+      },
+      "metres_median": 11647,
+      "local_length_m": 11636.646,
+      "segments": 6,
+      "segments_total_s": 2482
+    }
+  ],
+  "still_pending": [
+    {
+      "id": "5316",
+      "code": "K86",
+      "name": "Aeropuerto",
+      "dual": true,
+      "variant": "regular",
+      "reason": "sin destino equivalente en el paquete",
+      "gtfs_same_code": [
+        "Aeropuerto ||  Portal ElDorado"
+      ]
+    },
+    {
+      "id": "1186",
+      "code": "K86",
+      "name": "Aeropuerto El Dorado Ciclovía",
+      "dual": true,
+      "variant": "ciclovia",
+      "reason": "sin destino equivalente en el paquete",
+      "gtfs_same_code": [
+        "Aeropuerto ||  Portal ElDorado"
+      ]
+    }
+  ],
+  "without_segments": [
+    {
+      "id": "375",
+      "code": "C73",
+      "name": "P.SUBA",
+      "reason": "el catálogo local cuenta 9 tramos y el paquete [3]"
+    },
+    {
+      "id": "1213",
+      "code": "H76",
+      "name": "Portal Usme",
+      "reason": null
+    }
+  ]
+}

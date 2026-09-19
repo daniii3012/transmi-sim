@@ -1,0 +1,121 @@
+/* Map-led layout: generous canvas, one reading surface, compact controls. */
+:root{--surface:#fffffff5;--edge:#253b5219;--nav-height:64px;--safe-bottom:env(safe-area-inset-bottom,0px)}
+/* El doble toque hacía zoom de página, como en un sitio cualquiera: dentro de la aplicación eso
+   es un accidente, no un gesto. `manipulation` lo quita y deja intactos el desplazamiento y el
+   pinch; el lienzo del mapa sigue con `none` porque se maneja sus propios gestos. */
+html,body{touch-action:manipulation}
+body{overscroll-behavior:none}button,summary{-webkit-tap-highlight-color:transparent}
+button:focus-visible,summary:focus-visible{outline:2px solid #2470aa;outline-offset:3px}
+#canvas-host{touch-action:none}header{border-bottom:1px solid var(--edge)}
+#sidebar,#inspector,#timeline{border:1px solid var(--edge);background:var(--surface);box-shadow:0 6px 26px #10233512}
+.panel{padding:22px}.panel h1{font-size:1.2rem;letter-spacing:-.025em}.eyebrow{font-size:.6rem}
+#panel-toggle{display:none}#more-menu{position:relative;border:0;padding:0;font-size:.8rem}
+#more-menu summary{list-style:none;padding:12px;cursor:pointer}#more-menu summary::-webkit-details-marker{display:none}
+.more-options{position:absolute;right:0;top:100%;z-index:20;min-width:180px;padding:6px;background:var(--surface);border:1px solid var(--edge);border-radius:12px;box-shadow:0 8px 26px #10233520}
+.more-options button{display:block;width:100%;text-align:left;min-height:44px}
+body[data-theme=dark]{--surface:#202b36f5;--edge:#e5efff16}
+body[data-theme=dark] #sidebar,body[data-theme=dark] #inspector,body[data-theme=dark] #timeline{background:var(--surface)}
+@media(max-width:800px){
+ html,body{height:100%;width:100%;overflow:hidden}
+ /* La barra inferior y su menú cuelgan de <header>, que abre su propio contexto de apilamiento;
+    por alto que sea el z-index del menú, el bloque entero quedaba debajo de la ficha de detalle.
+    Se sube el contexto, no el menú. */
+ header{height:calc(52px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) 16px 0;gap:12px;z-index:20}
+ .brand>div{display:block;font-size:1.1rem}.brand small{display:none}.brand>b{width:29px;height:30px;font-size:1.2rem}
+ .header-right{margin-left:auto}.header-right #theme{width:42px;min-height:42px}
+ nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-height) + var(--safe-bottom));padding:4px 10px var(--safe-bottom);display:flex;align-items:center;justify-content:space-around;z-index:15;background:var(--surface);border-top:1px solid var(--edge);overflow:visible;gap:4px}
+ nav>button,nav>#more-menu{flex:1;min-width:0;text-align:center}nav button{min-height:48px;font-size:.75rem;padding:8px 4px;border-radius:9px}
+ nav button.nav-active{background:#dce9f2;color:#164f79;border-bottom:0}body[data-theme=dark] nav button.nav-active{background:#334b60;color:#e6f1ff}
+ #more-menu summary{min-height:48px;display:grid;place-items:center;padding:8px}.more-options{top:auto;bottom:60px;right:0;min-width:190px}
+ main{height:calc(100dvh - 52px - env(safe-area-inset-top,0px) - var(--nav-height) - var(--safe-bottom));min-height:0;overflow:hidden}
+ #sidebar,
+ body[data-panel=planner] #sidebar{bottom:10px;height:min(62%,580px)}
+ #panel-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:48px;padding:13px 18px;border:0;border-radius:0;position:sticky;top:0;z-index:6;background:var(--surface);font-size:.85rem;text-align:left}
+ /* Mismo galón de bordes que el tirador del detalle, y por lo mismo: los caracteres «⌄» y «⌃» no
+    miden igual ni se apoyan a la misma altura, así que la cabecera cambiaba de tamaño al plegarse
+    y la marca nunca quedaba a la altura del texto. */
+ #panel-toggle:after{content:'';flex:none;width:8px;height:8px;border:solid var(--muted);border-width:0 2px 2px 0;transform:translateY(-2px) rotate(45deg)}
+ body[data-sheet=closed] #panel-toggle:after{transform:translateY(2px) rotate(225deg)}
+ body[data-sheet=closed] #sidebar{height:48px!important;overflow:hidden}body[data-sheet=closed] #sidebar>.panel{display:none}
+ .panel{padding:0 18px 22px}.panel>.eyebrow,.panel-heading .eyebrow{display:none}.panel>h1,.panel-heading h1{font-size:1.1rem;margin-top:4px}.panel-heading h1{display:none}
+ button,input,select{min-height:44px}input,select{font-size:16px!important}.segmented button{font-size:.78rem;min-height:42px}
+ /* La fila conserva el ancho desbordado y el margen negativo del escritorio, así que quitarle el
+    relleno lateral —resto de cuando la lista iba a dos columnas— dejaba la insignia y el conteo
+    pegados al borde del recuadro. Con el relleno vuelven a alinearse con el resto del panel. */
+ #route-list{display:block}.route-row{min-height:62px}.zone-grid{grid-template-columns:repeat(4,1fr)}
+ .map-caption{top:15px;left:16px;right:74px;max-width:none}.map-caption strong{font-size:.85rem}.map-caption span{font-size:.55rem}
+ .map-actions{top:12px;right:12px;gap:6px}.map-actions button{width:40px;min-height:40px}.map-actions .north{display:none}
+ #context-toggle,#lanes-toggle,#signals-toggle,#corridors-toggle{display:none}
+ #metrics,
+ #metrics>div{min-width:0;padding:0 10px}#metrics strong{font-size:.98rem}#metrics span{font-size:.58rem}
+ .map-bottom,.map-bottom small{font-size:.5rem}
+ /* Tres filas repartidas por uso, que en dos quedaba todo apretado. Arriba el día, la hora y el
+    salto al ahora: lo que se lee. En medio lo que mueve el tiempo —quince minutos, pausa, quince
+    minutos— y la velocidad: lo que se toca. Abajo la línea del día, como estaba. La fecha y
+    «Ahora» dejan de vivir tras el menú Más, que no era sitio para ellas: `shell.mjs` arma las tres
+    filas en un teléfono y devuelve cada control a la suya en una pantalla ancha. El chevron pliega
+    las dos filas de mandos y deja a la vista la que dice qué momento se está mirando. */
+ /* Alto medido, no estimado: 44 de la fila de arriba —la altura táctil de un campo—, 36 de los
+    mandos y 32 de la línea del día, más dos huecos y el relleno. */
+ body{--clock-height:146px}
+ body[data-clock=closed]{--clock-height:66px}
+ #timeline{bottom:10px;left:10px;right:10px;padding:8px 12px 14px;height:var(--clock-height);overflow:hidden;border-radius:14px;display:flex;flex-direction:column;gap:6px}
+ .date-controls{display:flex;align-items:center;gap:6px;margin:0}
+ .time-main{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}
+ .scrub-row{display:flex;align-items:center;gap:10px;margin:0}
+ #day-type,.period{display:none}
+ body[data-clock=closed] .time-main,body[data-clock=closed] .scrub-row{display:none}
+ .date-controls input,#date{flex:none;width:96px;min-width:0;border:0;padding:4px 0;font-size:.8rem!important;font-weight:650;text-align:left;-webkit-appearance:none;appearance:none}
+ .time-main>button{min-width:38px;min-height:36px;padding:4px}
+ .speed-controls{display:flex;gap:2px;margin:0 0 0 auto}
+ .speed-controls button{min-width:32px;padding:4px;font-size:.7rem;min-height:36px}
+ .scrub-row>span{display:inline;font-size:.62rem}
+ .scrub-row input[type=range],#scrub{flex:1;min-width:0;min-height:28px}
+ .time-main input[type=time],#time{flex:none;min-width:104px!important;width:104px!important;font-size:.85rem!important;min-height:36px;text-align:center;padding:0}
+ /* El mismo galón dibujado que pliega la hoja y la ficha, aquí para el reloj. */
+ #timeline-toggle{display:grid;place-items:center;flex:none;margin-left:auto;min-width:38px;width:38px;min-height:36px;padding:0}
+ #timeline-toggle:before{content:'';width:8px;height:8px;border:solid currentColor;border-width:0 2px 2px 0;transform:translateY(-2px) rotate(45deg)}
+ body[data-clock=closed] #timeline-toggle:before{transform:translateY(2px) rotate(225deg)}
+ #now{flex:none;min-width:0;min-height:36px;padding:4px 10px;font-size:.72rem}
+ /* El icono nativo del selector se lleva veinte píxeles de un campo que aquí no los tiene. Tocar el
+    campo sigue abriendo el selector, que es como se usa en un teléfono. */
+ #date::-webkit-calendar-picker-indicator,#time::-webkit-calendar-picker-indicator{display:none}
+ body[data-panel=planner] #timeline{display:none}body[data-panel=planner] #metrics{display:none}
+ /* La ficha se apoya donde acabe el reloj: si está a la vista le deja su franja, y si la pestaña
+    no lo muestra llega hasta abajo del todo. */
+ body{--sheet-bottom:10px}
+ body[data-inspect=true]{--sheet-bottom:calc(var(--clock-height) + 18px)}
+ body[data-inspect=true][data-panel=planner]{--sheet-bottom:10px}
+ #inspector,
+ /* La hoja sí cede el sitio a la ficha, pero el reloj no: con una estación o un bus en foco es el
+    control que da sentido a lo que se está mirando, y esconderlo obligaba a soltar la selección
+    para volver a mover la hora. */
+ body[data-inspect=true] #sidebar{visibility:hidden}#inspector .close,#inspector #inspector-toggle{width:44px;min-width:44px;height:44px;min-height:44px}#inspector #inspector-toggle{right:60px}
+ #loading{left:12px;top:182px;max-width:calc(100% - 24px);width:auto;font-size:.75rem;padding:8px 12px}#error{top:18%;font-size:.8rem}
+ #toast{bottom:calc(var(--clock-height) + 22px);max-width:calc(100% - 40px);width:max-content;text-align:center}
+}
+@media(max-width:380px){.speed-controls button{min-width:25px;font-size:.65rem}.time-main>button{min-width:28px}.map-caption span{display:none}}
+@media(max-width:950px) and (max-height:500px){
+ #sidebar,body[data-panel=planner] #sidebar{width:300px;right:auto;bottom:10px;height:calc(100% - 20px)}
+ #timeline{left:320px;height:98px}#inspector{left:10px;right:auto;width:300px;max-height:95%}.map-caption,#metrics{left:330px}
+}
+/* La fecha y la hora se salían del panel y desplazaban la hoja entera de lado. En WebKit estos dos
+   controles se dimensionan solos —el ancho que piden no lo fija `width`, sino la maqueta nativa que
+   llevan dentro—, y por eso en la emulación del escritorio cabían y en el iPhone no. Se les quita
+   esa maqueta con `appearance:none`, que en iOS no cuesta nada porque allí se dibujan planos de
+   todos modos, y con eso pasan a medir exactamente el hueco que se les da: la pareja vuelve a caber
+   en una fila también en el teléfono. */
+.form-pair{gap:10px}.form-pair>*{min-width:0}
+.form-pair input{width:100%;max-width:100%;min-width:0}
+.form-pair input[type=date],.form-pair input[type=time]{-webkit-appearance:none;appearance:none}
+.form-pair input::-webkit-date-and-time-value{width:100%;margin:0;text-align:left}
+/* Y un tope, porque una hoja que se desplaza de lado nunca es lo que se quiere: cualquier control
+   que insista en pedir más ancho del que hay se recorta en vez de arrastrar el panel entero. */
+@media(max-width:800px){#sidebar{overflow-x:hidden}}
+/* Con el detalle plegado la hoja deja de tapar el mapa y lo seleccionado sigue en foco. En el
+   escritorio la ficha cuelga de arriba y en el móvil se apoya abajo, así que encoge por lados
+   distintos. */
+body[data-detail=closed] #inspector{bottom:auto;height:auto;max-height:none;padding:14px 20px}
+@media(max-width:800px){
+ body[data-detail=closed] #inspector{top:auto;bottom:var(--sheet-bottom,10px);height:auto;max-height:none;min-height:64px;padding:20px 112px 20px 20px}
+}

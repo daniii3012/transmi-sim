@@ -1,0 +1,18 @@
+.DS_Store
+**/.godot/
+*.log
+__pycache__/
+*.pyc
+.venv/
+
+# Copias automáticas de Blender; el original .blend sí se versiona.
+*.blend1
+*.blend2
+
+# Scratch work is kept outside the versioned application.
+/work/
+
+# Las instantáneas crudas no se versionan: son cientos de MB y lo que el simulador usa es el
+# dato curado que sale de ellas, que sí viaja aquí con su procedencia y su SHA-256.
+/data/raw/
+

@@ -1,0 +1,63 @@
+{
+  "scope": "CPU logical core only. Node.js, no browser, GPU or FPS measurement.",
+  "runtime": "v26.4.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "step_s": 0.1,
+  "results": [
+    {
+      "fleet": 100,
+      "simulated_s": 300,
+      "mean_step_ms": 0.009423390666666637,
+      "p95_batch_mean_step_ms": 0.02390833333333357,
+      "stats": {
+        "scenario": "load",
+        "time_s": 299.9999999999997,
+        "fleet": 100,
+        "moving": 77,
+        "dwell": 20,
+        "queue": 0,
+        "terminal": 3,
+        "stops": 367,
+        "legs": 34,
+        "distance_km": 262.76645410071063
+      }
+    },
+    {
+      "fleet": 1000,
+      "simulated_s": 300,
+      "mean_step_ms": 0.032338832,
+      "p95_batch_mean_step_ms": 0.044925000000000166,
+      "stats": {
+        "scenario": "load",
+        "time_s": 299.9999999999997,
+        "fleet": 1000,
+        "moving": 618,
+        "dwell": 157,
+        "queue": 193,
+        "terminal": 32,
+        "stops": 2975,
+        "legs": 238,
+        "distance_km": 2123.485292790095
+      }
+    },
+    {
+      "fleet": 3000,
+      "simulated_s": 300,
+      "mean_step_ms": 0.08435474933333326,
+      "p95_batch_mean_step_ms": 0.10359303333333306,
+      "stats": {
+        "scenario": "load",
+        "time_s": 299.9999999999997,
+        "fleet": 3000,
+        "moving": 816,
+        "dwell": 262,
+        "queue": 1922,
+        "terminal": 0,
+        "stops": 3305,
+        "legs": 238,
+        "distance_km": 2814.650735001408
+      }
+    }
+  ]
+}
