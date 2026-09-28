@@ -71,6 +71,7 @@ los `build_*` escriben ambas.
 | Rutas, paradas, horarios, trazados, colores | Catálogo público de rutas de TRANSMILENIO | `fetch_services.py`, `fetch_service_supplement.py` | `build_services.py` | `app/dist/services.json` |
 | Paraderos de calle de los duales | Capa oficial de paraderos SITP | `fetch_dual_stops.py` | (lo consume `build_services.py`) | dentro de `services.json` |
 | Contexto urbano: vías, parques, agua | OpenStreetMap / Overpass | (consulta registrada en `data/raw/context`) | `build_context.py` | `app/dist/context.json` |
+| Edificios de la vista 3D | Mapa de Referencia (IDECA / UAECD), capa Construcción | descarga fuera del repositorio | `build_buildings.py` | `app/dist/buildings/` |
 | Geometría física de estaciones y portales | OpenStreetMap API 0.6 y Overpass | `fetch_station_layouts.py` | `build_station_layouts.py` | `app/dist/station_layouts.json` |
 | Salidas programadas de cada servicio | GTFS abierto de TRANSMILENIO S.A. | `fetch_gtfs.py` | `build_schedule.py` | `app/dist/schedule.json` |
 | Tipo de vehículo por servicio | Lecturas de posición de la flota, desde el 12 sep 2026 | herramienta de captura, fuera del repositorio | `classify_fleet.py` | `data/curated/fleet_types.json` |
@@ -179,6 +180,21 @@ deja el puntero `data/raw/services/refresh_latest.json`. `build_services.py` pre
 ese detalle para esos identificadores y **toma el resto de la metadata, vigencia
 incluida, de la instantánea base**. Cada ruta queda con `detail_snapshot`, que dice de
 qué carpeta salió su detalle. Para volver atrás basta borrar el puntero.
+
+### Edificios de la vista 3D
+
+```sh
+# descarga fuera del repositorio: construcciones a 120 m de la calzada exclusiva
+../../work/venv/bin/python tools/build_buildings.py
+```
+
+La descarga consulta la capa Construcción del Mapa de Referencia a lo largo de cada tramo
+exclusivo, en piezas de 700 m, y guarda `data/raw/construcciones/<instantánea>/` con su
+manifiesto y SHA-256. `build_buildings.py` toma la huella exterior de cada construcción,
+la simplifica a 0,4 m, descarta las de menos de 12 m² y le da 3 m por piso
+(`CONNPISOS`). Las agrupa en teselas de 1 km por centroide, en binario (formato en el
+propio script), con `index.json` de procedencia. La vista 3D pide solo las teselas cerca
+de la cámara.
 
 ### Cambia la ubicación o la geometría física de una estación o un portal
 

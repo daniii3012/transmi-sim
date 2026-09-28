@@ -48,6 +48,11 @@ jobs:
             test -s "app/dist/$f.json" || { echo "Falta app/dist/$f.json"; exit 1; }
             python3 -c "import json;json.load(open('app/dist/$f.json'))"
           done
+          # Edificios de la vista 3D: índice y teselas.
+          test -s app/dist/buildings/index.json
+          python3 -c "import json,os; i=json.load(open('app/dist/buildings/index.json')); \
+            missing=[t for t in i['tiles'] if not os.path.exists(f'app/dist/buildings/{t[0]}_{t[1]}.bin')]; \
+            assert not missing, f'faltan {len(missing)} teselas'; print(f\"edificios: {i['coverage']['buildings']} en {len(i['tiles'])} teselas\")"
           # El horario publicado manda las salidas y la duración de cada tramo: sin rutas dentro, la
           # aplicación arrancaría con la regla sintética sin decirlo, que es peor que no publicar.
           python3 -c "import json; h=json.load(open('app/dist/schedule.json')); r=h.get('routes') or {}; \

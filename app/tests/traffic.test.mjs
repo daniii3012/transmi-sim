@@ -120,3 +120,17 @@ test('Dos martes normales comparten llave de escenario —y puntos de control—
  assert.notEqual(key('2026-09-22'),key('2026-09-26'),'un sábado es otro día');
  assert.notEqual(key('2026-09-22',{dayVariation:true}),key('2026-09-29',{dayVariation:true}));
 });
+
+test('Las teselas de edificios se leen enteras y caen donde dice su índice',()=>{
+ const index=read('buildings/index.json');let total=0;
+ for(const [x,y,count,bytes] of index.tiles.slice(0,40)){
+  const buffer=fs.readFileSync(new URL(`../dist/buildings/${x}_${y}.bin`,import.meta.url)),view=new DataView(buffer.buffer,buffer.byteOffset,buffer.byteLength);
+  assert.equal(buffer.length,bytes);assert.equal(buffer.toString('latin1',0,4),'TMB1');assert.equal(view.getUint32(4,true),count);
+  let at=8;
+  for(let b=0;b<count;b++){const floors=view.getUint8(at),n=view.getUint8(at+1);at+=2;assert.ok(floors>=1&&n>=3);
+   let cx=0,cy=0;for(let k=0;k<n;k++){cx+=view.getInt16(at,true)/10;cy+=view.getInt16(at+2,true)/10;at+=4;}
+   assert.ok(cx/n>-150&&cx/n<index.method.tile_m+150&&cy/n>-150&&cy/n<index.method.tile_m+150,'el edificio cae en su tesela');}
+  assert.equal(at,bytes,'sin bytes sobrantes');total+=count;
+ }
+ assert.ok(total>5000&&index.coverage.buildings>50000);
+});
