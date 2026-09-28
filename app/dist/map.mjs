@@ -423,7 +423,9 @@ export class NetworkMap {
   setBusColorMode(mode){this.busColor=mode;if(this.lastSimulation)this.updateBuses(this.lastSimulation,'all',true);}
   updateBuses(simulation,filter='all',forceClusters=false){
     this.lastSimulation=simulation;const buses=simulation.buses;this.updateSignals(simulation.signalTime??simulation.time);
-    let segments=0;for(const b of buses)segments+=(BODIES[b.length_m]||[b.length_m]).length;
+    // El largo llega en un arreglo de 32 bits (27,2 m es 27,2000007…): se redondea para dar con sus cuerpos.
+    const bodiesOf=len=>BODIES[Math.round(len*10)/10];
+    let segments=0;for(const b of buses)segments+=(bodiesOf(b.length_m)||[b.length_m]).length;
     if(!this.busMesh||this.busCapacity<segments){
       if(this.busMesh){for(const m of [this.busMesh,this.busNose,this.busJoint]){this.scene.remove(m);m.dispose();m.geometry.dispose();m.material.dispose();}}
       this.busCapacity=Math.max(4096,segments*2);
@@ -446,7 +448,7 @@ export class NetworkMap {
       this.busSamples.push({id:b.id,xy});
       if(this.busColor==='load'){const u=Math.min(1,b.load/Math.max(1,b.capacity));color.setHSL((1-u)*.33,.72,.47);}else color.set(b.color);
       const len=b.length_m||18.5,width=Math.max(BUS_WIDTH,this.mpp*3.4),height=Math.max(BUS_HEIGHT,width*1.15);
-      const bodies=close&&BODIES[len]?BODIES[len]:[Math.max(len,this.mpp*8)];
+      const bodies=close&&bodiesOf(len)?bodiesOf(len):[Math.max(len,this.mpp*8)];
       const path=close&&bodies.length>1?this.metricPaths.get(b.routeId):null;
       let back=0;
       for(let k=0;k<bodies.length;k++){
