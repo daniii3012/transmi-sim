@@ -1,9 +1,9 @@
-import {mountShell} from './shell.mjs?v=20260927.1';
-import {NetworkMap} from './map.mjs?v=20260927.1';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260927.1';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260927.1';
-import {STATES} from './traffic.mjs?v=20260927.1';
-import {registerSimulationTools} from './webmcp.mjs?v=20260927.1';
+import {mountShell} from './shell.mjs?v=20260928.1';
+import {NetworkMap} from './map.mjs?v=20260928.1';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260928.1';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260928.1';
+import {STATES} from './traffic.mjs?v=20260928.1';
+import {registerSimulationTools} from './webmcp.mjs?v=20260928.1';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -43,11 +43,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260927.1',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260928.1',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260927.1',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260928.1',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -78,7 +78,7 @@ try{
   if(m.type==='error'){ready=false;$('#loading').hidden=true;$('#error').hidden=false;$('#error').textContent='No se pudo preparar el escenario: '+m.message;return;}
   if(m.type==='ready'){ready=true;routeIds=m.routeIds;map.signalOffsets=m.signalOffsets;pendingSample=true;$('#plan-journey').disabled=false;renderRoutes();}
   if(m.type==='building'){$('#loading').hidden=false;$('#loading').textContent='Preparando el día de servicio…';}
-  if(m.type==='progress'){showProgress(m);if(m.frame)map.acceptSimulation(buildSnap(m),false);}
+  if(m.type==='progress'){showProgress(m);if(m.frame&&(!settled||m.target-m.at>1800))map.acceptSimulation(buildSnap(m),false);}
   if(m.type==='state'){if(m.requestId!==sampleSequence)return;pendingSample=false;$('#loading').hidden=true;const next=buildSnap(m);const animate=settled&&!clock.paused&&!scrubbing&&next.serviceDate===snap.serviceDate&&m.time>=snap.time&&m.time-snap.time<clock.speed*.5;if(!settled){settled=true;if(activePanel==='depots')worker.postMessage({type:'depots',generation});requestOverview();}snap=next;map.acceptSimulation(snap,animate);updateUI();if(selection?.kind==='bus'&&!snap.buses.some(b=>b.id===selection.id))renderBus();}
   if(m.type==='station'&&selection?.kind==='station'&&selection.id===m.id)renderStation(m);
   if(m.type==='depots')renderDepots(m.depots);
@@ -135,7 +135,7 @@ try{
   row('A bordo',`${b.load} / ${b.capacity}`);const track=el('div',undefined,'load-track'),fill=el('i');fill.style.width=Math.min(100,b.load/Math.max(1,b.capacity)*100)+'%';track.append(fill);p.append(track);
   if(d){
    row(['moving','signal','traffic'].includes(b.state)?'Próxima parada':'Parada',d.next_stop);row('Punto de atención',d.street?'Paradero calle':boardingPoint(d));
-   if(!b.offnet)row('Carril',d.lane?'De paso':'De atención');
+   if(!b.offnet)row('Carril',d.lane?'Del andén':'De paso');
    if(b.state!=='moving'&&b.state!=='dwell'&&d.binding!=='libre')row('Lo detiene',bindingText[d.binding]||d.binding);
    if(b.state==='dwell')row('Puertas',`${d.dwellLeft.toFixed(0)} s más · suben ${d.board}, bajan ${d.alight}`);
    row('Atraso sobre el horario',d.delay>60?Math.round(d.delay/60)+' min':'Al día');

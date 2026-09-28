@@ -1,7 +1,7 @@
-import {Operation} from './operation.mjs?v=20260927.1';
-import {JourneyPlanner} from './planner.mjs?v=20260927.1';
-import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260927.1';
-import {DAY,addDays} from './calendar.mjs?v=20260927.1';
+import {Operation} from './operation.mjs?v=20260928.1';
+import {JourneyPlanner} from './planner.mjs?v=20260928.1';
+import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260928.1';
+import {DAY,addDays} from './calendar.mjs?v=20260928.1';
 // El motor de espacio físico corre aquí. La página pide un instante —fecha y segundos desde la
 // medianoche anterior más un día, como hasta ahora— y el worker lo traduce a su día de servicio,
 // que va de las 03:00 a las 03:00: pasar la medianoche no reinicia nada, y cambiar de fecha solo
@@ -30,6 +30,9 @@ function pump(){
  const from=traffic.t,done=traffic.seek(request.service.t,45);
  if(target!==request)return schedule();
  if(!done){
+  // Un retraso corto —el reloj que avanzó un poco más que la última tanda— se recupera en silencio:
+  // avisar ahí hacía parpadear el aviso de carga y saltar a los buses.
+  if(request.service.t-traffic.t<300)return schedule();
   const now=performance.now();
   // Cada medio segundo, cómo va el día: el mapa lo dibuja mientras se pone al día.
   if(now-lastPreview>500){lastPreview=now;const f=traffic.frame(traffic.t);post({type:'progress',generation,serviceDate:traffic.date,at:toPage(traffic.t,request),target:request.time,from:toPage(SERVICE_START,request),frame:f,stats:traffic.stats()},[f.trip.buffer,f.route.buffer,f.s.buffer,f.lat.buffer,f.len.buffer,f.state.buffer,f.speed.buffer,f.load.buffer,f.cap.buffer,f.offnet.buffer]);}

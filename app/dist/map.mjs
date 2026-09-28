@@ -1,5 +1,5 @@
-import {MetricPath} from './simulation.mjs?v=20260927.1';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260927.1';
+import {MetricPath} from './simulation.mjs?v=20260928.1';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260928.1';
 import * as THREE from './vendor/three.module.js';
 
 export class NetworkMap {
@@ -27,7 +27,7 @@ export class NetworkMap {
     this.stopOuter.renderOrder=2;this.stopInner.renderOrder=3;
     this.stopOuter.frustumCulled=false;this.stopInner.frustumCulled=false;
     this.scene.add(this.stopOuter,this.stopInner);
-    this.marker=new THREE.Mesh(new THREE.RingGeometry(.7,1,24),new THREE.MeshBasicMaterial({color:'#dc253b',depthTest:false}));
+    this.marker=new THREE.Mesh(new THREE.RingGeometry(.7,1,24),new THREE.MeshBasicMaterial({color:'#dc253b',depthTest:false,transparent:true}));
     this.marker.renderOrder=7;this.marker.visible=false;this.scene.add(this.marker);
     this.wagonBorder=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:'#97a8b7',depthTest:false}),3000);this.wagonBorder.renderOrder=3.5;this.wagonBorder.frustumCulled=false;this.scene.add(this.wagonBorder);
     this.wagonMesh=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:'#f9fafb',depthTest:false}),3000);this.wagonMesh.renderOrder=4;this.wagonMesh.frustumCulled=false;this.scene.add(this.wagonMesh);
@@ -35,7 +35,7 @@ export class NetworkMap {
     this.buildCarriageways();
     this.buildStationGeometry();
     this.signalsEnabled=true;const signalCount=data.busway_signals?.signals.length||0;
-    if(signalCount){this.signalMesh=new THREE.InstancedMesh(new THREE.CircleGeometry(1,12),new THREE.MeshBasicMaterial({depthTest:false}),signalCount);this.signalMesh.frustumCulled=false;this.signalMesh.renderOrder=4.5;this.scene.add(this.signalMesh);}
+    if(signalCount){this.signalMesh=new THREE.InstancedMesh(new THREE.CircleGeometry(1,12),new THREE.MeshBasicMaterial({depthTest:false,transparent:true}),signalCount);this.signalMesh.frustumCulled=false;this.signalMesh.renderOrder=4.5;this.scene.add(this.signalMesh);}
     this.object=new THREE.Object3D(); this.w=1;this.h=1;
     this.resizeObserver=new ResizeObserver(()=>{this.resize();});this.resizeObserver.observe(host);
     this.resize(); this.fitNetwork(); this.bind();
@@ -267,8 +267,10 @@ export class NetworkMap {
     if(!this.busMesh||this.busCapacity<buses.length){
       if(this.busMesh){for(const m of [this.busMesh,this.busNose]){this.scene.remove(m);m.dispose();m.geometry.dispose();m.material.dispose();}}
       this.busCapacity=Math.max(2048,buses.length*2);
-      this.busMesh=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({depthTest:false}),this.busCapacity);
-      this.busNose=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:'#ffffff',depthTest:false}),this.busCapacity);
+      // Transparentes aunque sean opacos: Three dibuja lo translúcido después de lo opaco, así que las
+      // troncales, que son translúcidas, quedaban encima de los buses sin importar su orden.
+      this.busMesh=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({depthTest:false,transparent:true}),this.busCapacity);
+      this.busNose=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:'#ffffff',depthTest:false,transparent:true}),this.busCapacity);
       this.busMesh.renderOrder=5;this.busNose.renderOrder=6;for(const m of [this.busMesh,this.busNose]){m.frustumCulled=false;m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);m.visible=true;this.scene.add(m);}
     }
     this.busSamples=[];let i=0;const color=new THREE.Color(),cells=new Map(),clusters=[];
