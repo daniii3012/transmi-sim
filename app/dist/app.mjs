@@ -78,7 +78,7 @@ try{
  worker.onmessage=({data:m})=>{
   if(m.generation!==generation)return;
   if(m.type==='error'){ready=false;$('#loading').hidden=true;$('#error').hidden=false;$('#error').textContent='No se pudo preparar el escenario: '+m.message;return;}
-  if(m.type==='ready'){ready=true;routeIds=m.routeIds;map.signalOffsets=m.signalOffsets;if(m.guideway)map.setGuideway(m.guideway);if(!map.buildingIndex)map.loadBuildings('./buildings/');pendingSample=true;$('#plan-journey').disabled=false;renderRoutes();}
+  if(m.type==='ready'){ready=true;routeIds=m.routeIds;map.signalOffsets=m.signalOffsets;if(m.guideway)map.setGuideway(m.guideway);if(!map.buildingIndex)map.loadBuildings('./buildings/').then(noteBuildings);pendingSample=true;$('#plan-journey').disabled=false;renderRoutes();}
   if(m.type==='building'){$('#loading').hidden=false;$('#loading').textContent='Preparando el día de servicio…';}
   if(m.type==='progress'){showProgress(m);if(m.frame&&(!settled||m.target-m.at>1800))map.acceptSimulation(buildSnap(m),false);}
   if(m.type==='state'){if(m.requestId!==sampleSequence)return;pendingSample=false;$('#loading').hidden=true;const next=buildSnap(m);const animate=settled&&!clock.paused&&!scrubbing&&next.serviceDate===snap.serviceDate&&m.time>=snap.time&&m.time-snap.time<clock.speed*.5;if(!settled){settled=true;if(activePanel==='depots')worker.postMessage({type:'depots',generation});requestOverview();}snap=next;map.acceptSimulation(snap,animate);updateUI();if(selection?.kind==='bus'&&!snap.buses.some(b=>b.id===selection.id))renderBus();}
@@ -447,6 +447,14 @@ try{
    :`Perfil horario de un solo día observado.`;
   $('#coverage').append(el('p',detalle,'muted'),el('p',`${fmt(Math.round(data.demand.matched_validations))} validaciones enlazadas por estación y hora en el día de semana medio. No equivalen a una matriz origen-destino.`,'muted'));
  }
+ // Geometría física: estaciones, carriles y edificios, con la cifra sacada del propio dato.
+ {
+  const layouts=data.station_layouts?.stations||[],mapped=layouts.filter(l=>l.areas.length||l.platforms.some(p=>p.role==='platform_trunk')).length,trunk=data.stations.filter(s=>s.kind!=='street').length;
+  if(layouts.length)$('#coverage').append(el('p',`Estaciones: ${fmt(mapped)} de ${fmt(trunk)} con andén o contorno publicado en OpenStreetMap; las demás se dibujan con vagones esquemáticos.`,'muted'));
+  const g=data.busway_geometry?.coverage;
+  if(g)$('#coverage').append(el('p',`Calzada exclusiva: ${fmt(Math.round(g.km_two_lanes))} km con dos carriles y ${fmt(Math.round(g.km_one_lane))} con uno, según el ancho de cada calzada en el Mapa de Referencia (IDECA, datos del IDU).`,'muted'));
+ }
+ function noteBuildings(){const b=map.buildingIndex;if(b?.coverage)$('#coverage').append(el('p',`Edificios de la vista 3D: ${fmt(b.coverage.buildings)} construcciones de Catastro (IDECA / UAECD) a 120 m de la calzada exclusiva, con su número de pisos.`,'muted'));}
  for(const r of data.routes.filter(r=>!r.ready)){const d=el('details');d.append(el('summary',r.code+' · '+r.name),el('p',r.issues.join(' ')));$('#pending-list').append(d);}
  for(const r of data.excluded||[]){const p=el('p',r.code+' · '+r.name+': '+r.reason,'muted');$('#pending-list').append(p);}
  let last=performance.now();document.addEventListener('visibilitychange',()=>{last=performance.now();});

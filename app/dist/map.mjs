@@ -358,7 +358,7 @@ export class NetworkMap {
   async loadBuildings(base){
     try{
       const r=await fetch(base+'index.json');if(!r.ok)return;const index=await r.json();
-      this.buildingIndex={base,size:index.method.tile_m,floor:index.method.floor_height_m||3,tiles:index.tiles.map(([x,y,count])=>({key:x+'_'+y,x,y,count}))};
+      this.buildingIndex={base,size:index.method.tile_m,floor:index.method.floor_height_m||3,coverage:index.coverage,source:index.source,tiles:index.tiles.map(([x,y,count])=>({key:x+'_'+y,x,y,count}))};
       this.buildingTiles=new Map();this.buildingLoading=0;
       this.buildingGroup=new THREE.Group();this.buildingGroup.visible=false;this.scene.add(this.buildingGroup);
       this.buildingMaterial=new THREE.MeshLambertMaterial({color:this.palette.building});
