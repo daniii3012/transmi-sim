@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260929.6';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.6';
+import {MetricPath} from './simulation.mjs?v=20260929.7';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.7';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260929.6';
+import {pieceShape} from './wagons.mjs?v=20260929.7';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -581,6 +581,7 @@ export class NetworkMap {
     const far=Math.max(0,this.mpp*2.2-2.5),close=this.mpp<1.2;
     for(const b of buses){
       if(filter!=='all'&&filter!==b.routeId)continue;
+      if(this.routeBusesOnly&&b.routeId!==this.routeBusesOnly)continue;
       const xy=[b.xy[0]+Math.sin(b.angle)*far,b.xy[1]-Math.cos(b.angle)*far];
       const screen=this.worldToScreen(xy);if(screen[0]<-40||screen[0]>this.w+40||screen[1]<-40||screen[1]>this.h+40)continue;
       if(this.mpp>10&&b.id!==this.selected?.id){const key=Math.floor(screen[0]/28)+':'+Math.floor(screen[1]/28),cell=cells.get(key);if(cell){cell.count++;continue;}const c={count:1,xy,screen};cells.set(key,c);clusters.push(c);}

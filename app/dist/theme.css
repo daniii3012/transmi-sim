@@ -122,3 +122,17 @@ body.metrics-in-panel #load-legend{grid-column:1/-1;flex-direction:row;align-ite
 /* Las secciones ya se nombran en la barra de arriba: sin antetítulo repetido. */
 .panel>.eyebrow,.panel-heading .eyebrow{display:none}
 @media(max-width:800px){.layers-panel{right:52px;top:0;width:min(260px,calc(100vw - 84px))}}
+/* Ficha plegada y desplegada con el mismo margen izquierdo: el distintivo de la ruta no se mueve. */
+@media(min-width:801px){body[data-detail=closed] #inspector{padding:16px 96px 16px 24px}}
+/* Línea de paradas con buses encima. */
+.stop-list{position:relative}
+.stop-list .timeline-dots{position:absolute;left:-7px;top:0;bottom:0;width:10px;pointer-events:none}
+.stop-list .dot{position:absolute;left:0;width:10px;height:10px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line-strong);transition:top .25s linear;pointer-events:auto;cursor:pointer}
+.stop-list .dot.mine{width:14px;height:14px;left:-2px;box-shadow:0 0 0 2px var(--accent)}
+.stop-list li.passed{opacity:.5}
+.stop-list li.next button{font-weight:700}
+.stop-list.compact li{padding-bottom:10px}
+details.bus-route{margin-top:14px;border:1px solid var(--line);border-radius:var(--radius-card);padding:0 14px 12px;background:var(--surface-2)}
+details.bus-route>summary{list-style:none;padding:12px 0;font-size:.82rem;font-weight:650;cursor:pointer}
+details.bus-route>summary::-webkit-details-marker{display:none}
+details.bus-route .stop-list{margin:4px 0 12px 12px}
