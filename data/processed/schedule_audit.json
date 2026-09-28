@@ -125,7 +125,9 @@
       "long": "P85 AV 68 Calle 9 || M85 Museo Nacional",
       "segments": 17,
       "loop_closing_seconds": null,
+      "first_segment": 0,
       "turn_segment": 7,
+      "turn_segments": 1,
       "turn_seconds": 64,
       "trips": 244,
       "halves": [
@@ -155,7 +157,9 @@
       "long": "P85 AV 68 Calle 9 || M85 Museo Nacional",
       "segments": 17,
       "loop_closing_seconds": null,
+      "first_segment": 0,
       "turn_segment": 7,
+      "turn_segments": 1,
       "turn_seconds": 51,
       "trips": 59,
       "halves": [
@@ -185,7 +189,9 @@
       "long": "M84 KR 7 CLL 73 || C84 Av. Suba K114 D",
       "segments": 15,
       "loop_closing_seconds": null,
+      "first_segment": 0,
       "turn_segment": 8,
+      "turn_segments": 1,
       "turn_seconds": 128,
       "trips": 453,
       "halves": [
@@ -215,7 +221,9 @@
       "long": "M86 KR 7 CLL 107A || K86 Portal ElDorado",
       "segments": 47,
       "loop_closing_seconds": 319,
+      "first_segment": 0,
       "turn_segment": 21,
+      "turn_segments": 1,
       "turn_seconds": 117,
       "trips": 498,
       "halves": [
@@ -245,7 +253,9 @@
       "long": "KR 7 CLL 107A || K86 Portal ElDorado",
       "segments": 47,
       "loop_closing_seconds": 269,
+      "first_segment": 0,
       "turn_segment": 21,
+      "turn_segments": 1,
       "turn_seconds": 99,
       "trips": 59,
       "halves": [
@@ -275,7 +285,9 @@
       "long": "F63 Pradera || Z63 Tibanica",
       "segments": 15,
       "loop_closing_seconds": null,
+      "first_segment": 0,
       "turn_segment": 7,
+      "turn_segments": 2,
       "turn_seconds": 946,
       "trips": 348,
       "halves": [
@@ -305,7 +317,9 @@
       "long": "M82 CLL134 KR 7 || L82  Portal 20 de Julio",
       "segments": 33,
       "loop_closing_seconds": null,
+      "first_segment": 0,
       "turn_segment": 16,
+      "turn_segments": 1,
       "turn_seconds": 74,
       "trips": 557,
       "halves": [
@@ -335,7 +349,9 @@
       "long": "CLL134 KR 7 || L82 Portal 20 de Julio",
       "segments": 33,
       "loop_closing_seconds": null,
+      "first_segment": 0,
       "turn_segment": 16,
+      "turn_segments": 1,
       "turn_seconds": 59,
       "trips": 71,
       "halves": [

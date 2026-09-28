@@ -243,8 +243,9 @@ test('El horario cubre la mayoría del catálogo y lo que falta queda declarado,
   assert.ok(combinadas.has(c.route_id),'un corte sale de un registro de vuelta completa');
   assert.equal(c.halves.length,2);
   assert.notEqual(c.halves[0].local_id,c.halves[1].local_id);
-  // tramos = los de la primera mitad + el giro + los de la segunda.
-  assert.equal(c.halves[0].segments+1+c.halves[1].segments,c.segments);
+  // tramos = los de antes de la primera mitad + la primera + el giro + la segunda. El giro es un
+  // tramo, salvo cuando una mitad local empieza una parada después que el paquete (FZ63).
+  assert.equal((c.first_segment??0)+c.halves[0].segments+(c.turn_segments??1)+c.halves[1].segments,c.segments);
   for(const h of c.halves)mitades.set(h.route_id,h);
  }
  for(const entrada of Object.values(horario.routes))for(const g of entrada.gtfs)
