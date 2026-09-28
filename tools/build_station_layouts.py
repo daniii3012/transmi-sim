@@ -148,6 +148,10 @@ def main() -> None:
     parser.add_argument("--raw-root", type=pathlib.Path, default=pathlib.Path("data/raw/station_layouts"))
     parser.add_argument("--output", type=pathlib.Path, default=pathlib.Path("data/curated/station_layouts.json"))
     parser.add_argument("--app-output", type=pathlib.Path, default=pathlib.Path("app/dist/station_layouts.json"))
+    # Una edición de OSM puede sacar las plataformas de la relación de una estación (le pasó a Portal
+    # Suba entre el 12 y el 28 de septiembre de 2026): con --keep, la estación conserva la geometría
+    # de la versión curada anterior si esa tenía más plataformas troncales, y lo declara.
+    parser.add_argument("--keep", type=pathlib.Path, help="versión curada anterior de la que conservar estaciones más completas")
     args = parser.parse_args()
     raw_path = args.raw or latest_raw(args.raw_root)
     raw = json.loads(raw_path.read_text())
@@ -282,6 +286,24 @@ def main() -> None:
             }
         )
 
+    kept: list[str] = []
+    previous_source = None
+    if args.keep and args.keep.exists():
+        previous = json.loads(args.keep.read_text())
+        previous_source = previous["source"]
+        before = {s["station_id"]: s for s in previous["stations"]}
+
+        def trunk(s):
+            return sum(1 for p in s["platforms"] if p.get("role") == "platform_trunk")
+
+        for i, s in enumerate(output_stations):
+            old = before.get(s["station_id"])
+            if not old:
+                continue
+            if trunk(old) > trunk(s) or (not s["platforms"] and not s["areas"] and (old["platforms"] or old["areas"])):
+                output_stations[i] = {**old, "source_snapshot": old.get("source_snapshot") or previous_source.get("raw_snapshot")}
+                kept.append(s["station_id"])
+
     document = {
         "schema_version": 1,
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -295,6 +317,11 @@ def main() -> None:
             "raw_sha256": raw_sha256,
             "license": "OpenStreetMap contributors, ODbL 1.0",
             "attribution": "© OpenStreetMap contributors",
+            **({"kept_from_previous": {
+                "stations": kept,
+                "snapshots": sorted({s.get("source_snapshot") for s in output_stations if s.get("source_snapshot")}),
+                "rule": "la versión anterior tenía más plataformas troncales que esta instantánea; cada estación conservada lleva source_snapshot",
+            }} if kept else {}),
         },
         "projection": {
             "origin_lon_lat": [-74.136, 4.63027],
@@ -304,7 +331,7 @@ def main() -> None:
         "scope": {
             "stations": list(raw_stations),
             "radius_m": raw.get("radius_m", 450),
-            "selection": "Portal Norte, Portal 80, Portal Sur, Portal Suba, Portal Américas, Portal El Dorado, Portal Tunal, Portal Usme, Portal 20 de Julio, Banderas, Ricaurte, Avenida Jiménez",
+            "selection": f"las {len(raw_stations)} estaciones de la instantánea (todas las de la red del simulador desde el 28 sep. 2026; antes, 40)",
             "limitations": [
                 "OSM may encode a platform as a node or open line; those features retain closed=false and are not inflated into invented polygons.",
                 "Station/building outlines are in areas and are never emitted as platforms unless OSM names/tags the member as a platform.",
@@ -318,7 +345,7 @@ def main() -> None:
     args.output.write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n")
     args.app_output.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(args.output, args.app_output)
-    print(json.dumps({"raw": str(raw_path), "output": str(args.output), "stations": len(output_stations), "platforms": sum(s["counts"]["platforms"] for s in output_stations)}, ensure_ascii=False))
+    print(json.dumps({"raw": str(raw_path), "output": str(args.output), "stations": len(output_stations), "platforms": sum(s["counts"]["platforms"] for s in output_stations), "kept": kept}, ensure_ascii=False))
 
 
 if __name__ == "__main__":

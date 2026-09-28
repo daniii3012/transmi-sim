@@ -73,7 +73,7 @@ escenarios: cada visita empieza en el momento actual.
 | Salidas y tiempos entre paradas | GTFS abierto de TRANSMILENIO S.A. | 115 de los 117 servicios utilizables despachan a las horas publicadas, 47.190 salidas |
 | **Tipo de bus y velocidad por trecho** | Lecturas de posición de la flota, desde el 12 de septiembre de 2026 | La etiqueta de flota de cada vehículo: 108 servicios resueltos. Y 113,8 km de corredor en cubetas de 100 m con su velocidad y su tiempo detenido |
 | Demanda de pasajeros | [Validaciones diarias SITP](https://datosabiertos.bogota.gov.co/dataset/validaciones-diarias-sitp) | 28.014.777 validaciones en 17 días; perfil por hora, estación y tipo de día |
-| Calzada, semáforos, estaciones | [OpenStreetMap](https://www.openstreetmap.org/copyright) · Overpass | 723 semáforos con evidencia y 40 estaciones con geometría |
+| Calzada, semáforos, estaciones | [OpenStreetMap](https://www.openstreetmap.org/copyright) · Overpass | 723 semáforos con evidencia y 109 estaciones con geometría (andén o contorno) |
 | Carriles de la calzada exclusiva | [Mapa de Referencia](https://datosabiertos.bogota.gov.co/dataset/mapa-de-referencia) · IDECA / UAECD | Ancho medido de cada calzada: 237 km con dos carriles y 72 con uno |
 | Andenes, separadores, construcciones | [Datos Abiertos Bogotá](https://datosabiertos.bogota.gov.co/) · IDECA | Contexto urbano fechado y con licencia por ficha |
 | Festivos | [Ley 51 de 1983](https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=4954) | Calendario colombiano con traslados al lunes y Pascua |
@@ -95,7 +95,7 @@ Cada pieza del simulador tuvo que demostrarse antes de entrar. Lo que se midió 
 | [¿Es agosto–septiembre representativo?](docs/DEMANDA_COMPARACION_MARZO_20260911.md) | Contraste con 15 días de marzo: factores por tipo de día estables y nivel 7,3 % más bajo, uniforme |
 | [Semáforos con evidencia](docs/SEMAFOROS_20260911.md) | De 2.588 nodos evaluados se aceptan 723, por pertenencia directa a la vía del bus; el resto no entra |
 | [Calzadas reales](docs/CALZADAS_20260911.md) | Se dibuja la calzada de OSM con los carriles publicados, en vez de suponerlos |
-| [Geometría de estaciones](docs/ESTACIONES_OSM_20260911.md) · [portales](docs/TODOS_LOS_PORTALES_20260911.md) | 40 estaciones con plataformas, cubiertas y vías internas documentadas objeto por objeto |
+| [Geometría de estaciones](docs/ESTACIONES_OSM_20260911.md) · [portales](docs/TODOS_LOS_PORTALES_20260911.md) | 109 de 151 estaciones con plataformas o contorno, cubiertas y vías internas; las demás, vagones esquemáticos |
 | [Verificación del catálogo](docs/RUTAS_VERIFICACION_20260912.md) | Los tableros de salida separan un servicio sin geometría de uno que dejó de existir |
 | [Registros pendientes](docs/PENDIENTES_20260911.md) | Por qué 20 registros siguen fuera y no se rellenan con líneas rectas |
 | [Colas y espacio](docs/COLAS_Y_ESPACIO_20260911.md) | Qué se puede medir de las lecturas de posición y qué no: su reloj está congelado y sus velocidades son ruido |

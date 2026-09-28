@@ -183,13 +183,18 @@ qué carpeta salió su detalle. Para volver atrás basta borrar el puntero.
 ### Cambia la ubicación o la geometría física de una estación o un portal
 
 ```sh
-python3 tools/fetch_station_layouts.py --radius-m 450
-../../work/venv/bin/python tools/build_station_layouts.py
+# descarga: herramienta fuera del repositorio, como todos los fetch_*
+python3 fetch_station_layouts.py --radius-m 450 --stations 151
+../../work/venv/bin/python tools/build_station_layouts.py --keep data/curated/station_layouts.json
 ```
 
-La lista de estaciones a consultar está en el diccionario `STATIONS` dentro de
-`fetch_station_layouts.py`, con su `station_id` y su coordenada. Para incluir una
-estación nueva se agrega ahí, con el identificador que usa `services.json`. La
+Desde el 28 sep. 2026 se consultan las 151 estaciones de la red (antes, 40). La
+descarga toma las estaciones de `services.json` por número de servicios, con su
+`station_id` y su coordenada. `--keep` conserva, estación por estación, la versión
+curada anterior cuando tenía más plataformas troncales que la instantánea nueva: una
+edición de OSM sacó de la relación de Portal Suba sus plataformas, y sin esto el
+portal habría perdido su geometría. Cada estación conservada lleva `source_snapshot`
+y la lista queda en `source.kept_from_previous`. La
 consulta filtra `public_transport=platform|stop_position|station|stop_area`, vías
 `highway=busway|service` y `railway=platform|service`, y acota las relaciones de
 estación por nombre para no arrastrar las del Metro.

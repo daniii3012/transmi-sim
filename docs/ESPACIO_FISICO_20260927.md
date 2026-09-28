@@ -164,8 +164,8 @@ nivel de demanda ±5 %. La misma fecha se repite igual; dos martes ya no.
 **Contra la operación observada** —los tiempos entre paradas medidos en las lecturas de la flota,
 `observed_times.json`—, un día laborable completo con carriles medidos: mediana 1,02, percentil 10
 0,91 y 90 1,15; ninguna hora fuera de 0,96–1,06. **Contra el horario publicado**, 0,88: los buses
-reales van más rápido de lo que publica el horario, que acolcha los tramos largos. Pico de 1.657 buses
-en servicio y 2.145 vehículos en el día, dentro de la flota real.
+reales van más rápido de lo que publica el horario, que acolcha los tramos largos. Pico de 1.666 buses
+en servicio y 2.118 vehículos en el día, dentro de la flota real.
 
 Antes de medir los carriles, con un solo carril donde OSM no decía otra cosa —la tabla que sigue—, la
 punta se alargaba entre 20 y 35 % sobre lo publicado por colas que en la calle no existen:
