@@ -1,8 +1,8 @@
-import {Operation} from './operation.mjs?v=20260929.1';
-import {JourneyPlanner} from './planner.mjs?v=20260929.1';
-import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260929.1';
-import {DAY,addDays} from './calendar.mjs?v=20260929.1';
-import * as stored from './checkpoints.mjs?v=20260929.1';
+import {Operation} from './operation.mjs?v=20260929.2';
+import {JourneyPlanner} from './planner.mjs?v=20260929.2';
+import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260929.2';
+import {DAY,addDays} from './calendar.mjs?v=20260929.2';
+import * as stored from './checkpoints.mjs?v=20260929.2';
 // El motor de espacio físico corre aquí. La página pide un instante —fecha y segundos desde la
 // medianoche anterior más un día, como hasta ahora— y el worker lo traduce a su día de servicio,
 // que va de las 03:00 a las 03:00: pasar la medianoche no reinicia nada, y cambiar de fecha solo
@@ -96,6 +96,7 @@ self.onmessage=({data:m})=>{
   const request={date:m.date||traffic.date,time:0};
   if(m.type==='station'){const s=traffic.stationStats(m.id);for(const u of s.upcoming)u.arrival=toPage(u.arrival,request);post({type:'station',generation,id:m.id,...s});}
   else if(m.type==='depots'){const d=traffic.depotStats();for(const x of d)if(Number.isFinite(x.next))x.next=toPage(x.next,request);post({type:'depots',generation,depots:d});}
+  else if(m.type==='crowd')post({type:'crowd',generation,stations:traffic.pressure(Infinity).map(s=>[s.id,s.waiting])});
   else if(m.type==='overview')post({type:'overview',generation,pressure:traffic.pressure(6),zones:traffic.zoneLoad()});
  }catch(error){console.error(error);post({type:m.type==='plan'?'plan-error':'error',generation,requestId:m.requestId,message:error.message});}
 };

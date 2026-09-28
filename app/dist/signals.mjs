@@ -1,4 +1,4 @@
-import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20260929.1';
+import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20260929.2';
 
 // Existence is sourced from OSM. These phases are explicitly scenario estimates.
 export const SIGNAL_CYCLE=Object.freeze({cycle:90,green:52,amber:3});
@@ -91,8 +91,17 @@ export function signalTravelAt(move,time){
 }
 /** Aplica las correcciones observadas en la calle (`field_corrections.json`) al catálogo de semáforos:
  * los que se retiran dejan de existir para el motor y para el mapa. Se puede llamar más de una vez. */
+/** Semáforos que solo detienen a quien gira en el cruce (`applies_to: 'turning'`): el recorrido que
+ * sigue derecho —menos de 30° de giro en los 150 m siguientes— no lo encuentra. */
+export function turningOnly(data,path,signals){
+ const only=new Set((data.field_corrections?.signals_removed||[]).filter(s=>s.applies_to==='turning').map(s=>s.id));if(!only.size)return signals;
+ return signals.filter(s=>{if(!only.has(s.id))return true;const a=path.sample(Math.max(0,s.at_m-20)).angle,b=path.sample(Math.min(path.length,s.at_m+150)).angle;let d=Math.abs(b-a)%(2*Math.PI);if(d>Math.PI)d=2*Math.PI-d;return d>30*Math.PI/180;});
+}
 export function applyFieldCorrections(data){
- const removed=new Set((data.field_corrections?.signals_removed||[]).map(s=>s.id));
+ const removed=new Set((data.field_corrections?.signals_removed||[]).filter(s=>!s.applies_to).map(s=>s.id));
+ for(const c of data.field_corrections?.stations_status||[]){const st=data.stations?.find(s=>s.id===c.id);if(st){st.status=c.status;st.status_note=c.reason;}}
+ // Paradas de calle que ningún servicio utilizable usa: restos de la C15 zonal en la Carrera 13 y 11.
+ if(data.routes&&data.stations){const used=new Set(data.routes.filter(r=>r.ready).flatMap(r=>r.stops.map(s=>s.station_id)));data.stations=data.stations.filter(s=>s.kind!=='street'||used.has(s.id));}
  if(removed.size&&data.busway_signals?.signals)data.busway_signals={...data.busway_signals,signals:data.busway_signals.signals.filter(s=>!removed.has(s.id))};
  return data;
 }

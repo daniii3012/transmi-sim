@@ -1,10 +1,10 @@
-import {mountShell} from './shell.mjs?v=20260929.1';
-import {NetworkMap} from './map.mjs?v=20260929.1';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260929.1';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260929.1';
-import {STATES} from './traffic.mjs?v=20260929.1';
-import {applyFieldCorrections} from './signals.mjs?v=20260929.1';
-import {registerSimulationTools} from './webmcp.mjs?v=20260929.1';
+import {mountShell} from './shell.mjs?v=20260929.2';
+import {NetworkMap} from './map.mjs?v=20260929.2';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260929.2';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260929.2';
+import {STATES} from './traffic.mjs?v=20260929.2';
+import {applyFieldCorrections} from './signals.mjs?v=20260929.2';
+import {registerSimulationTools} from './webmcp.mjs?v=20260929.2';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -46,15 +46,17 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260929.1',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260929.2',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260929.1',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260929.2',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
-  $('#view-title').textContent=config.selection.mode==='all'?'Toda la red':config.selection.mode==='route'?`${routeById.get(config.selection.route)?.code||''} · ${routeById.get(config.selection.route)?.name||''}`:'Troncales '+config.selection.zones.join(' · ');
+  // Con toda la red a la vista no hace falta rótulo: el mapa lo dice. Solo se nombra una selección.
+  $('.map-caption').hidden=config.selection.mode==='all';
+  $('#view-title').textContent=config.selection.mode==='all'?'':config.selection.mode==='route'?`${routeById.get(config.selection.route)?.code||''} · ${routeById.get(config.selection.route)?.name||''}`:'Troncales '+config.selection.zones.join(' · ');
   if(fit)fitSelection();
  }
  function fitSelection(){const r=routeById.get(focusedRoute);if(r?.points.length)map.fitPoints(r.points);else if(config.selection.mode==='zones'){const points=data.routes.filter(r=>map.routeSet.has(r.id)).flatMap(r=>r.points);if(points.length)map.fitPoints(points);}else map.fitNetwork();}
@@ -86,6 +88,7 @@ try{
   if(m.type==='station'&&selection?.kind==='station'&&selection.id===m.id)renderStation(m);
   if(m.type==='depots')renderDepots(m.depots);
   if(m.type==='overview')renderOverview(m);
+  if(m.type==='crowd'&&map.crowdEnabled)map.setCrowd(m.stations);
   if((m.type==='plan'||m.type==='plan-error')&&m.requestId===planSequence){$('#plan-journey').disabled=false;if(m.type==='plan')renderJourneys(m.result);else $('#journey-results').replaceChildren(el('p',m.message,'muted'));}
  };
  worker.onerror=e=>{$('#loading').hidden=true;$('#error').hidden=false;$('#error').textContent='No pudo iniciarse el motor: '+e.message;ready=false;};
@@ -271,6 +274,7 @@ try{
   demandCurves.set(kind,curve);return curve;
  }
  let overviewAt=0;
+ let crowdAt=0;function requestCrowd(){if(ready&&map.crowdEnabled){worker.postMessage({type:'crowd',generation});crowdAt=performance.now();}}
  function requestOverview(){if(ready&&viewMode==='all'){worker.postMessage({type:'overview',generation});overviewAt=performance.now();}}
  function renderOverview({pressure,zones}){
   const list=$('#pressure-list');list.replaceChildren();
@@ -423,12 +427,20 @@ try{
  $('#back').onclick=()=>jump(clock.time-900);$('#forward').onclick=()=>jump(clock.time+900);$('#pause').onclick=()=>{clock.paused=!clock.paused;syncControls();};
  $$('[data-speed]').forEach(b=>b.onclick=()=>{clock.speed=Number(b.dataset.speed);syncControls();});
  // Vista cenital o inclinada. La brújula gira con el mapa y, al tocarla, vuelve a mirar al norte.
- const syncView=()=>{const b=$('#view-toggle');b.textContent=map.is3D?'2D':'3D';b.setAttribute('aria-label',map.is3D?'Volver a la vista desde arriba':'Inclinar la vista en 3D');b.setAttribute('aria-pressed',String(map.is3D));};
+ const syncView=()=>{const b=$('#view-toggle');b.textContent=map.is3D?'2D':'3D';b.setAttribute('aria-label',map.is3D?'Volver a la vista desde arriba':'Inclinar la vista en 3D');b.title=b.getAttribute('aria-label');b.setAttribute('aria-pressed',String(map.is3D));$('#orbit').hidden=!map.is3D;};
+ // Girar e inclinar sin arrastrar: en escritorio el arrastre con botón derecho no se adivina.
+ for(const [id,db,dt] of [['#rotate-left',Math.PI/12,0],['#rotate-right',-Math.PI/12,0],['#tilt-up',0,.12],['#tilt-down',0,-.12]])$(id).onclick=()=>map.rotate(db,dt);
+ // Capas: un solo botón despliega las opciones visuales; los mandos del mapa quedan siempre a la vista.
+ $('#layers-toggle').onclick=e=>{e.stopPropagation();const open=$('#layers-panel').hidden;$('#layers-panel').hidden=!open;$('#layers-toggle').setAttribute('aria-expanded',String(open));};
+ document.addEventListener('click',e=>{if(!$('#layers-panel').hidden&&!$('#layers-panel').contains(e.target)&&e.target!==$('#layers-toggle')){$('#layers-panel').hidden=true;$('#layers-toggle').setAttribute('aria-expanded','false');}});
+ $('#buildings-toggle').onclick=()=>{const on=map.buildingsEnabled===false;map.buildingsEnabled=on;$('#buildings-toggle').setAttribute('aria-pressed',on);map.updateCamera();};
+ $('#crowd-toggle').onclick=()=>{const on=!map.crowdEnabled;map.crowdEnabled=on;$('#crowd-toggle').setAttribute('aria-pressed',on);if(on)requestCrowd();else map.setCrowd(null);};
+ for(const b of $$('.map-actions button'))if(!b.title)b.title=b.getAttribute('aria-label')||'';
  map.onView=syncView;syncView();
  $('#view-toggle').onclick=()=>{map.setView(map.is3D?'2d':'3d');setTimeout(syncView,700);};
  $('.north').onclick=()=>map.resetNorth();
  $('#zoom-in').onclick=()=>map.zoom(1/1.4);$('#zoom-out').onclick=()=>map.zoom(1.4);$('#fit').onclick=()=>{following=false;fitSelection();};$('#context-toggle').onclick=()=>{map.contextGroup.visible=!map.contextGroup.visible;$('#context-toggle').setAttribute('aria-pressed',map.contextGroup.visible);};$('#lanes-toggle').onclick=()=>{map.carriagewaysEnabled=map.carriagewaysEnabled===false;$('#lanes-toggle').setAttribute('aria-pressed',map.carriagewaysEnabled);if(map.carriagewayGroup)map.carriagewayGroup.visible=map.carriagewaysEnabled&&map.mpp<6;};
- $('#signals-toggle').onclick=()=>{const oculto=map.signalsEnabled;map.setSignals(!oculto);$('#signals-toggle').setAttribute('aria-pressed',oculto);$('#signals-toggle').classList.toggle('active',oculto);};
+ $('#signals-toggle').onclick=()=>{const on=!map.signalsEnabled;map.setSignals(on);$('#signals-toggle').setAttribute('aria-pressed',on);};
  $('#corridors-toggle').onclick=()=>{const faded=!map.corridorsFaded;map.setCorridorsFaded(faded);$('#corridors-toggle').setAttribute('aria-pressed',faded);$('#corridors-toggle').classList.toggle('active',faded);};map.onPan=()=>following=false;
  // Color por ocupación: pasajeros a bordo frente a la capacidad del bus, de verde a rojo.
  $('#load-toggle').onclick=()=>{const on=map.busColor!=='load';map.setBusColorMode(on?'load':'route');$('#load-toggle').setAttribute('aria-pressed',on);$('#load-toggle').classList.toggle('active',on);$('#load-legend').hidden=!on;};
@@ -468,7 +480,7 @@ try{
  function frame(now,manual=false){try{frameBody(now);}catch(error){console.error(error);}if(!manual)requestAnimationFrame(frame);}
  function frameBody(now){const dt=(now-last)/1000;last=now;if(!document.hidden||debug){if(ready&&settled&&!clock.paused&&!scrubbing&&document.activeElement!==$('#time')){clock.time+=dt*clock.speed;if(clock.time>=2*DAY)jump(clock.time);}if(now-lastSample>=50){sample();lastSample=now;}
   map.animateBuses(now);if(following&&selection?.kind==='bus'){const b=(map.visualBuses||snap.buses).find(b=>b.id===selection.id);if(b){map.follow(b.xy,dt);}}
-  map.render();if(now-lastUI>200){updateUI();renderNow();lastUI=now;}if(now-lastList>5000){if(activePanel==='routes'&&!$('#route-list').contains(document.activeElement))renderRoutes();if(activePanel==='depots'&&ready)worker.postMessage({type:'depots',generation});lastList=now;}
+  map.render();if(now-lastUI>200){updateUI();renderNow();lastUI=now;}if(map.crowdEnabled&&now-crowdAt>2000)requestCrowd();if(now-lastList>5000){if(activePanel==='routes'&&!$('#route-list').contains(document.activeElement))renderRoutes();if(activePanel==='depots'&&ready)worker.postMessage({type:'depots',generation});lastList=now;}
   if(now-lastInspect>1000){if(selection?.kind==='bus'){const focus=document.activeElement?.id;renderBus();if(focus==='follow')$('#follow')?.focus({preventScroll:true});}if(selection?.kind==='station'){if(ready&&!$('#inspector').contains(document.activeElement))worker.postMessage({type:'station',generation,id:selection.id});}lastInspect=now;}}
  }
  const dispose=registerSimulationTools(document.modelContext,{read:()=>({...snap.stats,date:config.date,paused:clock.paused,speed:clock.speed,selected:selection}),control:input=>{if('paused'in input)clock.paused=input.paused;if('speed'in input)clock.speed=input.speed;syncControls();}});

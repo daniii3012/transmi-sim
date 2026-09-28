@@ -78,3 +78,26 @@ details.why>p,details.why>a{margin:0 14px 12px;display:block;font-size:.76rem;li
 #load-legend[hidden]{display:none}
 #load-legend i{display:block;width:78px;height:7px;border-radius:999px;background:linear-gradient(90deg,hsl(119 72% 47%),hsl(60 72% 47%),hsl(0 72% 47%))}
 #load-legend span{font-size:.62rem;color:var(--muted);white-space:nowrap}
+
+/* Controles del mapa: navegación siempre a la vista, capas en un panel desplegable. */
+.map-actions{position:absolute}
+.orbit{display:flex;flex-direction:column;gap:8px}
+.orbit[hidden]{display:none}
+.layers-panel{position:absolute;right:56px;top:auto;width:240px;display:flex;flex-direction:column;gap:4px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow-pop);z-index:9}
+.layers-panel[hidden]{display:none}
+.layers-panel>strong{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:2px 6px 6px}
+.map-actions .layers-panel button{width:100%;min-height:38px;display:flex;align-items:center;gap:10px;justify-content:flex-start;padding:6px 10px;font-size:.82rem;box-shadow:none;border-color:transparent;text-align:left}
+.map-actions .layers-panel button i{font-style:normal;width:20px;text-align:center;color:var(--muted)}
+.map-actions .layers-panel button[aria-pressed=true]{background:var(--surface-2);border-color:var(--line-strong);font-weight:650}
+.map-actions .layers-panel button[aria-pressed=true] i{color:var(--accent)}
+/* Escritorio: panel izquierdo más ancho y la escala a la derecha, junto a la atribución. */
+@media(min-width:1101px){
+ #sidebar{width:360px}
+ .map-caption,#metrics,#loading{left:400px}
+ .map-bottom{left:400px}
+}
+.map-bottom{justify-content:flex-end}
+.map-bottom #scale{order:2}
+/* Listas de próximas llegadas y servicios: bordes iguales y aire entre filas. */
+#inspector li,#inspector .route-row{border:1px solid var(--line);border-radius:var(--radius-card);margin:0 0 8px;background:var(--surface)}
+#inspector ul,#inspector ol{padding:0;list-style:none}

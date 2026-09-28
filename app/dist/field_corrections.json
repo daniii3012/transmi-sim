@@ -5,8 +5,18 @@
   {
    "id": "osm-node-5631009101",
    "where": "NQS hacia el norte, cruce con la conexión a la Calle 26, después de la estación Av. El Dorado",
-   "reason": "Los buses que van al norte no tienen semáforo: hay doble calzada, por la izquierda giran los que van a la troncal de la Calle 26 y por la derecha siguen derecho. El semáforo solo detiene a los que vienen de norte a sur, para que los otros puedan girar.",
-   "observed": "2026-09-28"
+   "reason": "Los buses que siguen derecho hacia el norte no tienen semáforo: la calzada se abre en dos, por la izquierda esperan el semáforo los que giran hacia la troncal de la Calle 26 y por la derecha siguen los demás sin detenerse. El semáforo solo detiene a los que giran (y el del sentido sur, que es otro nodo).",
+   "observed": "2026-09-28",
+   "applies_to": "turning"
+  }
+ ],
+ "stations_status": [
+  {
+   "id": "5001",
+   "name": "Patio Bonito",
+   "status": "Operativa",
+   "since": "2026-09-19",
+   "reason": "Reabrió el 19 de septiembre de 2026 tras la ampliación de la Av. Ciudad de Cali (anuncio de la Alcaldía de Bogotá). El GTFS del 12 de septiembre todavía la trae cerrada y sin servicios: hasta un paquete nuevo, se muestra operativa pero ningún servicio simulado para ahí."
   }
  ]
 }

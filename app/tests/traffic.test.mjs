@@ -153,7 +153,9 @@ test('Cada servicio para en el vagón que publica el GTFS: en Mandalay el A est�
  assert.ok(placed/total>.9,`${placed} de ${total} paradas en su vagón del GTFS`);
 });
 
-test('Las correcciones en sitio retiran el semáforo de la NQS hacia el norte y dejan el del sentido sur',()=>{
- const {op}=build();const ids=new Set([...op.routes.values()].flatMap(r=>r.signals.map(s=>s.id)));
- assert.ok(!ids.has('osm-node-5631009101'));assert.ok(ids.has('osm-node-13252352390'));
+test('En la NQS hacia el norte el semáforo solo detiene a quien gira; el del sentido sur sigue',()=>{
+ const {op}=build();const has=(code,id)=>[...op.routes.values()].filter(r=>r.code===code).some(r=>r.signals.some(s=>s.id===id));
+ assert.ok(!has('4','osm-node-5631009101'),'el 4 sigue derecho hacia Universidad Nacional');
+ assert.ok([...op.routes.values()].some(r=>r.signals.some(s=>s.id==='osm-node-5631009101')),'algún servicio que gira sí lo encuentra');
+ assert.ok([...op.routes.values()].some(r=>r.signals.some(s=>s.id==='osm-node-13252352390')));
 });

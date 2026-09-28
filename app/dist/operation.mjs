@@ -1,11 +1,11 @@
-import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260929.1';
-import {vehicleSpec} from './vehicles.mjs?v=20260929.1';
-import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections} from './signals.mjs?v=20260929.1';
-import {travelTimeAtDistance} from './travel.mjs?v=20260929.1';
-import {generatedPassengers,alightFraction,demandBase} from './passengers.mjs?v=20260929.1';
-import {placeVisit} from './station-layouts.mjs?v=20260929.1';
-import {visitWagons} from './wagons.mjs?v=20260929.1';
-import {MetricPath} from './simulation.mjs?v=20260929.1';
+import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260929.2';
+import {vehicleSpec} from './vehicles.mjs?v=20260929.2';
+import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections,turningOnly} from './signals.mjs?v=20260929.2';
+import {travelTimeAtDistance} from './travel.mjs?v=20260929.2';
+import {generatedPassengers,alightFraction,demandBase} from './passengers.mjs?v=20260929.2';
+import {placeVisit} from './station-layouts.mjs?v=20260929.2';
+import {visitWagons} from './wagons.mjs?v=20260929.2';
+import {MetricPath} from './simulation.mjs?v=20260929.2';
 export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1,mode:'auto',cruiseKmh:60,streetKmh:50,acceleration:.8,braking:1.1,turnaround:240,variableDispatch:true,reinforcements:true,signals:true,beyondValidity:true,programmedDispatch:true,programmedRunning:true,observedRunning:true,
  // Espacio físico (traffic.mjs). Separación en marcha y parado, ciclo semafórico y atención son
  // decisiones de modelo, rotuladas como estimación; la variación diaria cambia de una fecha a otra
@@ -137,7 +137,7 @@ export class Operation {
   const picked=r=>this.selection.mode==='route'?r.id===this.selection.route:this.selection.mode==='zones'?(this.selection.zones||[]).some(z=>r.served_zones.includes(z)||r.zone===z):true;
   const fields=data.speed_profiles?.routes||{};
   for(const r of data.routes.filter(r=>r.ready&&picked(r)))this.routes.set(r.id,{...r,typeSource:vehicleSpec(r).typeSource,path:new MetricPath(r.points),field:routeField(fields[r.id])});
-  this.prepareDirections();for(const r of this.routes.values())r.signals=this.params.signals?matchSignals(r.path,data.busway_signals):[];this.motionCache=new Map();
+  this.prepareDirections();for(const r of this.routes.values())r.signals=this.params.signals?turningOnly(data,r.path,matchSignals(r.path,data.busway_signals)):[];this.motionCache=new Map();
   // Con `plan:true` solo se prepara lo que el motor de espacio físico necesita —vagones, semáforos,
   // reparto de la demanda y salidas—, sin precalcular cada viaje, que es lo caro.
   if(config.plan)return;

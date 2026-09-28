@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260929.1';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.1';
+import {MetricPath} from './simulation.mjs?v=20260929.2';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.2';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260929.1';
+import {pieceShape} from './wagons.mjs?v=20260929.2';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -13,8 +13,8 @@ const LANE=3.4,BUS_WIDTH=2.55,BUS_HEIGHT=3.25,CELL_M=5;
 const BODIES={12:[12],18.5:[10.9,7.3],27.2:[9.8,8.4,8.4]};
 const JOINT=.3;
 const PALETTE={
- light:{depot:'#dfe4e9',parked:'#c7343f',clear:'#edf1f4',park:'#d4e3d8',water:'#c5dce8',road:'#ffffff',waterLine:'#b6d5e4',bridge:'#c1cbd5',asphalt:'#c9d1d9',berth:'#bcc6cf',laneMark:'#ffffff',platform:'#f7f9fb',platformEdge:'#8a9dac',roof:'#9fb1c1',building:'#d9dfe5',stopInner:'#ffffff'},
- dark:{depot:'#1c2835',parked:'#a8323c',clear:'#131d28',park:'#1d3530',water:'#1d3547',road:'#2b3947',waterLine:'#35596c',bridge:'#607383',asphalt:'#26333f',berth:'#2f3e4c',laneMark:'#51647a',platform:'#51667a',platformEdge:'#8aa1b5',roof:'#6f879c',building:'#233140',stopInner:'#293746'},
+ light:{crowd:'#dc253b',depot:'#dfe4e9',parked:'#c7343f',clear:'#edf1f4',park:'#d4e3d8',water:'#c5dce8',road:'#ffffff',waterLine:'#b6d5e4',bridge:'#c1cbd5',asphalt:'#c9d1d9',berth:'#bcc6cf',laneMark:'#ffffff',platform:'#f7f9fb',platformEdge:'#8a9dac',roof:'#9fb1c1',building:'#d9dfe5',stopInner:'#ffffff'},
+ dark:{crowd:'#ef3b52',depot:'#1c2835',parked:'#a8323c',clear:'#131d28',park:'#1d3530',water:'#1d3547',road:'#2b3947',waterLine:'#35596c',bridge:'#607383',asphalt:'#26333f',berth:'#2f3e4c',laneMark:'#51647a',platform:'#51667a',platformEdge:'#8aa1b5',roof:'#6f879c',building:'#233140',stopInner:'#293746'},
 };
 
 // Una tesela de edificios: paredes y techo de cada huella extruida a sus pisos, en un solo
@@ -170,8 +170,10 @@ export class NetworkMap {
     if(this.stationRoofs)this.stationRoofs.visible=near<3&&this.is3D;
     if(this.infrastructureGroup)this.infrastructureGroup.visible=near<8;
     if(this.carriagewayGroup)this.carriagewayGroup.visible=this.carriagewaysEnabled!==false&&near<6&&!this.guidewayGroup;
-    if(this.guidewayGroup){this.guidewayGroup.visible=this.carriagewaysEnabled!==false&&near<5;if(this.laneMarks)this.laneMarks.visible=near<1.4;}
-    if(this.buildingGroup){this.buildingGroup.visible=this.is3D&&near<14;this.updateBuildingTiles();}
+    // Con la calzada a la vista, la línea de la troncal sobra: se muestra una u otra, igual en 2D y en
+    // 3D. El interruptor de la calzada manda en las dos vistas.
+    if(this.guidewayGroup){this.guidewayGroup.visible=this.carriagewaysEnabled!==false&&near<5;if(this.laneMarks)this.laneMarks.visible=near<1.4;for(const {mesh} of this.paths)mesh.visible=!this.guidewayGroup.visible;}
+    if(this.buildingGroup){this.buildingGroup.visible=this.buildingsEnabled!==false&&near<(this.is3D?14:6);this.updateBuildingTiles();}
     if(this.depotGroup){this.depotGroup.visible=near<10;if(this.depotBuses)this.depotBuses.visible=near<4;}
     if(labels)this.updateLabels();this.positionLabels();this.updateMarker();this.updateScale();
     if(this.lastSimulation)this.updateBuses(this.lastSimulation,'all',true);
@@ -337,14 +339,22 @@ export class NetworkMap {
         }
         // Puente: el canto del tablero a los dos lados. Deprimido: los muros hasta el nivel de la calle.
         if(za>.3||zb>.3)for(const [oa,ob] of [[-side*LANE/2,-side*LANE/2],[side*(LANE/2+wa),side*(LANE/2+wb)]])wall(a,b,na,nb,oa,ob,za,zb,Math.max(0,za-DECK),Math.max(0,zb-DECK));
-        if(za<-.3||zb<-.3)for(const [oa,ob] of [[-side*(LANE/2+.4),-side*(LANE/2+.4)],[side*(LANE/2+wa+.4),side*(LANE/2+wb+.4)]])wall(a,b,na,nb,oa,ob,za,zb,0,0);
       }
     }
     const add=(vertices,key,order,line=false)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));const m=line?new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:this.palette[key],depthTest:true,depthWrite:false})):new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette[key],depthTest:true,depthWrite:false,side:THREE.DoubleSide}));m.renderOrder=order;m.userData.key=key;this.guidewayGroup.add(m);return m;};
     // Calzada de TransMilenio que ningún recorrido usa (busway_context.json): la media glorieta de
     // Banderas, vías internas de portales, accesos a patios. Un carril, sin buses.
     const extra=[];
-    for(const piece of this.data.busway_context?.pieces||[]){const P=piece.points,N=P.map((p,j)=>{const a=P[Math.max(0,j-1)],b=P[Math.min(P.length-1,j+1)],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return [dy/l,-dx/l];});for(let j=1;j<P.length;j++)quad(extra,P[j-1],P[j],N[j-1],N[j],-LANE/2,LANE/2,-LANE/2,LANE/2,0,0);}
+    // Donde un trozo pasa por un puente de OSM (busway_structures.json) sube igual que la calzada del
+    // motor, con rampas de 7 %: así se ve, por ejemplo, el conector de la Av. 68 a la Calle 26.
+    const structs=(this.data.busway_structures?.structures||[]).filter(t=>t.kind==='bridge');
+    const levelAt=(p,ang)=>{for(const t of structs)for(let i=1;i<t.points.length;i++){const a=t.points[i-1],b=t.points[i],ex=b[0]-a[0],ey=b[1]-a[1],l2=ex*ex+ey*ey;if(!l2)continue;const u=((p[0]-a[0])*ex+(p[1]-a[1])*ey)/l2;if(u<0||u>1)continue;if(Math.hypot(p[0]-a[0]-u*ex,p[1]-a[1]-u*ey)>6)continue;if(Math.abs(Math.cos(ang)*ex+Math.sin(ang)*ey)/Math.sqrt(l2)<.8)continue;return t.layer*5.5;}return 0;};
+    for(const piece of this.data.busway_context?.pieces||[]){
+      const P=piece.points,N=P.map((p,j)=>{const a=P[Math.max(0,j-1)],b=P[Math.min(P.length-1,j+1)],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return [dy/l,-dx/l];});
+      let Z=P.map((p,j)=>piece.bridge?levelAt(p,Math.atan2(-N[j][0],N[j][1])):0);
+      if(Z.some(z=>z)){for(let j=1;j<Z.length;j++)Z[j]=Math.max(Z[j],Z[j-1]-.07*Math.hypot(P[j][0]-P[j-1][0],P[j][1]-P[j-1][1]));for(let j=Z.length-2;j>=0;j--)Z[j]=Math.max(Z[j],Z[j+1]-.07*Math.hypot(P[j][0]-P[j+1][0],P[j][1]-P[j+1][1]));}
+      for(let j=1;j<P.length;j++){quad(extra,P[j-1],P[j],N[j-1],N[j],-LANE/2,LANE/2,-LANE/2,LANE/2,Z[j-1],Z[j]);if(Z[j-1]>.3||Z[j]>.3)for(const o of [-LANE/2,LANE/2])wall(P[j-1],P[j],N[j-1],N[j],o,o,Z[j-1],Z[j],Math.max(0,Z[j-1]-DECK),Math.max(0,Z[j]-DECK));}
+    }
     add(main,'asphalt',.25);add(berth,'berth',.26);this.laneMarks=add(marks,'laneMark',.27,true);if(extra.length)add(extra,'asphalt',.24);
     if(walls.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(walls,3));g.computeVertexNormals();const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:this.palette.bridge,side:THREE.DoubleSide}));m.renderOrder=4.5;m.userData.key='bridge';this.guidewayGroup.add(m);}
     this.updateCamera();
@@ -377,6 +387,13 @@ export class NetworkMap {
     const capacity=this.depotSlots.reduce((s,d)=>s+d.slots.length,0),box=new THREE.BoxGeometry(1,1,1);box.translate(0,0,.5);
     this.depotBuses=new THREE.InstancedMesh(box,new THREE.MeshLambertMaterial({color:this.palette.parked}),Math.max(1,capacity));this.depotBuses.count=0;this.depotBuses.frustumCulled=false;this.depotBuses.userData.key='parked';this.depotBuses.renderOrder=5;this.depotGroup.add(this.depotBuses);
     this.depotCapacity=capacity;
+  }
+  /** Pasajeros esperando: un disco en el suelo de cada estación, de área proporcional a la gente. */
+  setCrowd(list){
+    if(!this.crowdMesh){const g=new THREE.CircleGeometry(1,40);this.crowdMesh=new THREE.InstancedMesh(g,new THREE.MeshBasicMaterial({color:this.palette.crowd,transparent:true,opacity:.35,depthTest:true,depthWrite:false}),400);this.crowdMesh.frustumCulled=false;this.crowdMesh.renderOrder=.3;this.crowdMesh.userData.key='crowd';this.scene.add(this.crowdMesh);}
+    const byId=new Map(this.data.stations.map(s=>[s.id,s]));let i=0;
+    for(const [id,waiting] of list||[]){const s=byId.get(id);if(!s||waiting<5||i>=400)continue;const r=Math.sqrt(waiting)*Math.max(1.6,this.mpp*.6);this.object.position.set(s.xy[0],s.xy[1],.1);this.object.rotation.set(0,0,0);this.object.scale.set(r,r,1);this.object.updateMatrix();this.crowdMesh.setMatrixAt(i++,this.object.matrix);}
+    this.crowdMesh.count=i;this.crowdMesh.instanceMatrix.needsUpdate=true;this.crowdMesh.visible=!!list;
   }
   /** Llena los patios con `idle` buses, repartidos según el área de cada uno. */
   updateDepotBuses(idle){
@@ -450,7 +467,7 @@ export class NetworkMap {
     }catch{}
   }
   updateBuildingTiles(){
-    const idx=this.buildingIndex;if(!idx||!this.is3D||this.mpp>=14)return;
+    const idx=this.buildingIndex;if(!idx||this.buildingsEnabled===false||this.mpp>=(this.is3D?14:6))return;
     const size=idx.size,[cx,cy]=this.target,reach=Math.min(3500,Math.max(900,this.distance*1.4)),want=[];
     for(const t of idx.tiles){const dx=Math.max(0,Math.abs(cx-(t.x+.5)*size)-size/2),dy=Math.max(0,Math.abs(cy-(t.y+.5)*size)-size/2),d=Math.hypot(dx,dy);if(d<reach)want.push([d,t]);}
     want.sort((a,b)=>a[0]-b[0]);
@@ -586,7 +603,7 @@ export class NetworkMap {
     const recolor=o=>{const key=o.userData?.key;if(key&&o.material&&this.palette[key])o.material.color.set(this.palette[key]);};
     for(const mesh of this.contextMeshes||[])recolor(mesh);
     this.stopInner.material.color.set(this.palette.stopInner);
-    this.stationGroup.traverse(recolor);this.stationRoofs.traverse(recolor);this.guidewayGroup?.traverse(recolor);this.buildingGroup?.traverse(recolor);this.depotGroup?.traverse(recolor);
+    this.stationGroup.traverse(recolor);this.stationRoofs.traverse(recolor);this.guidewayGroup?.traverse(recolor);this.buildingGroup?.traverse(recolor);this.depotGroup?.traverse(recolor);if(this.crowdMesh)recolor(this.crowdMesh);
     for(const mesh of (this.carriagewayGroup?.children||[]))mesh.material.color.set(mesh.userData.palette[this.dark?1:0]);
   }
   render(){this.renderer.render(this.scene,this.camera);}
