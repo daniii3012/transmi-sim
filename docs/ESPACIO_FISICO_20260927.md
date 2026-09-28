@@ -49,6 +49,16 @@ celdas de dos; donde OSM dice uno, el ancho medido dice dos en más de la mitad.
 El atributo de carriles de la malla vial no sirve: un mismo código de vía cubre segmentos con valores
 distintos.
 
+**Puentes y deprimidos.** OSM corta la calzada de TransMilenio donde empieza y termina cada puente y
+cada deprimido y los etiqueta (`tools/build_busway_structures.py`, `busway_structures.json`: 68 y 68).
+En un puente queda un carril por sentido salvo que OSM publique otra cosa, así que los dos sentidos se
+angostan en el mismo punto —en el puente al oriente de Mandalay el ancho medido los cortaba a 150 m
+uno del otro—. Un `layer` sin `bridge` ni `tunnel` no cuenta: suele estar solo para que dos vías no
+se crucen en el mapa. La vista 3D sube 5,5 m por nivel, con rampas de 7 % fuera de la estructura, y
+lleva a los buses a esa altura; el segundo carril se abre y se cierra en 30 m en vez de en escalón.
+Se descartan además los tramos sueltos: dos carriles en menos de 40 m entre tramos de uno, o un
+carril en menos de 15 m entre tramos de dos, fuera de puentes.
+
 Además, dos carriles en cada estación: el que sigue de largo y el del andén, desde 70 m antes del
 primer punto de atención hasta 60 m después del último, uniendo los de todos los servicios que paran
 ahí. El carril del andén queda a la izquierda en la troncal —el andén está en el separador— y a la

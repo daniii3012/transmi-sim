@@ -1,8 +1,8 @@
-import {Operation} from './operation.mjs?v=20260928.6';
-import {JourneyPlanner} from './planner.mjs?v=20260928.6';
-import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260928.6';
-import {DAY,addDays} from './calendar.mjs?v=20260928.6';
-import * as stored from './checkpoints.mjs?v=20260928.6';
+import {Operation} from './operation.mjs?v=20260928.7';
+import {JourneyPlanner} from './planner.mjs?v=20260928.7';
+import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260928.7';
+import {DAY,addDays} from './calendar.mjs?v=20260928.7';
+import * as stored from './checkpoints.mjs?v=20260928.7';
 // El motor de espacio físico corre aquí. La página pide un instante —fecha y segundos desde la
 // medianoche anterior más un día, como hasta ahora— y el worker lo traduce a su día de servicio,
 // que va de las 03:00 a las 03:00: pasar la medianoche no reinicia nada, y cambiar de fecha solo
@@ -75,13 +75,15 @@ self.onmessage=({data:m})=>{
  try{
   if(m.type==='init'){
    generation=m.generation;traffic=null;planner=null;target=null;loading=false;
-   const start=performance.now();op=new Operation(m.data,{...m.config,plan:true});guide=new Guideway([...op.routes.values()],{lanes:m.data.busway_lanes,geometry:m.data.busway_geometry});
+   const start=performance.now();op=new Operation(m.data,{...m.config,plan:true});guide=new Guideway([...op.routes.values()],{lanes:m.data.busway_lanes,geometry:m.data.busway_geometry,structures:m.data.busway_structures});
    // Los desfases semafóricos coordinados se calculan una vez y viajan a la página, que dibuja las
    // luces con los mismos.
    const probe=new Traffic(op,guide,m.date);
    post({type:'ready',generation,buildMs:performance.now()-start,routeIds:[...op.routes.keys()],guide:guide.summary,signalOffsets:Object.fromEntries(op.signalOffsets.map),
     // La calzada sobre la que ruedan los buses, para dibujarla con sus carriles.
-    guideway:guide.links.map(l=>({points:l.points,lanes:l.lanes,station:l.station,street:l.street,bridge:l.bridge||null}))});
+    guideway:guide.links.map(l=>({points:l.points,lanes:l.lanes,station:l.station,street:l.street,level:l.level.some(v=>v)?l.level:null,z:l.z.some(v=>v)?l.z:null})),
+    // Por servicio, qué tramos recorre y desde qué abscisa: con eso el mapa sabe a qué altura va cada bus.
+    routeLinks:Object.fromEntries([...guide.routeMaps].map(([id,m])=>[id,{links:m.links,starts:m.starts}]))});
    traffic=probe;
    if(m.time!=null){target={date:m.date,time:m.time,requestId:0,service:serviceOf(m.date,m.time)};schedule();}
    return;

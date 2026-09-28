@@ -1,12 +1,12 @@
-import {MetricPath} from './simulation.mjs?v=20260928.6';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260928.6';
+import {MetricPath} from './simulation.mjs?v=20260928.7';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260928.7';
 import * as THREE from './vendor/three.module.js';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
 // cámara es el punto que mira, la distancia, la inclinación desde la vertical y el rumbo.
 const FOV=35,TAN=Math.tan(FOV/2*Math.PI/180),TILT_3D=56*Math.PI/180,MAX_TILT=72*Math.PI/180;
-const LANE=3.4,BUS_WIDTH=2.55,BUS_HEIGHT=3.25;
+const LANE=3.4,BUS_WIDTH=2.55,BUS_HEIGHT=3.25,CELL_M=5;
 // Cuerpos de cada tipo de bus, del frente hacia atrás: el articulado dobla en una rótula y el
 // biarticulado en dos. Así los volúmenes siguen la curva en vez de atravesarla.
 const BODIES={12:[12],18.5:[10.9,7.3],27.2:[9.8,8.4,8.4]};
@@ -266,7 +266,12 @@ export class NetworkMap {
   rebuildHighlight(){
     const ids=this.routeId==null?[]:[this.routeId].flat();
     const routes=this.journey||this.data.routes.filter(r=>ids.includes(r.id)&&r.ready),focused=!!ids.length||!!this.journey?.length,mpp=this.builtMpp||this.mpp;
-    const vertices=[],colors=[];for(const r of routes){const color=new THREE.Color(r.color),width=mpp<1.6?Math.max(1.4,mpp*2.4):Math.max(4,mpp*(focused?5:2.1));for(let i=1;i<r.points.length;i++){const [x,y]=r.points[i-1],[a,b]=r.points[i],len=Math.hypot(a-x,b-y);if(!len)continue;const dx=-(b-y)/len*width/2,dy=(a-x)/len*width/2;vertices.push(x+dx,y+dy,0,x-dx,y-dy,0,a+dx,b+dy,0,a+dx,b+dy,0,x-dx,y-dy,0,a-dx,b-dy,0);for(let j=0;j<6;j++)colors.push(color.r,color.g,color.b);}}
+    const vertices=[],colors=[];for(const r of routes){const color=new THREE.Color(r.color),width=mpp<1.6?Math.max(1.4,mpp*2.4):Math.max(4,mpp*(focused?5:2.1));
+      // Con la altura de la calzada a mano, el recorrido se remuestrea cada 8 m y sube y baja con los
+      // puentes y deprimidos; si no, va por los vértices publicados, a ras de suelo.
+      const path=this.routeLinks?.[r.id]&&this.metricPaths?.get(r.id);let P=r.points,Z=null;
+      if(path){P=[];Z=[];for(let at=0;;at=Math.min(path.length,at+8)){P.push(path.sample(at).xy);Z.push(this.elevationAt(r.id,at)+.05);if(at>=path.length)break;}}
+      for(let i=1;i<P.length;i++){const [x,y]=P[i-1],[a,b]=P[i],len=Math.hypot(a-x,b-y);if(!len)continue;const z0=Z?Z[i-1]:0,z1=Z?Z[i]:0,dx=-(b-y)/len*width/2,dy=(a-x)/len*width/2;vertices.push(x+dx,y+dy,z0,x-dx,y-dy,z0,a+dx,b+dy,z1,a+dx,b+dy,z1,x-dx,y-dy,z0,a-dx,b-dy,z1);for(let j=0;j<6;j++)colors.push(color.r,color.g,color.b);}}
     this.highlight.geometry.dispose();this.highlight.geometry=new THREE.BufferGeometry();this.highlight.geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));this.highlight.geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));this.highlight.material.vertexColors=true;this.highlight.material.color.set('#ffffff');this.highlight.material.needsUpdate=true;
     this.highlight.material.opacity=this.subtleRoute?.62:.98;for(const {mesh} of this.paths)mesh.material.opacity=this.corridorsFaded?.07:focused?(this.subtleRoute?.24:.3):.86;
     for(const line of this.streetGroup.children)line.material.opacity=this.corridorsFaded?.08:.65;
@@ -297,30 +302,54 @@ export class NetworkMap {
   /** La calzada que usa el motor: cada tramo con su carril que sigue de largo y, donde lo hay, el del
    * andén, del lado del separador en la troncal y de la acera en calle. Es la geometría exacta sobre
    * la que ruedan los buses, así que de cerca se ven en su carril. */
-  setGuideway(links){
+  // La calzada de TransMilenio con sus carriles, muestreada cada 5 m: el segundo carril se abre y se
+  // cierra en 30 m en vez de en escalón, y los puentes y deprimidos de OSM suben o bajan la calzada
+  // con sus rampas (la altura la calcula el motor, Guideway.elevate). `routeLinks` dice qué tramos
+  // recorre cada servicio, para poner a cada bus a la altura de la calzada por la que va.
+  setGuideway(links,routeLinks=null){
     if(this.guidewayGroup){this.scene.remove(this.guidewayGroup);this.guidewayGroup.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
     this.guidewayGroup=new THREE.Group();this.scene.add(this.guidewayGroup);
-    const main=[],berth=[],marks=[],CELL=5;
-    const quad=(target,a,b,na,nb,o1,o2)=>{target.push(a[0]+na[0]*o1,a[1]+na[1]*o1,0,a[0]+na[0]*o2,a[1]+na[1]*o2,0,b[0]+nb[0]*o1,b[1]+nb[1]*o1,0,b[0]+nb[0]*o1,b[1]+nb[1]*o1,0,a[0]+na[0]*o2,a[1]+na[1]*o2,0,b[0]+nb[0]*o2,b[1]+nb[1]*o2,0);};
+    this.guideLinks=links;this.routeLinks=routeLinks;if(routeLinks)this.rebuildHighlight();
+    const main=[],berth=[],marks=[],walls=[],STEP=5,TAPER=30,DECK=1.1;
+    const quad=(t,a,b,na,nb,o1a,o2a,o1b,o2b,za,zb)=>{t.push(a[0]+na[0]*o1a,a[1]+na[1]*o1a,za,a[0]+na[0]*o2a,a[1]+na[1]*o2a,za,b[0]+nb[0]*o1b,b[1]+nb[1]*o1b,zb,b[0]+nb[0]*o1b,b[1]+nb[1]*o1b,zb,a[0]+na[0]*o2a,a[1]+na[1]*o2a,za,b[0]+nb[0]*o2b,b[1]+nb[1]*o2b,zb);};
+    const wall=(a,b,na,nb,oa,ob,za,zb,ha,hb)=>{const A=[a[0]+na[0]*oa,a[1]+na[1]*oa],B=[b[0]+nb[0]*ob,b[1]+nb[1]*ob];walls.push(A[0],A[1],za,B[0],B[1],zb,A[0],A[1],ha,A[0],A[1],ha,B[0],B[1],zb,B[0],B[1],hb);};
     for(const link of links){
       const pts=link.points,cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));
-      const side=link.street?1:-1;
-      // Normal hacia la derecha de la marcha en cada vértice, promediada para que las juntas cierren.
-      const normal=pts.map((p,i)=>{const a=pts[Math.max(0,i-1)],b=pts[Math.min(pts.length-1,i+1)],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return [dy/l,-dx/l];});
-      for(let i=1;i<pts.length;i++){
-        const a=pts[i-1],b=pts[i],na=normal[i-1],nb=normal[i];
-        quad(main,a,b,na,nb,-LANE/2,LANE/2);
-        const c=Math.min(link.lanes.length-1,Math.floor((cum[i-1]+cum[i])/2/CELL));
-        if(link.lanes[c]===2){
-          const o1=side*LANE/2,o2=side*LANE*1.5;quad(berth,a,b,na,nb,Math.min(o1,o2),Math.max(o1,o2));
-          // Raya entre los dos carriles, a trazos.
-          const segs=Math.max(1,Math.floor((cum[i]-cum[i-1])/6));for(let k=0;k<segs;k+=2){const t0=k/segs,t1=Math.min(1,(k+1)/segs),x0=a[0]+(b[0]-a[0])*t0,y0=a[1]+(b[1]-a[1])*t0,x1=a[0]+(b[0]-a[0])*t1,y1=a[1]+(b[1]-a[1])*t1,o=side*LANE/2;marks.push(x0+na[0]*o,y0+na[1]*o,0,x1+nb[0]*o,y1+nb[1]*o,0);}
+      const length=cum.at(-1),n=Math.max(1,Math.ceil(length/STEP)),side=link.street?1:-1,P=[],Z=[],W=[];
+      let seg=1;
+      for(let j=0;j<=n;j++){
+        const at=Math.min(length,j*STEP);while(seg<pts.length-1&&cum[seg]<at)seg++;
+        const a=pts[seg-1],b=pts[seg],f=(at-cum[seg-1])/((cum[seg]-cum[seg-1])||1),c=Math.min(link.lanes.length-1,Math.floor(Math.min(at,length-.01)/CELL_M));
+        P.push([a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]);Z.push(link.z?link.z[c]:0);W.push(link.lanes[c]===2?1:0);
+      }
+      const d=STEP/TAPER;for(let j=1;j<W.length;j++)W[j]=Math.min(W[j],W[j-1]+d);for(let j=W.length-2;j>=0;j--)W[j]=Math.min(W[j],W[j+1]+d);
+      // Normal hacia la derecha de la marcha, de la cuerda entre las muestras vecinas: las juntas cierran.
+      const N=P.map((p,j)=>{const a=P[Math.max(0,j-1)],b=P[Math.min(P.length-1,j+1)],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return [dy/l,-dx/l];});
+      for(let j=1;j<P.length;j++){
+        const a=P[j-1],b=P[j],na=N[j-1],nb=N[j],za=Z[j-1],zb=Z[j];
+        quad(main,a,b,na,nb,-LANE/2,LANE/2,-LANE/2,LANE/2,za,zb);
+        const wa=W[j-1]*LANE,wb=W[j]*LANE;
+        if(wa>.01||wb>.01){
+          quad(berth,a,b,na,nb,side*LANE/2,side*(LANE/2+wa),side*LANE/2,side*(LANE/2+wb),za+.01,zb+.01);
+          if(W[j-1]>.95&&W[j]>.95&&j%2){const o=side*LANE/2;marks.push(a[0]+na[0]*o,a[1]+na[1]*o,za+.02,b[0]+nb[0]*o,b[1]+nb[1]*o,zb+.02);}
         }
+        // Puente: el canto del tablero a los dos lados. Deprimido: los muros hasta el nivel de la calle.
+        if(za>.3||zb>.3)for(const [oa,ob] of [[-side*LANE/2,-side*LANE/2],[side*(LANE/2+wa),side*(LANE/2+wb)]])wall(a,b,na,nb,oa,ob,za,zb,Math.max(0,za-DECK),Math.max(0,zb-DECK));
+        if(za<-.3||zb<-.3)for(const [oa,ob] of [[-side*(LANE/2+.4),-side*(LANE/2+.4)],[side*(LANE/2+wa+.4),side*(LANE/2+wb+.4)]])wall(a,b,na,nb,oa,ob,za,zb,0,0);
       }
     }
-    const add=(vertices,key,order,line=false)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));const m=line?new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:this.palette[key],depthTest:true,depthWrite:false})):new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette[key],depthTest:true,depthWrite:false}));m.renderOrder=order;m.userData.key=key;this.guidewayGroup.add(m);return m;};
+    const add=(vertices,key,order,line=false)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));const m=line?new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:this.palette[key],depthTest:true,depthWrite:false})):new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette[key],depthTest:true,depthWrite:false,side:THREE.DoubleSide}));m.renderOrder=order;m.userData.key=key;this.guidewayGroup.add(m);return m;};
     add(main,'asphalt',.25);add(berth,'berth',.26);this.laneMarks=add(marks,'laneMark',.27,true);
+    if(walls.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(walls,3));g.computeVertexNormals();const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:this.palette.bridge,side:THREE.DoubleSide}));m.renderOrder=4.5;m.userData.key='bridge';this.guidewayGroup.add(m);}
     this.updateCamera();
+  }
+  /** Altura de la calzada bajo un punto del recorrido de un servicio, en metros (0 sin puente). */
+  elevationAt(routeId,s){
+    const rl=this.routeLinks?.[routeId];if(!rl)return 0;const starts=rl.starts;let lo=0,hi=rl.links.length-1;
+    while(lo<hi){const mid=(lo+hi+1)>>1;if(starts[mid]<=s)lo=mid;else hi=mid-1;}
+    const link=this.guideLinks[rl.links[lo]];if(!link?.z)return 0;
+    const x=Math.max(0,(s-starts[lo])/CELL_M-.5),c=Math.min(link.z.length-1,Math.floor(x)),f=Math.min(1,x-c);
+    return link.z[c]+(link.z[Math.min(link.z.length-1,c+1)]-link.z[c])*f;
   }
   buildStationGeometry(){
     // Plataformas y cubiertas de OSM en relieve bajo; de arriba se leen como antes, inclinado se ve
@@ -453,11 +482,13 @@ export class NetworkMap {
       let back=0;
       for(let k=0;k<bodies.length;k++){
         const body=bodies[k];let px=xy[0],py=xy[1],ang=b.angle;
-        if(path){const center=b.s+len/2-back-body/2,pose=path.sample(center);ang=pose.angle;px=pose.xy[0]+Math.sin(ang)*b.lat;py=pose.xy[1]-Math.cos(ang)*b.lat;}
-        this.object.position.set(px,py,0);this.object.rotation.set(0,0,ang);this.object.scale.set(body-(bodies.length>1?JOINT:0),width,height);this.object.updateMatrix();
+        let pz=0;
+        if(path){const center=b.s+len/2-back-body/2,pose=path.sample(center);ang=pose.angle;px=pose.xy[0]+Math.sin(ang)*b.lat;py=pose.xy[1]-Math.cos(ang)*b.lat;pz=this.elevationAt(b.routeId,center);}
+        else if(this.routeLinks)pz=this.elevationAt(b.routeId,b.s);
+        this.object.position.set(px,py,pz);this.object.rotation.set(0,0,ang);this.object.scale.set(body-(bodies.length>1?JOINT:0),width,height);this.object.updateMatrix();
         this.busMesh.setMatrixAt(i,this.object.matrix);this.busMesh.setColorAt(i,color);i++;
-        if(k===0){this.object.position.set(px+Math.cos(ang)*(body/2-.45),py+Math.sin(ang)*(body/2-.45),height*.35);this.object.scale.set(.8,width*1.01,height*.5);this.object.updateMatrix();this.busNose.setMatrixAt(nose++,this.object.matrix);}
-        if(k>0){const jx=px+Math.cos(ang)*(body/2),jy=py+Math.sin(ang)*(body/2);this.object.position.set(jx,jy,.25);this.object.rotation.set(0,0,ang);this.object.scale.set(JOINT+.5,width*.86,height*.82);this.object.updateMatrix();this.busJoint.setMatrixAt(joint++,this.object.matrix);}
+        if(k===0){this.object.position.set(px+Math.cos(ang)*(body/2-.45),py+Math.sin(ang)*(body/2-.45),pz+height*.35);this.object.scale.set(.8,width*1.01,height*.5);this.object.updateMatrix();this.busNose.setMatrixAt(nose++,this.object.matrix);}
+        if(k>0){const jx=px+Math.cos(ang)*(body/2),jy=py+Math.sin(ang)*(body/2);this.object.position.set(jx,jy,pz+.25);this.object.rotation.set(0,0,ang);this.object.scale.set(JOINT+.5,width*.86,height*.82);this.object.updateMatrix();this.busJoint.setMatrixAt(joint++,this.object.matrix);}
         back+=body+JOINT;
       }
     }

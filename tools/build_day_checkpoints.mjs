@@ -30,11 +30,11 @@ const out=new URL(arg('out','app/dist/checkpoints')+'/',ROOT);
 // Los datos, armados igual que en app.mjs antes de pasarlos al worker.
 const read=f=>JSON.parse(fs.readFileSync(new URL(f,DIST)));
 const data=read('services.json');
-for(const [k,f] of [['schedule','schedule.json'],['speed_profiles','speed_profiles.json'],['busway_geometry','busway_geometry.json'],['wagon_stops','wagon_stops.json'],['field_corrections','field_corrections.json'],['od_profiles','od_profiles.json'],['busway_signals','busway_signals.json'],['busway_lanes','busway_lanes.json'],['station_layouts','station_layouts.json'],['station_wagons','station_wagons.json']])data[k]=read(f);
+for(const [k,f] of [['schedule','schedule.json'],['speed_profiles','speed_profiles.json'],['busway_geometry','busway_geometry.json'],['wagon_stops','wagon_stops.json'],['field_corrections','field_corrections.json'],['od_profiles','od_profiles.json'],['busway_structures','busway_structures.json'],['busway_signals','busway_signals.json'],['busway_lanes','busway_lanes.json'],['station_layouts','station_layouts.json'],['station_wagons','station_wagons.json']])data[k]=read(f);
 data.demand=read('demand.json');{const profiles=new Map(data.demand.profiles.map(p=>[p.station_id,p]));for(const s of data.stations){const p=profiles.get(s.id);if(p)s.demand_profile=p;}}
 const config={date:from,params:{...DEFAULTS},selection:{mode:'all'}};
 const op=new Operation(data,{...config,plan:true});
-const guide=new Guideway([...op.routes.values()],{lanes:data.busway_lanes,geometry:data.busway_geometry});
+const guide=new Guideway([...op.routes.values()],{lanes:data.busway_lanes,geometry:data.busway_geometry,structures:data.busway_structures});
 
 // Un día de servicio por llave: la primera fecha en que aparece.
 const scenarios=new Map();

@@ -193,6 +193,16 @@ juego de puertas, con coordenadas) y, en `stop_times`, en cuál para cada viaje.
 secuencia de paradas de vagón en `wagon_stops.json`. Se rehace con cada GTFS nuevo, después de
 `build_schedule.py`, que es el que empareja las rutas.
 
+### Puentes y deprimidos de la calzada
+
+```sh
+# descarga de OSM fuera del repositorio: vías de TransMilenio con bridge, tunnel o layer
+../../work/venv/bin/python tools/build_busway_structures.py
+```
+
+Toma la instantánea más reciente de `data/raw/busway_structures/` y guarda cada puente o deprimido
+con su nivel y sus carriles, proyectado, en `busway_structures.json`.
+
 ### Correcciones observadas en la calle
 
 `data/curated/field_corrections.json` (y su copia en `app/dist`) guarda lo que se observó en sitio y

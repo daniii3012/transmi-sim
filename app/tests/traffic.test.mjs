@@ -8,10 +8,10 @@ import {signalClusters,signalPhase} from '../dist/signals.mjs';
 const read=f=>JSON.parse(fs.readFileSync(new URL('../dist/'+f,import.meta.url)));
 const data=read('services.json');
 const demand=read('demand.json');const profiles=new Map(demand.profiles.map(p=>[p.station_id,p]));for(const s of data.stations)s.demand_profile=profiles.get(s.id);
-for(const [k,f] of [['busway_signals','busway_signals.json'],['station_layouts','station_layouts.json'],['station_wagons','station_wagons.json'],['schedule','schedule.json'],['speed_profiles','speed_profiles.json'],['busway_lanes','busway_lanes.json'],['busway_geometry','busway_geometry.json'],['wagon_stops','wagon_stops.json'],['field_corrections','field_corrections.json'],['od_profiles','od_profiles.json']])data[k]=read(f);
+for(const [k,f] of [['busway_signals','busway_signals.json'],['station_layouts','station_layouts.json'],['station_wagons','station_wagons.json'],['schedule','schedule.json'],['speed_profiles','speed_profiles.json'],['busway_lanes','busway_lanes.json'],['busway_geometry','busway_geometry.json'],['wagon_stops','wagon_stops.json'],['field_corrections','field_corrections.json'],['od_profiles','od_profiles.json'],['busway_structures','busway_structures.json']])data[k]=read(f);
 
 const WEEKDAY='2026-09-24';
-function build(config={},date=WEEKDAY){const op=new Operation(data,{date,plan:true,...config});const guide=new Guideway([...op.routes.values()],{lanes:data.busway_lanes,geometry:data.busway_geometry});return {op,guide,traffic:new Traffic(op,guide,date)};}
+function build(config={},date=WEEKDAY){const op=new Operation(data,{date,plan:true,...config});const guide=new Guideway([...op.routes.values()],{lanes:data.busway_lanes,geometry:data.busway_geometry,structures:data.busway_structures});return {op,guide,traffic:new Traffic(op,guide,date)};}
 // Troncal Caracas sur y sus alimentaciones: bastante tráfico para que haya colas, pocos servicios
 // para que las pruebas no tarden lo que tarda la red entera.
 const SMALL={selection:{mode:'zones',zones:['H']}};

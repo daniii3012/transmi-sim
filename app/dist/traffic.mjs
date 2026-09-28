@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260928.6';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260928.6';
-import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260928.6';
-import {hash,programmedSpeed} from './operation.mjs?v=20260928.6';
-import {vehicleSpec} from './vehicles.mjs?v=20260928.6';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260928.7';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260928.7';
+import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260928.7';
+import {hash,programmedSpeed} from './operation.mjs?v=20260928.7';
+import {vehicleSpec} from './vehicles.mjs?v=20260928.7';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -65,7 +65,7 @@ function curveCap(path,pos){
  * un vértice que los dos recorridos publican.
  */
 export class Guideway{
- constructor(routes,{lanes=null,geometry=null}={}){
+ constructor(routes,{lanes=null,geometry=null,structures=null}={}){
   this.links=[];this.routeMaps=new Map();
   const nodeOf=new Map(),xy=[],seq=[];
   for(const r of routes){
@@ -91,7 +91,24 @@ export class Guideway{
    this.routeMaps.set(r.id,{links:Int32Array.from(links),starts:Float64Array.from(starts)});
   }
   for(const map of this.routeMaps.values())for(let k=1;k<map.links.length;k++){this.links[map.links[k-1]].next.add(map.links[k]);this.links[map.links[k]].prev.add(map.links[k-1]);}
-  this.assignLanes(routes,lanes,geometry);
+  this.assignLanes(routes,lanes,geometry,structures);
+ }
+ /** Altura de la calzada en cada celda, para la vista 3D: un puente sube 5,5 m por nivel y un
+  * deprimido baja lo mismo, con rampas de 7 % fuera de la estructura que cruzan de un tramo al
+  * siguiente. No cambia nada del movimiento. */
+ elevate(){
+  const H=5.5,G=.07*CELL,L=this.links;
+  for(const link of L){link.up=Float32Array.from(link.level,v=>v>0?v*H:0);link.down=Float32Array.from(link.level,v=>v<0?v*H:0);}
+  for(let it=0;it<30;it++){let changed=false;
+   for(const link of L){const u=link.up,d=link.down,n=u.length;
+    for(const P of link.prev){const p=L[P],pu=p.up[p.up.length-1],pd=p.down[p.down.length-1];if(pu-G>u[0]+1e-3){u[0]=pu-G;changed=true;}if(pd+G<d[0]-1e-3){d[0]=pd+G;changed=true;}}
+    for(const N of link.next){const q=L[N],qu=q.up[0],qd=q.down[0];if(qu-G>u[n-1]+1e-3){u[n-1]=qu-G;changed=true;}if(qd+G<d[n-1]-1e-3){d[n-1]=qd+G;changed=true;}}
+    for(let c=1;c<n;c++){if(u[c-1]-G>u[c]){u[c]=u[c-1]-G;changed=true;}if(d[c-1]+G<d[c]){d[c]=d[c-1]+G;changed=true;}}
+    for(let c=n-2;c>=0;c--){if(u[c+1]-G>u[c]){u[c]=u[c+1]-G;changed=true;}if(d[c+1]+G<d[c]){d[c]=d[c+1]+G;changed=true;}}
+   }
+   if(!changed)break;
+  }
+  for(const link of L){link.z=new Float32Array(link.up.length);for(let c=0;c<link.z.length;c++)link.z[c]=Math.max(0,link.up[c])+Math.min(0,link.down[c]);delete link.up;delete link.down;}
  }
  makeLink(nodes,xy){
   const points=nodes.map(i=>xy[i]),cum=new Float64Array(points.length);
@@ -115,8 +132,8 @@ export class Guideway{
  // uno donde no —no se deduce—, y dos en cada estación: el de atención junto al andén y el de paso,
  // que es la abstracción autorizada del proyecto y lo que se ve en cualquier estación troncal. En
  // calle mixta el bus tiene siempre un carril para adelantar a otro detenido en un paradero.
- assignLanes(routes,lanes,geometry=null){
-  for(const link of this.links){link.lanes=new Uint8Array(Math.ceil(link.length/CELL)+1).fill(1);link.station=new Uint8Array(link.lanes.length);link.osm=new Uint8Array(link.lanes.length);}
+ assignLanes(routes,lanes,geometry=null,structures=null){
+  for(const link of this.links){const n=Math.ceil(link.length/CELL)+1;link.lanes=new Uint8Array(n).fill(1);link.station=new Uint8Array(n);link.osm=new Uint8Array(n);link.level=new Int8Array(n);}
   // Carriles medidos: el ancho de la calzada del IDU, cada 5 m de cada arista, en la misma clave de
   // vértices que la red (tools/build_busway_geometry.py). Mandan sobre la etiqueta de OSM, que
   // queda para donde la calzada no tiene polígono; y si no hay ninguna de las dos, un carril.
@@ -161,6 +178,38 @@ export class Guideway{
     if(link.street)link.lanes[c]=2;
    }
   }
+  // Puentes y deprimidos de OSM (busway_structures.json): la vía más cercana, paralela y en el mismo
+  // sentido. Un puente de la troncal tiene un carril por sentido salvo que OSM diga otra cosa.
+  if(structures?.structures?.length){
+   const S=structures.structures,sgrid=new Map(),SG=40;
+   S.forEach((w,wi)=>{for(let i=1;i<w.points.length;i++){const a=w.points[i-1],b=w.points[i],steps=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/SG));for(let q=0;q<=steps;q++){const x=a[0]+(b[0]-a[0])*q/steps,y=a[1]+(b[1]-a[1])*q/steps,key=Math.floor(x/SG)+':'+Math.floor(y/SG),list=sgrid.get(key)||[];if(!list.some(e=>e[0]===wi&&e[1]===i))list.push([wi,i]);sgrid.set(key,list);}}});
+   for(const link of this.links){
+    if(link.street)continue;
+    for(let c=0;c<link.lanes.length;c++){
+     const {xy,angle}=this.sampleLink(link,Math.min(link.length,c*CELL+CELL/2)),gx=Math.floor(xy[0]/SG),gy=Math.floor(xy[1]/SG);let best=null,bestD=7;
+     for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(const [wi,i] of sgrid.get((gx+dx)+':'+(gy+dy))||[]){
+      const w=S[wi],a=w.points[i-1],b=w.points[i],ex=b[0]-a[0],ey=b[1]-a[1],l2=ex*ex+ey*ey;if(!l2)continue;
+      const u=((xy[0]-a[0])*ex+(xy[1]-a[1])*ey)/l2;if(u<-.02||u>1.02)continue;
+      const d=Math.hypot(xy[0]-a[0]-u*ex,xy[1]-a[1]-u*ey);if(d>=bestD)continue;
+      const dot=(Math.cos(angle)*ex+Math.sin(angle)*ey)/Math.sqrt(l2);if(Math.abs(dot)<.85||w.oneway&&dot<0)continue;
+      best=w;bestD=d;
+     }
+     if(!best)continue;
+     link.level[c]=best.layer;
+     const per=best.lanes?(best.oneway?best.lanes:Math.max(1,Math.floor(best.lanes/2))):null;
+     if(best.kind==='bridge')link.lanes[c]=Math.min(2,per||1);else if(per)link.lanes[c]=Math.min(2,per);
+    }
+   }
+  }
+  // Tramos sueltos: un segundo carril de menos de 40 m entre tramos de uno es una muestra del ancho
+  // en un cruce, no un carril que un bus pueda usar; y un carril único de menos de 15 m entre dos de
+  // dos, fuera de un puente, es un hueco del polígono. Solo dentro del tramo, sin tocar sus extremos.
+  const runs=(arr,fn)=>{for(let c=0;c<arr.length;){let e=c;while(e+1<arr.length&&arr[e+1]===arr[c])e++;fn(c,e,arr[c]);c=e+1;}};
+  for(const link of this.links){
+   if(link.street)continue;const L=link.lanes,B=link.level;
+   runs(L,(a,b,v)=>{if(v===1&&a>0&&b<L.length-1&&(b-a+1)*CELL<15&&!B.subarray(a,b+1).some(x=>x>0))L.fill(2,a,b+1);});
+   runs(L,(a,b,v)=>{if(v===2&&a>0&&b<L.length-1&&(b-a+1)*CELL<40)L.fill(1,a,b+1);});
+  }
   // Zonas de estación: desde 70 m antes del primer punto de atención hasta 60 m después del último,
   // uniendo los de todos los servicios que paran ahí. Si la aproximación empieza en el tramo
   // anterior, se extiende hacia atrás por el propio recorrido.
@@ -180,6 +229,7 @@ export class Guideway{
   // si no, se cierra antes del final. Así cada cierre cae dentro de un tramo y es un punto concreto
   // que los buses de los dos carriles se turnan, en cremallera, igual que un empalme.
   for(const link of this.links){const n=link.lanes.length;if(link.lanes[n-1]===2&&(!link.next.size||[...link.next].some(L=>this.links[L].lanes[0]!==2)))link.lanes[n-1]=1;}
+  this.elevate();
   this.pointBase=this.nodeCount;let points=0;
   for(const link of this.links){
    const n=link.lanes.length;link.twoEnd=new Float32Array(n);link.endId=new Int32Array(n).fill(-1);link.twoRuns=link.lanes[n-1]===2;
