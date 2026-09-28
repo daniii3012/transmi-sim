@@ -1,8 +1,8 @@
-import {Operation} from './operation.mjs?v=20260928.4';
-import {JourneyPlanner} from './planner.mjs?v=20260928.4';
-import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260928.4';
-import {DAY,addDays} from './calendar.mjs?v=20260928.4';
-import * as stored from './checkpoints.mjs?v=20260928.4';
+import {Operation} from './operation.mjs?v=20260928.5';
+import {JourneyPlanner} from './planner.mjs?v=20260928.5';
+import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260928.5';
+import {DAY,addDays} from './calendar.mjs?v=20260928.5';
+import * as stored from './checkpoints.mjs?v=20260928.5';
 // El motor de espacio físico corre aquí. La página pide un instante —fecha y segundos desde la
 // medianoche anterior más un día, como hasta ahora— y el worker lo traduce a su día de servicio,
 // que va de las 03:00 a las 03:00: pasar la medianoche no reinicia nada, y cambiar de fecha solo
@@ -20,7 +20,7 @@ const SAVE_EVERY=3600,WORTH=1200;// guardar cada hora; cargar si ahorra al menos
 function lookup(){const key=traffic.scenarioKey();if(!scenarios.has(key))scenarios.set(key,stored.available(key).catch(()=>null).then(()=>true));return scenarios.get(key);}
 // Punto de control guardado que conviene cargar antes de simular hasta `goal`, o -1.
 function shortcut(goal){
- let from=traffic.t<=goal+.5?traffic.t:-Infinity;for(const cp of traffic.checkpoints.values())if(cp.t<=goal+1e-9&&cp.t>from)from=cp.t;
+ let from=traffic.t<=goal+traffic.dt?traffic.t:-Infinity;for(const cp of traffic.checkpoints.values())if(cp.t<=goal+1e-9&&cp.t>from)from=cp.t;
  return stored.best(traffic.scenarioKey(),goal,from+WORTH);
 }
 function persist(){

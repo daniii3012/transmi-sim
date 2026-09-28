@@ -134,3 +134,10 @@ test('Las teselas de edificios se leen enteras y caen donde dice su índice',()=
  }
  assert.ok(total>5000&&index.coverage.buildings>50000);
 });
+
+test('Pedir un instante dentro del último paso no restaura un punto de control',()=>{
+ const t=build(SMALL).traffic;t.seek(7*3600+40*60+.05);const at=t.t;let restored=0;const restore=t.restore.bind(t);t.restore=cp=>{restored++;return restore(cp);};
+ for(const dt of [.1,.2,.3,.6,.9,1.05,1.4])t.seek(7*3600+40*60+dt);
+ assert.equal(restored,0,'avanzar a 1× nunca vuelve atrás');assert.ok(t.t>=at);
+ t.seek(7*3600+35*60);assert.equal(restored,1,'retroceder de verdad sí restaura');
+});

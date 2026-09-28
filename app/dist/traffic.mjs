@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260928.4';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260928.4';
-import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260928.4';
-import {hash,programmedSpeed} from './operation.mjs?v=20260928.4';
-import {vehicleSpec} from './vehicles.mjs?v=20260928.4';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260928.5';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260928.5';
+import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260928.5';
+import {hash,programmedSpeed} from './operation.mjs?v=20260928.5';
+import {vehicleSpec} from './vehicles.mjs?v=20260928.5';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -417,7 +417,10 @@ export class Traffic{
   // Hacia atrás se restaura el punto de control anterior; hacia adelante también, si ya hay uno
   // guardado más cerca: volver a las 18:00 después de ir a las 7:00 no repite las once horas.
   let best=null;for(const cp of this.checkpoints.values())if(cp.t<=target+1e-9&&(!best||cp.t>best.t))best=cp;
-  if(target<this.t-this.dt*.5||best&&best.t>this.t+this.dt*.5)this.restore(best);
+  // Un instante dentro del último paso no es retroceder: `frame` lo dibuja interpolando entre la
+  // posición anterior y la actual. Tomarlo como retroceso restauraba el punto de control de hasta
+  // 15 min antes y volvía a simular en casi cada petición a 1×.
+  if(target<this.t-this.dt-1e-9||best&&best.t>this.t+this.dt*.5)this.restore(best);
   const start=performance.now();let steps=0;
   while(this.t<target-1e-9){this.step();if((++steps&63)===0&&performance.now()-start>budget)return false;}
   return true;

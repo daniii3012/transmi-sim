@@ -1,5 +1,5 @@
-import {MetricPath} from './simulation.mjs?v=20260928.4';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260928.4';
+import {MetricPath} from './simulation.mjs?v=20260928.5';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260928.5';
 import * as THREE from './vendor/three.module.js';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
