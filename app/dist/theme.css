@@ -121,3 +121,4 @@ body.metrics-in-panel #load-legend{grid-column:1/-1;flex-direction:row;align-ite
 .combo-list li.active,.combo-list li:hover{background:var(--surface-2)}
 /* Las secciones ya se nombran en la barra de arriba: sin antetítulo repetido. */
 .panel>.eyebrow,.panel-heading .eyebrow{display:none}
+@media(max-width:800px){.layers-panel{right:52px;top:0;width:min(260px,calc(100vw - 84px))}}

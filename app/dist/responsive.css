@@ -46,7 +46,7 @@ body[data-theme=dark] #sidebar,body[data-theme=dark] #inspector,body[data-theme=
  #route-list{display:block}.route-row{min-height:62px}.zone-grid{grid-template-columns:repeat(4,1fr)}
  .map-caption{top:15px;left:16px;right:74px;max-width:none}.map-caption strong{font-size:.85rem}.map-caption span{font-size:.55rem}
  .map-actions{top:12px;right:12px;gap:6px}.map-actions button{width:40px;min-height:40px}
- #context-toggle,#lanes-toggle,#signals-toggle,#corridors-toggle{display:none}
+
  #metrics{left:12px;right:auto;top:66px;bottom:auto;max-width:calc(100% - 80px);padding:8px 0;overflow:hidden}
  #metrics>div{min-width:0;padding:0 10px}#metrics strong{font-size:.98rem}#metrics span{font-size:.58rem}
  .map-bottom,.map-bottom small{font-size:.5rem}
