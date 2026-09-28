@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260929.11';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.11';
+import {MetricPath} from './simulation.mjs?v=20260929.12';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.12';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260929.11';
+import {pieceShape} from './wagons.mjs?v=20260929.12';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -48,6 +48,40 @@ function fillet(P,reach=15){
   }
   out.push(P.at(-1));
   return out;
+}
+
+// Estructura de un puente sobre una franja de calzada: losa con su cara de abajo y sus cantos,
+// barandas New Jersey a los dos lados, columnas con viga cabezal cada `span` metros donde el tablero
+// va alto y, donde va bajo (las rampas), muro de contención hasta el suelo. P son los puntos, N la
+// normal a la derecha, L y R los bordes (metros sobre N) y Z la altura de la calzada en cada punto.
+function bridgeParts(out,P,N,L,R,Z,{deck=1.1,parapet=.9,span=24}={}){
+  const tri=(...v)=>out.push(...v);
+  const quad=(a,b,c,d)=>tri(...a,...b,...c,...c,...b,...d);
+  const at=(j,o,z)=>[P[j][0]+N[j][0]*o,P[j][1]+N[j][1]*o,z];
+  let run=0;
+  for(let j=1;j<P.length;j++){
+    const za=Z[j-1],zb=Z[j],len=Math.hypot(P[j][0]-P[j-1][0],P[j][1]-P[j-1][1]);
+    if(!(za>.3||zb>.3)||!len){run+=len;continue;}
+    const ua=za-deck,ub=zb-deck,open=ua>1.2&&ub>1.2;
+    const da=open?ua:0,db=open?ub:0;
+    for(const [oa,ob] of [[L[j-1],L[j]],[R[j-1],R[j]]]){
+      quad(at(j-1,oa,za),at(j,ob,zb),at(j-1,oa,Math.max(0,da)),at(j,ob,Math.max(0,db)));
+      quad(at(j-1,oa,za+parapet),at(j,ob,zb+parapet),at(j-1,oa,za),at(j,ob,zb));
+    }
+    if(open)quad(at(j-1,L[j-1],ua),at(j,L[j],ub),at(j-1,R[j-1],ua),at(j,R[j],ub));
+    // Columnas: una en el centro o, si el tablero es ancho, una cerca de cada borde.
+    for(let s=(span-run%span)%span;s<=len;s+=span){
+      const f=s/len,z=za+(zb-za)*f-deck;if(z<2)continue;
+      const x=P[j-1][0]+(P[j][0]-P[j-1][0])*f,y=P[j-1][1]+(P[j][1]-P[j-1][1])*f,nx=N[j][0],ny=N[j][1],tx=ny,ty=-nx;
+      const l=L[j-1]+(L[j]-L[j-1])*f,r=R[j-1]+(R[j]-R[j-1])*f,w=r-l;
+      const box=(o0,o1,t,z0,z1)=>{const c=[[o0,-t],[o1,-t],[o1,t],[o0,t]].map(([o,q])=>[x+nx*o+tx*q,y+ny*o+ty*q]);
+        for(let k=0;k<4;k++){const A=c[k],B=c[(k+1)%4];quad([...A,z1],[...B,z1],[...A,z0],[...B,z0]);}
+        quad([...c[0],z0],[...c[1],z0],[...c[3],z0],[...c[2],z0]);};
+      for(const o of w>9?[l+2,r-2]:[(l+r)/2])box(o-.55,o+.55,.55,0,z-.7);
+      box(l+.4,r-.4,.6,z-.7,z);
+    }
+    run+=len;
+  }
 }
 
 export class NetworkMap {
@@ -337,7 +371,7 @@ export class NetworkMap {
     if(this.guidewayGroup){this.scene.remove(this.guidewayGroup);this.guidewayGroup.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
     this.guidewayGroup=new THREE.Group();this.scene.add(this.guidewayGroup);
     this.guideLinks=links;this.routeLinks=routeLinks;if(routeLinks)this.rebuildHighlight();
-    const main=[],berth=[],marks=[],walls=[],STEP=5,TAPER=30,DECK=1.1;
+    const main=[],berth=[],marks=[],walls=[],structure=[],STEP=5,TAPER=30,DECK=1.1;
     const quad=(t,a,b,na,nb,o1a,o2a,o1b,o2b,za,zb)=>{t.push(a[0]+na[0]*o1a,a[1]+na[1]*o1a,za,a[0]+na[0]*o2a,a[1]+na[1]*o2a,za,b[0]+nb[0]*o1b,b[1]+nb[1]*o1b,zb,b[0]+nb[0]*o1b,b[1]+nb[1]*o1b,zb,a[0]+na[0]*o2a,a[1]+na[1]*o2a,za,b[0]+nb[0]*o2b,b[1]+nb[1]*o2b,zb);};
     const wall=(a,b,na,nb,oa,ob,za,zb,ha,hb)=>{const A=[a[0]+na[0]*oa,a[1]+na[1]*oa],B=[b[0]+nb[0]*ob,b[1]+nb[1]*ob];walls.push(A[0],A[1],za,B[0],B[1],zb,A[0],A[1],ha,A[0],A[1],ha,B[0],B[1],zb,B[0],B[1],hb);};
     for(const link of links){
@@ -360,9 +394,10 @@ export class NetworkMap {
           quad(berth,a,b,na,nb,side*LANE/2,side*(LANE/2+wa),side*LANE/2,side*(LANE/2+wb),za+.01,zb+.01);
           if(W[j-1]>.95&&W[j]>.95&&j%2){const o=side*LANE/2;marks.push(a[0]+na[0]*o,a[1]+na[1]*o,za+.02,b[0]+nb[0]*o,b[1]+nb[1]*o,zb+.02);}
         }
-        // Puente: el canto del tablero a los dos lados. Deprimido: los muros hasta el nivel de la calle.
-        if(za>.3||zb>.3)for(const [oa,ob] of [[-side*LANE/2,-side*LANE/2],[side*(LANE/2+wa),side*(LANE/2+wb)]])wall(a,b,na,nb,oa,ob,za,zb,Math.max(0,za-DECK),Math.max(0,zb-DECK));
+        // Deprimido: los muros hasta el nivel de la calle. Los puentes van enteros, más abajo.
+        if(za<-.3||zb<-.3)for(const [oa,ob] of [[-side*LANE/2,-side*LANE/2],[side*(LANE/2+wa),side*(LANE/2+wb)]])wall(a,b,na,nb,oa,ob,za,zb,Math.max(0,za-DECK),Math.max(0,zb-DECK));
       }
+      if(Z.some(z=>z>.3)){const E1=W.map(()=>-side*LANE/2),E2=W.map(w=>side*(LANE/2+w*LANE));bridgeParts(structure,P,N,E1.map((e,j)=>Math.min(e,E2[j])),E1.map((e,j)=>Math.max(e,E2[j])),Z,{deck:DECK});}
     }
     const add=(vertices,key,order,line=false)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));const m=line?new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:this.palette[key],depthTest:true,depthWrite:false})):new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette[key],depthTest:true,depthWrite:false,side:THREE.DoubleSide}));m.renderOrder=order;m.userData.key=key;this.guidewayGroup.add(m);return m;};
     // Calzada de TransMilenio que ningún recorrido usa (busway_context.json): la media glorieta de
@@ -376,10 +411,12 @@ export class NetworkMap {
       const P=piece.points,N=P.map((p,j)=>{const a=P[Math.max(0,j-1)],b=P[Math.min(P.length-1,j+1)],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return [dy/l,-dx/l];});
       let Z=P.map((p,j)=>piece.bridge?levelAt(p,Math.atan2(-N[j][0],N[j][1])):0);
       if(Z.some(z=>z)){for(let j=1;j<Z.length;j++)Z[j]=Math.max(Z[j],Z[j-1]-.07*Math.hypot(P[j][0]-P[j-1][0],P[j][1]-P[j-1][1]));for(let j=Z.length-2;j>=0;j--)Z[j]=Math.max(Z[j],Z[j+1]-.07*Math.hypot(P[j][0]-P[j+1][0],P[j][1]-P[j+1][1]));}
-      for(let j=1;j<P.length;j++){quad(extra,P[j-1],P[j],N[j-1],N[j],-LANE/2,LANE/2,-LANE/2,LANE/2,Z[j-1],Z[j]);if(Z[j-1]>.3||Z[j]>.3)for(const o of [-LANE/2,LANE/2])wall(P[j-1],P[j],N[j-1],N[j],o,o,Z[j-1],Z[j],Math.max(0,Z[j-1]-DECK),Math.max(0,Z[j]-DECK));}
+      for(let j=1;j<P.length;j++)quad(extra,P[j-1],P[j],N[j-1],N[j],-LANE/2,LANE/2,-LANE/2,LANE/2,Z[j-1],Z[j]);
+      if(Z.some(z=>z>.3))bridgeParts(structure,P,N,P.map(()=>-LANE/2),P.map(()=>LANE/2),Z,{deck:DECK});
     }
     add(main,'asphalt',.25);add(berth,'berth',.26);this.laneMarks=add(marks,'laneMark',.27,true);if(extra.length)add(extra,'asphalt',.24);
     if(walls.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(walls,3));g.computeVertexNormals();const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:this.palette.bridge,side:THREE.DoubleSide}));m.renderOrder=4.5;m.userData.key='bridge';this.guidewayGroup.add(m);}
+    if(structure.length)this.guidewayGroup.add(this.structureMesh(structure));
     this.updateCamera();
   }
   /** Altura de la calzada bajo un punto del recorrido de un servicio, en metros (0 sin puente). */
@@ -562,12 +599,20 @@ export class NetworkMap {
       const L=cum.at(-1),H=f.bridge?Math.max(1,Number(f.layer)||1)*5.5:0,ramp=Math.min(60,L/3),z=s=>H?H*Math.min(1,s/ramp,(L-s)/ramp):0;
       for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],len=cum[i]-cum[i-1];if(!len)continue;const nx=-(b[1]-a[1])/len*W,ny=(b[0]-a[0])/len*W,za=z(cum[i-1]),zb=z(cum[i]);
         bands.push(a[0]+nx,a[1]+ny,za,a[0]-nx,a[1]-ny,za,b[0]+nx,b[1]+ny,zb,b[0]+nx,b[1]+ny,zb,a[0]-nx,a[1]-ny,za,b[0]-nx,b[1]-ny,zb);
-        if(H)for(const sd of [1,-1])decks.push(a[0]+nx*sd,a[1]+ny*sd,za,b[0]+nx*sd,b[1]+ny*sd,zb,a[0]+nx*sd,a[1]+ny*sd,Math.max(0,za-1.1),a[0]+nx*sd,a[1]+ny*sd,Math.max(0,za-1.1),b[0]+nx*sd,b[1]+ny*sd,zb,b[0]+nx*sd,b[1]+ny*sd,Math.max(0,zb-1.1));}
+      }
+      if(H){const N=P.map((p,j)=>{const a=P[Math.max(0,j-1)],b=P[Math.min(P.length-1,j+1)],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return [-dy/l,dx/l];});bridgeParts(decks,P,N,P.map(()=>-W),P.map(()=>W),cum.map(z));}
     }
     this.roadBands=new THREE.Group();this.contextGroup.add(this.roadBands);this.roadBands.visible=false;
     const bandGeometry=new THREE.BufferGeometry();bandGeometry.setAttribute('position',new THREE.Float32BufferAttribute(bands,3));const bandMesh=new THREE.Mesh(bandGeometry,new THREE.MeshBasicMaterial({color:this.palette.road,depthTest:true,depthWrite:false,side:THREE.DoubleSide}));bandMesh.renderOrder=.12;bandMesh.userData.key='road';this.roadBands.add(bandMesh);
-    if(decks.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(decks,3));g.computeVertexNormals();const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:this.palette.bridge,side:THREE.DoubleSide}));m.renderOrder=4.4;m.userData.key='bridge';this.roadBands.add(m);}
+    if(decks.length)this.roadBands.add(this.structureMesh(decks));
     this.contextMeshes=[...(this.contextMeshes||[]),...this.roadBands.children];
+  }
+  /** Malla semitransparente de la estructura de los puentes: se dibuja después de los buses y sin
+   *  escribir profundidad, así que deja ver lo que pasa debajo, como las cubiertas de las estaciones. */
+  structureMesh(vertices){
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));g.computeVertexNormals();
+    const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:this.palette.bridge,transparent:true,opacity:.55,depthWrite:false,side:THREE.DoubleSide}));
+    m.renderOrder=8.2;m.userData.key='bridge';return m;
   }
   /** Cruces peatonales en cebra y puentes peatonales con sus rampas (tools/build_cross_streets.py). */
   setCrossings(data){

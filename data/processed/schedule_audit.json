@@ -270,6 +270,36 @@
       ]
     },
     {
+      "route_id": "13789",
+      "short": "FZ63",
+      "long": "F63 Pradera || Z63 Tibanica",
+      "segments": 15,
+      "loop_closing_seconds": null,
+      "turn_segment": 7,
+      "turn_seconds": 946,
+      "trips": 348,
+      "halves": [
+        {
+          "route_id": "13789#a",
+          "local_id": "5450",
+          "code": "F63",
+          "name": "Pradera",
+          "segments": 7,
+          "metres": 11732,
+          "share_of_trip": 0.4774
+        },
+        {
+          "route_id": "13789#b",
+          "local_id": "5451",
+          "code": "Z63",
+          "name": "Tibanica",
+          "segments": 6,
+          "metres": 8550,
+          "share_of_trip": 0.3479
+        }
+      ]
+    },
+    {
       "route_id": "13833",
       "short": "ML82",
       "long": "M82 CLL134 KR 7 || L82  Portal 20 de Julio",
@@ -379,13 +409,6 @@
       "long": "KR 7 CLL 107A || K86 Portal ElDorado Ciclovía",
       "reason": "sin servicio local utilizable para: K86 Portal ElDorado Ciclovía",
       "trips": 8
-    },
-    {
-      "route_id": "13789",
-      "short": "FZ63",
-      "long": "F63 Pradera || Z63 Tibanica",
-      "reason": "el catálogo local cuenta 7 + giro + 6 tramos y el paquete 15",
-      "trips": 348
     },
     {
       "route_id": "13821",
@@ -2886,20 +2909,26 @@
           "agency_id": "6",
           "short": "F63",
           "long": "Pradera"
+        },
+        {
+          "route_id": "13789#a",
+          "agency_id": "6",
+          "short": "F63",
+          "long": "Pradera"
         }
       ],
-      "trips": 445,
+      "trips": 793,
       "by_service": {
-        "1": 16,
+        "1": 364,
         "2": 238,
         "4": 191
       },
       "duration_min": {
         "1": {
-          "p10": 32.8,
-          "p50": 33.2,
-          "p90": 35.2,
-          "n": 16
+          "p10": 39.6,
+          "p50": 42.9,
+          "p90": 46.1,
+          "n": 364
         },
         "2": {
           "p10": 35.5,
@@ -2917,7 +2946,7 @@
       "metres_median": 11732,
       "local_length_m": 12855.692,
       "segments": 7,
-      "segments_total_s": 2220
+      "segments_total_s": 2402
     },
     {
       "id": "347",
@@ -5163,20 +5192,26 @@
           "agency_id": "6",
           "short": "Z63",
           "long": "Tibanica"
+        },
+        {
+          "route_id": "13789#b",
+          "agency_id": "6",
+          "short": "Z63",
+          "long": "Tibanica"
         }
       ],
-      "trips": 448,
+      "trips": 796,
       "by_service": {
-        "1": 15,
+        "1": 363,
         "2": 249,
         "4": 184
       },
       "duration_min": {
         "1": {
-          "p10": 34.2,
-          "p50": 34.2,
-          "p90": 34.5,
-          "n": 15
+          "p10": 29.2,
+          "p50": 31.4,
+          "p90": 33.8,
+          "n": 363
         },
         "2": {
           "p10": 37.0,
@@ -5194,7 +5229,7 @@
       "metres_median": 11647,
       "local_length_m": 8657.714,
       "segments": 6,
-      "segments_total_s": 1729
+      "segments_total_s": 1884
     }
   ],
   "still_pending": [
@@ -5280,6 +5315,12 @@
       "id": "12297",
       "code": "M82",
       "name": "CLL134 - KR 7",
+      "reason": null
+    },
+    {
+      "id": "5451",
+      "code": "Z63",
+      "name": "Tibanica",
       "reason": null
     }
   ]

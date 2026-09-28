@@ -198,10 +198,29 @@ def partir(aside, catalogue, segments, by_route):
         if (cuenta[0] + 1 + cuenta[1] != len(filas) and len(filas) > 1
                 and filas[-1]['to_stop'] == filas[0]['from_stop']):
             cierre, utiles = filas[-1:], filas[:-1]
-        if min(cuenta) < 1 or cuenta[0] + 1 + cuenta[1] != len(utiles):
+        bordes = None
+        if min(cuenta) >= 1 and cuenta[0] + 1 + cuenta[1] == len(utiles):
+            bordes = (0, cuenta[0], cuenta[0] + 1, len(utiles))
+        elif min(cuenta) >= 1 and STOP_NAMES:
+            # Si la cuenta no cuadra porque una mitad local empieza una parada después que el paquete
+            # (la Z63 del buscador arranca en Banderas y la vuelta FZ63 pasa antes por Pradera), se
+            # buscan las dos secuencias locales por nombre de estación: cada una tiene que aparecer
+            # una sola vez, en orden, y lo que queda entre ellas es el giro.
+            nombres = [STOP_NAMES.get(x['from_stop']) for x in filas] + [STOP_NAMES.get(filas[-1]['to_stop'])]
+            listas = [[clave(x.get('name')) for x in serv['stops']] for serv in locales]
+            def donde(lista, desde):
+                return [i for i in range(desde, len(nombres) - len(lista) + 1) if nombres[i:i + len(lista)] == lista]
+            primeros = donde(listas[0], 0)
+            if len(primeros) == 1:
+                segundos = donde(listas[1], primeros[0] + cuenta[0] + 1)
+                if len(segundos) == 1:
+                    bordes = (primeros[0], primeros[0] + cuenta[0], segundos[0], segundos[0] + cuenta[1])
+                    cierre, utiles = filas[bordes[3]:], filas[:bordes[3]]
+        if not bordes:
             rechazar(f'el catálogo local cuenta {cuenta[0]} + giro + {cuenta[1]} tramos '
                      f'y el paquete {len(utiles)}' + (' más el cierre del bucle' if cierre else ''))
             continue
+        s0, e0, s1, e1 = bordes
         # El reparto del viaje se hace sobre su propia duración publicada, no sobre la mediana de
         # los tramos: un viaje de la punta tarda más que uno de la noche y el punto donde da la
         # vuelta se corre con él.
@@ -213,10 +232,9 @@ def partir(aside, catalogue, segments, by_route):
         # Las proporciones se miden sobre la vuelta entera, cierre incluido, porque la duración
         # publicada del viaje también lo incluye; pero la segunda mitad termina en su última parada
         # y no en el andén de salida, así que su llegada se corta antes del cierre.
-        parte_ida = sum(totales[:cuenta[0]]) / total
-        parte_giro = sum(totales[:cuenta[0] + 1]) / total
-        parte_vuelta = sum(totales[:len(utiles)]) / total
-        tramos = [utiles[:cuenta[0]], utiles[cuenta[0] + 1:]]
+        parte = lambda k: sum(totales[:k]) / total
+        parte_salida, parte_ida, parte_giro, parte_vuelta = parte(s0), parte(e0), parte(s1), parte(e1)
+        tramos = [filas[s0:e0], filas[s1:e1]]
         metros = [sum(float(x['metres']) for x in bloque) for bloque in tramos]
         registros = []
         for lado in (0, 1):
@@ -227,10 +245,10 @@ def partir(aside, catalogue, segments, by_route):
                 salida, llegada = int(trip['departure_s']), int(trip['arrival_s'])
                 duracion = llegada - salida if llegada > salida else total
                 if lado == 0:
-                    desde, hasta = salida, salida + round(duracion * parte_ida)
+                    desde, hasta = salida + round(duracion * parte_salida), salida + round(duracion * parte_ida)
                 else:
                     desde = salida + round(duracion * parte_giro)
-                    hasta = llegada if not cierre else salida + round(duracion * parte_vuelta)
+                    hasta = llegada if e1 == len(filas) else salida + round(duracion * parte_vuelta)
                 viajes.append({**trip, 'route_id': rid, 'departure_s': str(desde),
                                'arrival_s': str(hasta), 'metres': str(metros[lado])})
             by_route[rid] = viajes
@@ -242,13 +260,13 @@ def partir(aside, catalogue, segments, by_route):
             'route_id': route['route_id'], 'short': route['route_short_name'],
             'long': route['route_long_name'], 'segments': len(utiles),
             'loop_closing_seconds': round(sum(float(x['seconds']) for x in cierre)) if cierre else None,
-            'turn_segment': int(utiles[cuenta[0]]['index']),
-            'turn_seconds': round(float(utiles[cuenta[0]]['seconds'])),
+            'turn_segment': int(filas[e0]['index']),
+            'turn_seconds': round(sum(float(x['seconds']) for x in filas[e0:s1])),
             'trips': len(by_route.get(route['route_id']) or []),
             'halves': [{'route_id': r['route_id'], 'local_id': locales[i]['id'],
                         'code': locales[i]['code'], 'name': locales[i]['name'],
                         'segments': cuenta[i], 'metres': round(metros[i]),
-                        'share_of_trip': round([parte_ida, 1 - parte_giro][i], 4)}
+                        'share_of_trip': round([parte_ida - parte_salida, 1 - parte_giro][i], 4)}
                        for i, r in enumerate(registros)],
         })
     return extra, cortes, rechazos, fuera
