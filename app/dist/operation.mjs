@@ -1,10 +1,10 @@
-import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260928.2';
-import {vehicleSpec} from './vehicles.mjs?v=20260928.2';
-import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED} from './signals.mjs?v=20260928.2';
-import {travelTimeAtDistance} from './travel.mjs?v=20260928.2';
-import {generatedPassengers,alightFraction,DEMAND_BASELINE} from './passengers.mjs?v=20260928.2';
-import {placeVisit} from './station-layouts.mjs?v=20260928.2';
-import {MetricPath} from './simulation.mjs?v=20260928.2';
+import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260928.3';
+import {vehicleSpec} from './vehicles.mjs?v=20260928.3';
+import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED} from './signals.mjs?v=20260928.3';
+import {travelTimeAtDistance} from './travel.mjs?v=20260928.3';
+import {generatedPassengers,alightFraction,DEMAND_BASELINE} from './passengers.mjs?v=20260928.3';
+import {placeVisit} from './station-layouts.mjs?v=20260928.3';
+import {MetricPath} from './simulation.mjs?v=20260928.3';
 export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1,mode:'auto',cruiseKmh:60,streetKmh:50,acceleration:.8,braking:1.1,turnaround:240,variableDispatch:true,reinforcements:true,signals:true,beyondValidity:true,programmedDispatch:true,programmedRunning:true,observedRunning:true,
  // Espacio físico (traffic.mjs). Separación en marcha y parado, ciclo semafórico y atención son
  // decisiones de modelo, rotuladas como estimación; la variación diaria cambia de una fecha a otra
@@ -182,8 +182,10 @@ export class Operation {
    const key=id+'/'+n;let m=this.modules.get(key);if(m)return m;
    const st=this.stations.get(id),sum=axes.get(id)||[1,0],angle=Math.atan2(sum[1],sum[0])/2,u=[Math.cos(angle),Math.sin(angle)];
    let center=st.xy,spacing=MODULE_SPACING;
-   // Donde OSM publica los andenes troncales, el centro y el largo salen de ellos.
-   const plats=(layouts.get(id)?.platforms||[]).filter(p=>p.role==='platform_trunk'&&p.points.length>2);
+   // Donde OSM publica los andenes troncales, el centro y el largo salen de ellos; si solo publica el
+   // contorno de la estación —la estructura del andén con su cubierta—, de ese contorno.
+   const layout=layouts.get(id);let plats=(layout?.platforms||[]).filter(p=>p.role==='platform_trunk'&&p.points.length>2);
+   if(!plats.length)plats=(layout?.areas||[]).filter(a=>a.role==='station_area'&&a.closed&&a.points.length>3);
    if(plats.length){
     const pts=plats.flatMap(p=>p.points),along=pts.map(p=>(p[0]-st.xy[0])*u[0]+(p[1]-st.xy[1])*u[1]),lo=Math.min(...along),hi=Math.max(...along);
     if(hi-lo>20&&hi-lo<600){center=[st.xy[0]+u[0]*(lo+hi)/2,st.xy[1]+u[1]*(lo+hi)/2];spacing=Math.min(MODULE_SPACING,Math.max(30,(hi-lo)/n));}

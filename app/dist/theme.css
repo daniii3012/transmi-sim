@@ -1,0 +1,74 @@
+/* Sistema visual unificado: un solo juego de radios, sombras, superficies y márgenes para todo lo que
+   flota sobre el mapa. Se carga al final y ordena lo que style.css y responsive.css dibujaban cada uno
+   a su manera. Las medidas de disposición —dónde va cada panel— siguen en esos dos archivos. */
+:root{
+ --radius-panel:16px;--radius-card:12px;--radius-control:10px;--radius-chip:7px;
+ --edge:20px;--pad:20px;--gap:12px;
+ --surface:#ffffff;--surface-2:#f4f6f9;--surface-3:#eaeef3;--line:#e3e8ee;--line-strong:#cfd7e1;
+ --ink:#1f2d3d;--muted:#66758a;--accent:#dc253b;--accent-ink:#ffffff;--focus:#317bed;
+ --shadow-panel:0 12px 32px -10px rgba(18,31,48,.22),0 2px 6px rgba(18,31,48,.06);
+ --shadow-control:0 1px 2px rgba(18,31,48,.07),0 3px 10px rgba(18,31,48,.06);
+ --shadow-pop:0 18px 44px -12px rgba(18,31,48,.28);
+}
+[data-theme=dark]{
+ --surface:#16222f;--surface-2:#1c2a3a;--surface-3:#243446;--line:#2a3a4d;--line-strong:#3a4d63;
+ --ink:#e6edf5;--muted:#93a4b8;--accent:#ef3b52;--focus:#6aa5ff;
+ --shadow-panel:0 16px 40px -12px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.3);
+ --shadow-control:0 1px 2px rgba(0,0,0,.35),0 3px 10px rgba(0,0,0,.25);
+ --shadow-pop:0 20px 48px -12px rgba(0,0,0,.6);
+}
+
+/* Superficies flotantes: barra lateral, ficha, reloj, métricas y avisos. */
+#sidebar,#inspector,#timeline{background:var(--surface);border-radius:var(--radius-panel);box-shadow:var(--shadow-panel);border:1px solid var(--line)}
+#metrics,#loading{background:color-mix(in srgb,var(--surface) 94%,transparent);border-radius:var(--radius-card);box-shadow:var(--shadow-control);border:1px solid var(--line);backdrop-filter:blur(8px)}
+#loading{padding:11px 15px;font-weight:550}
+#toast{border-radius:var(--radius-card);box-shadow:var(--shadow-pop)}
+#error{border-radius:var(--radius-card)}
+header{background:var(--surface);border-bottom:1px solid var(--line)}
+
+/* Controles: mismos radios, bordes y sombras en todas partes. */
+button,input,select{border-radius:var(--radius-control)}
+button{border-color:var(--line);background:var(--surface);color:var(--ink);transition:background .15s,border-color .15s,box-shadow .15s}
+button:hover{background:var(--surface-2);border-color:var(--line-strong)}
+input,select{border-color:var(--line);background:var(--surface);color:var(--ink)}
+.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:var(--shadow-control)}
+.primary:hover{filter:brightness(1.06);background:var(--accent)}
+.map-actions{gap:8px}
+.map-actions button{border-radius:var(--radius-control);box-shadow:var(--shadow-control);background:color-mix(in srgb,var(--surface) 96%,transparent)}
+.segmented{border-radius:var(--radius-control);background:var(--surface-2);padding:4px}
+.segmented button{border-radius:8px}
+.speed-controls button,.time-main>button{border-radius:var(--radius-control)}
+.period{border-radius:var(--radius-chip)}
+.search{border-radius:var(--radius-control);border-color:var(--line)}
+.route-code{border-radius:var(--radius-chip)}
+.route-row{border-radius:var(--radius-card)}
+.cluster-label{border-radius:999px;box-shadow:var(--shadow-control)}
+.wagon-diagram span{border-radius:var(--radius-chip);min-width:34px;text-align:center;font-weight:650}
+.coverage-grid div{border-radius:var(--radius-card);background:var(--surface-2)}
+.split{border-radius:999px}
+.load-track{border-radius:999px}
+
+/* Paneles: mismo ritmo vertical. */
+.panel{padding:22px var(--pad)}
+.now-block{border-top:1px solid var(--line)}
+.metric-row{border-bottom-color:var(--line)}
+
+/* Procedencia plegada: el dato se lee primero y se audita después. */
+details.why{margin-top:16px;border:1px solid var(--line);border-radius:var(--radius-card);padding:0;background:var(--surface-2)}
+details.why>summary{list-style:none;padding:11px 14px;font-size:.78rem;font-weight:650;color:var(--muted);display:flex;align-items:center;gap:8px}
+details.why>summary::-webkit-details-marker{display:none}
+details.why>summary::before{content:'i';display:grid;place-items:center;width:17px;height:17px;border-radius:50%;border:1.5px solid currentColor;font-size:.66rem;font-weight:800;font-style:italic}
+details.why[open]>summary{color:var(--ink)}
+details.why>p,details.why>a{margin:0 14px 12px;display:block;font-size:.76rem;line-height:1.55;color:var(--muted)}
+
+/* Parámetros agrupados. */
+.settings-group{border:1px solid var(--line);border-radius:var(--radius-card);padding:6px 14px 12px;margin:0 0 14px;background:var(--surface)}
+.settings-group>legend{font-size:.72rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 6px}
+.settings-group>p.muted{margin:4px 0 6px;font-size:.74rem}
+.setting{margin-top:10px}
+.setting label{margin:10px 0 6px;display:flex;align-items:baseline;gap:6px}
+.setting label .unit{font-weight:500;color:var(--muted);font-size:.72rem}
+.setting label output{margin-left:auto}
+.setting.check label{margin:12px 0 4px}
+.setting p.help{margin:4px 0 0;font-size:.72rem;line-height:1.45}
+.settings-actions .full{margin:10px 0 0}

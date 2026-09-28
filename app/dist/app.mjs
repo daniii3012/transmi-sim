@@ -1,9 +1,9 @@
-import {mountShell} from './shell.mjs?v=20260928.2';
-import {NetworkMap} from './map.mjs?v=20260928.2';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260928.2';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260928.2';
-import {STATES} from './traffic.mjs?v=20260928.2';
-import {registerSimulationTools} from './webmcp.mjs?v=20260928.2';
+import {mountShell} from './shell.mjs?v=20260928.3';
+import {NetworkMap} from './map.mjs?v=20260928.3';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260928.3';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260928.3';
+import {STATES} from './traffic.mjs?v=20260928.3';
+import {registerSimulationTools} from './webmcp.mjs?v=20260928.3';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -37,17 +37,19 @@ try{
  let selection=null,following=false,focusedRoute=null,activePanel='routes',generation=0,ready=false,pendingSample=false,lastUI=0,lastList=0,lastInspect=0,lastSample=0,routeIds=[],settled=false,snap={buses:[],stats:{}};
  let viewMode=config.selection.mode,scrubbing=false,sampleSequence=0,planSequence=0;
  let selectedZones=new Set(config.selection.zones||[]);const map=new NetworkMap($('#canvas-host'),$('#labels'),data,onSelect);
+ // Con ?depurar en la dirección, el mapa queda a mano en la consola para revisar la vista.
+ if(new URLSearchParams(location.search).has('depurar'))window.transmi={map};
  if(contextResponse.ok)map.setContext(await contextResponse.json());
  // El escenario guardado se retiró; lo que quedara de él en este navegador ya no tiene dueño.
  try{localStorage.removeItem('transmi-scenario-v3');localStorage.removeItem('transmi-scenario-v2');}catch{}
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260928.2',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260928.3',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260928.2',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260928.3',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -76,7 +78,7 @@ try{
  worker.onmessage=({data:m})=>{
   if(m.generation!==generation)return;
   if(m.type==='error'){ready=false;$('#loading').hidden=true;$('#error').hidden=false;$('#error').textContent='No se pudo preparar el escenario: '+m.message;return;}
-  if(m.type==='ready'){ready=true;routeIds=m.routeIds;map.signalOffsets=m.signalOffsets;pendingSample=true;$('#plan-journey').disabled=false;renderRoutes();}
+  if(m.type==='ready'){ready=true;routeIds=m.routeIds;map.signalOffsets=m.signalOffsets;if(m.guideway)map.setGuideway(m.guideway);pendingSample=true;$('#plan-journey').disabled=false;renderRoutes();}
   if(m.type==='building'){$('#loading').hidden=false;$('#loading').textContent='Preparando el día de servicio…';}
   if(m.type==='progress'){showProgress(m);if(m.frame&&(!settled||m.target-m.at>1800))map.acceptSimulation(buildSnap(m),false);}
   if(m.type==='state'){if(m.requestId!==sampleSequence)return;pendingSample=false;$('#loading').hidden=true;const next=buildSnap(m);const animate=settled&&!clock.paused&&!scrubbing&&next.serviceDate===snap.serviceDate&&m.time>=snap.time&&m.time-snap.time<clock.speed*.5;if(!settled){settled=true;if(activePanel==='depots')worker.postMessage({type:'depots',generation});requestOverview();}snap=next;map.acceptSimulation(snap,animate);updateUI();if(selection?.kind==='bus'&&!snap.buses.some(b=>b.id===selection.id))renderBus();}
@@ -88,9 +90,75 @@ try{
  worker.onerror=e=>{$('#loading').hidden=true;$('#error').hidden=false;$('#error').textContent='No pudo iniciarse el motor: '+e.message;ready=false;};
  // Pasar de un día al siguiente ya no reconstruye nada: el worker sigue en su día de servicio.
  function jump(value){clock.time=value;if(clock.time<DAY||clock.time>=2*DAY){const day=Math.floor(clock.time/DAY)-1;config.date=addDays(config.date,day);clock.time-=day*DAY;syncControls();renderRoutes();}sample(true);updateUI();following=false;}
+ // Parámetros del escenario: una sola definición da el formulario, la lectura y la escritura. Cada uno
+ // dice qué es y de dónde sale su valor inicial; lo que no es medido se presenta como decisión del modelo.
+ const SETTINGS=[
+  {group:'Servicio',intro:'Qué buses salen y cuándo.'},
+  {key:'programmedDispatch',type:'check',label:'Salidas del horario publicado',help:'Cada servicio sale a las horas del GTFS de TRANSMILENIO. Apagado, todos usan los intervalos de abajo.'},
+  {key:'peakHeadway',type:'number',label:'Intervalo en pico',unit:'min',scale:60,min:2,max:20,step:1,help:'Para los servicios sin horario publicado.'},
+  {key:'offpeakHeadway',type:'number',label:'Intervalo en valle',unit:'min',scale:60,min:3,max:30,step:1},
+  {key:'variableDispatch',type:'check',label:'Variación entre salidas'},
+  {key:'reinforcements',type:'check',label:'Refuerzos ocasionales en pico'},
+  {key:'beyondValidity',type:'check',label:'Operar servicios con vigencia vencida',help:'Conservan su último horario publicado; la ficha del servicio dice hasta cuándo rigió.'},
+  {key:'fleet',type:'number',label:'Flota disponible',unit:'buses',min:200,max:8000,step:10,help:'2.202 troncales que publica TRANSMILENIO (feb. 2026) más 50 duales eléctricos de 2026. Si se agota, la salida espera un bus libre.'},
+  {group:'Circulación',intro:'Cómo ruedan los buses por su carril.'},
+  {key:'cruiseKmh',type:'number',label:'Tope en la troncal',unit:'km/h',min:25,max:75,step:1,help:'La velocidad de cada trecho sale de las lecturas de la flota; esto es el techo.'},
+  {key:'streetKmh',type:'number',label:'Tope en calle mixta',unit:'km/h',min:20,max:60,step:1},
+  {key:'acceleration',type:'number',label:'Aceleración',unit:'m/s²',min:.4,max:1.4,step:.05},
+  {key:'braking',type:'number',label:'Frenada cómoda',unit:'m/s²',min:.5,max:1.8,step:.05},
+  {key:'headwayTime',type:'number',label:'Distancia al de delante',unit:'s',min:.6,max:3,step:.1,help:'Tiempo que un conductor deja con el bus que lleva delante.'},
+  {key:'jamGap',type:'number',label:'Separación parado',unit:'m',min:1,max:8,step:.5},
+  {key:'programmedRunning',type:'check',label:'Tiempos de calle del horario',help:'En calle mixta el tráfico general no se simula: su efecto llega por el tiempo publicado de cada tramo.'},
+  {group:'Semáforos',intro:'Existencia corroborada en OSM; fases estimadas y coordinadas en onda verde.'},
+  {key:'signals',type:'check',label:'Semáforos corroborados'},
+  {key:'signalCycle',type:'number',label:'Ciclo',unit:'s',min:50,max:180,step:5},
+  {key:'signalGreen',type:'number',label:'Verde para la troncal',unit:'s',min:15,max:150,step:1},
+  {group:'Estaciones y pasajeros',intro:'Un vagón atiende a un bus a la vez.'},
+  {key:'mode',type:'select',label:'Demanda',options:[['auto','Según la hora y el día'],['peak','Forzar hora pico'],['offpeak','Forzar hora valle']]},
+  {key:'demand',type:'range',label:'Pasajeros',unit:'×',min:.25,max:3,step:.25,help:'Sobre la demanda medida en las validaciones de 17 días.'},
+  {key:'dwellBase',type:'number',label:'Atención mínima',unit:'s',min:5,max:40,step:1,help:'Abrir y cerrar puertas, antes de subir y bajar gente.'},
+  {key:'boardingRate',type:'number',label:'Embarque por puerta',unit:'pas/s',min:.3,max:2,step:.1,help:'Articulado 4 puertas, biarticulado 5, padrón dual 2.'},
+  {group:'Variación entre días',intro:'Sin variación, todos los martes son iguales; con ella, cada fecha tiene su día y se repite igual.'},
+  {key:'dayVariation',type:'check',label:'Variación entre días'},
+  {key:'dispatchJitter',type:'number',label:'Desfase de despacho',unit:'s',min:0,max:300,step:10,help:'Cuánto puede adelantarse o atrasarse una salida respecto al horario.'},
+  {key:'variant',type:'number',label:'Versión del día',min:0,max:999,step:1,help:'Otra versión cambia la semilla: el mismo día, con otros desfases.'},
+ ];
+ function renderSettings(){
+  const form=$('#settings-form');form.replaceChildren();let fieldset=null;
+  for(const f of SETTINGS){
+   if(f.group){fieldset=el('fieldset',undefined,'settings-group');fieldset.append(el('legend',f.group));if(f.intro)fieldset.append(el('p',f.intro,'muted'));form.append(fieldset);continue;}
+   const id='param-'+f.key,wrap=el('div',undefined,'setting '+f.type);
+   if(f.type==='check'){const label=el('label',undefined,'inline'),input=el('input');input.type='checkbox';input.id=id;label.append(input,document.createTextNode(' '+f.label));wrap.append(label);}
+   else{
+    const label=el('label',f.label);label.htmlFor=id;if(f.unit){const u=el('span',f.unit,'unit');label.append(u);}
+    let input;
+    if(f.type==='select'){input=el('select');for(const [v,t] of f.options){const o=el('option',t);o.value=v;input.append(o);}}
+    else{input=el('input');input.type=f.type==='range'?'range':'number';input.min=f.min;input.max=f.max;input.step=f.step;input.required=true;}
+    input.id=id;wrap.append(label,input);
+    if(f.type==='range'){const out=el('output','',undefined);out.id=id+'-value';label.append(out);input.oninput=()=>out.textContent=input.value+(f.unit||'');}
+   }
+   if(f.help)wrap.append(el('p',f.help,'muted help'));
+   fieldset.append(wrap);
+  }
+  const actions=el('div',undefined,'settings-actions');
+  const apply=el('button','Aplicar y volver a simular','primary full');apply.type='submit';
+  const reset=el('button','Valores iniciales','full');reset.type='button';reset.onclick=()=>{config.params={...DEFAULTS};syncSettings();};
+  const other=el('button','Otra versión de este día','full');other.type='button';other.onclick=()=>{$('#param-variant').value=(Number($('#param-variant').value)+1)%1000;$('#param-dayVariation').checked=true;form.requestSubmit();};
+  actions.append(apply,other,reset);form.append(actions);
+  form.onsubmit=e=>{e.preventDefault();const next={...config.params};
+   for(const f of SETTINGS){if(!f.key)continue;const input=$('#param-'+f.key);next[f.key]=f.type==='check'?input.checked:f.type==='select'?input.value:Number(input.value)*(f.scale||1);}
+   try{config.params=parameters(next);}catch(error){toast(error.message.replace('Parámetro fuera de rango: ','Revisa el valor de ').replace(/signalGreen/,'el verde').replace(/(\w+)$/,m=>SETTINGS.find(f=>f.key===m)?.label.toLowerCase()||m));return;}
+   rebuild();toast('Escenario reconstruido con los parámetros nuevos.');};
+  syncSettings();
+ }
+ function syncSettings(){
+  for(const f of SETTINGS){if(!f.key)continue;const input=$('#param-'+f.key);if(!input)continue;const v=config.params[f.key];
+   if(f.type==='check')input.checked=!!v;else input.value=f.scale?v/f.scale:v;
+   if(f.type==='range')$('#'+input.id+'-value').textContent=input.value+(f.unit||'');}
+ }
  function syncControls(displayMode=viewMode){
   $('#date').value=config.date;$$('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===displayMode));$('#zone-options').hidden=displayMode!=='zones';$('#network-now').hidden=displayMode!=='all';$('#route-browser').hidden=displayMode==='all';
-  $('#peak').value=config.params.peakHeadway/60;$('#offpeak').value=config.params.offpeakHeadway/60;$('#demand').value=config.params.demand;$('#demand-value').textContent=config.params.demand+'×';$('#demand-mode').value=config.params.mode;$('#programmed-dispatch').checked=config.params.programmedDispatch;$('#programmed-running').checked=config.params.programmedRunning;$('#variable-dispatch').checked=config.params.variableDispatch;$('#reinforcements').checked=config.params.reinforcements;$('#signals').checked=config.params.signals;$('#beyond-validity').checked=config.params.beyondValidity;$('#cruise').value=config.params.cruiseKmh;$('#street-speed').value=config.params.streetKmh;
+  syncSettings();
   $$('[data-speed]').forEach(b=>b.classList.toggle('active',Number(b.dataset.speed)===clock.speed));$('#pause').textContent=clock.paused?'▶':'Ⅱ';$('#pause').setAttribute('aria-label',clock.paused?'Reanudar':'Pausar');
  }
  const validityNote={expired:'horario vencido',future:'horario aún no vigente'};
@@ -119,7 +187,9 @@ try{
   if(r.ready){const b=el('button','Simular solo este servicio','primary full');b.onclick=()=>{config.selection={mode:'route',route:r.id};viewMode='route';rebuild({clear:false});selection={kind:'route',id:r.id};renderRoute(r);};panel.append(b);const f=el('button','Seguir un bus de esta ruta','full');f.onclick=()=>followBus(r.id);panel.append(f);}
   for(const issue of r.issues)panel.append(el('p',issue,'muted'));
   const list=el('ol',undefined,'stop-list');for(const s of r.stops){const li=el('li',undefined,s.kind==='street'?'street':'');const b=el('button',s.name);b.onclick=()=>{const st=data.stations.find(st=>st.id===s.station_id);if(st){onSelect({kind:'station',id:st.id});map.focusStation(st);}};li.append(b,el('small',`${s.kind==='street'?'Paradero en calle':'Estación'}${s.coordinate_source==='route_linear_reference_estimated'?' · ubicación aproximada':''}`));list.append(li);}panel.append(list);
-  panel.append(el('p','Horarios publicados; frecuencias, ocupación y asignación a vagones estimadas.','muted'));const source=el('a','Detalle de la fuente ↗');source.href=r.source_url;source.target='_blank';source.rel='noreferrer';panel.append(source);
+  const why=el('details',undefined,'why');why.append(el('summary','De dónde sale'),el('p','Recorrido, paradas y horarios publicados por TRANSMILENIO. La ocupación y el vagón de cada parada, donde el tablero de la estación no lo publica, son estimaciones del modelo.'));
+  if(r.vehicle_profile)why.append(el('p',`Tipo de bus leído de la flota que atiende el servicio${r.vehicle_profile.buses?` (${r.vehicle_profile.buses} buses observados)`:''}.`));
+  const source=el('a','Detalle de la fuente ↗');source.href=r.source_url;source.target='_blank';source.rel='noreferrer';why.append(source);panel.append(why);
  }
  function followBus(routeId){const b=snap.buses.find(b=>!routeId||b.routeId===routeId);if(!b){toast('No hay buses de este servicio a esta hora. Prueba otra hora o inclúyelo en la simulación.');return;}selection={kind:'bus',id:b.id,routeId:b.routeId};worker.postMessage({type:'select',generation,id:b.id});focusedRoute=b.routeId;map.select('bus',b.id);map.setRoute(b.routeId,{subtle:true});following=true;map.focusOn(b.xy,.9);renderBus();$('#inspector').scrollTop=0;}
  // La ficha combina lo que llega en cada muestra —estado, velocidad, carga— con el detalle que el
@@ -131,7 +201,7 @@ try{
   const where=b.offnet===1?'En la plataforma de salida':b.offnet===2?'Desembarcando en la terminal':stateNames[b.state]+(d?.street?' · calle':'');
   const p=$('#selection');p.replaceChildren(badge(b),el('span','  '+(d?.vehicleId||''),'eyebrow'),el('h2',b.pattern),el('div',where,'bus-state'));$('#inspector').hidden=false;
   row('Velocidad',b.speed_kmh.toFixed(0)+' km/h');
-  if(d){row('Tipo de bus',d.busType+' · '+b.length_m.toFixed(1)+' m');p.append(el('p',d.typeSource,'muted'));}
+  if(d)row('Tipo de bus',d.busType);
   row('A bordo',`${b.load} / ${b.capacity}`);const track=el('div',undefined,'load-track'),fill=el('i');fill.style.width=Math.min(100,b.load/Math.max(1,b.capacity)*100)+'%';track.append(fill);p.append(track);
   if(d){
    row(['moving','signal','traffic'].includes(b.state)?'Próxima parada':'Parada',d.next_stop);row('Punto de atención',d.street?'Paradero calle':boardingPoint(d));
@@ -141,6 +211,7 @@ try{
    row('Atraso sobre el horario',d.delay>60?Math.round(d.delay/60)+' min':'Al día');
   }
   row('Recorrido',(b.s/1000).toFixed(2)+' km');
+  if(d){const why=el('details',undefined,'why');why.append(el('summary','De dónde sale'),el('p',`${d.busType} de ${b.length_m.toFixed(1)} m y ${b.capacity} plazas. ${d.typeSource}.`),el('p','La posición la calcula el simulador a partir del horario y de la velocidad medida en cada trecho; no es una lectura GPS. El atraso compara con el horario publicado.'));p.append(why);}
   const button=el('button',following?'Dejar de seguir':'Seguir este bus','primary full');button.id='follow';button.onclick=()=>{following=!following;if(following)map.focusOn(b.xy,.9);renderBus();};p.append(button);const route=el('button','Ver paradas de '+b.code,'full');route.onclick=()=>selectRoute(b.routeId);p.append(route);
  }
  // Ficha de un bus en tiempo real. Son dos fuentes distintas y la ficha lo dice: la lectura GPS trae
@@ -168,15 +239,19 @@ try{
  function requestStation(){const s=data.stations.find(s=>s.id===selection?.id);if(!s)return;$('#selection').replaceChildren(el('span',s.kind==='street'?'PARADERO EN CALLE':'ESTACIÓN','eyebrow'),el('h2',s.name),el('p','Consultando próximos servicios…','muted'));$('#inspector').hidden=false;if(ready)worker.postMessage({type:'station',generation,id:s.id});}
  function renderStation(info){
   const s=data.stations.find(s=>s.id===info.id);if(!s)return;const p=$('#selection');p.replaceChildren(el('span',s.kind==='street'?'PARADERO EN CALLE':'ESTACIÓN','eyebrow'),el('h2',s.name));row('Estado publicado',s.status);
-  if(s.kind!=='street'){row('Vagones',s.wagons?String(s.wagons)+' · publicados':'2 · estimados');const diagram=el('div',undefined,'wagon-diagram');for(let i=1;i<=(s.wagons||2);i++){const w=el('span','V'+i,info.buses.some(b=>b.wagon===i)?'busy':'');diagram.append(w);}p.append(diagram);row('Carriles por sentido','Atención + paso');}
-  const layout=data.station_layouts?.stations.find(l=>l.station_id===s.id);if(layout)p.append(el('p','Geometría física OSM: plataformas, cubiertas y accesos separados. La asignación del servicio al punto de atención es estimada.','muted'));
-  if(s.coordinate_source==='route_linear_reference_estimated')p.append(el('p','Ubicación aproximada sobre el trazado publicado.','muted'));
-  row('Pasajeros esperando',fmt(info.waiting)+' · est.');row('Servicios seleccionados',info.routes.length);p.append(el('h2','Próximas llegadas'));
+  if(s.kind!=='street'){row('Vagones',String(s.wagons||2));const diagram=el('div',undefined,'wagon-diagram');for(let i=1;i<=(s.wagons||2);i++){const w=el('span',String.fromCharCode(64+i),info.buses.some(b=>b.wagon===i)?'busy':'');w.title='Vagón '+String.fromCharCode(64+i)+(info.buses.some(b=>b.wagon===i)?' · atendiendo':'');diagram.append(w);}p.append(diagram);}
+  row('Pasajeros esperando',fmt(info.waiting));row('Servicios que paran',info.routes.length);p.append(el('h2','Próximas llegadas'));
   if(!info.upcoming.length)p.append(el('p','Sin llegadas en los próximos 30 minutos dentro del escenario seleccionado.','muted'));
   for(const arrival of info.upcoming){const b=el('button',undefined,'route-row');const r=routeById.get(arrival.routeId);b.append(badge(r));const text=el('div',undefined,'route-text');text.append(el('strong',arrival.name),el('small',Math.max(0,Math.ceil((arrival.arrival-clock.time)/60))+' min'+(s.kind==='street'?'':' · '+boardingPoint(arrival))));b.append(text);b.onclick=()=>selectRoute(r.id);p.append(b);}
-  p.append(el('p',info.upcoming.some(a=>a.wagonSource==='published')
-   ? 'El punto de atención es el que publica el tablero de esta estación. Donde no se conoce, el reparto sigue siendo estimado y se rotula. Los expresos usan el carril de paso.'
-   : 'Distribución operativa de vagones estimada. Los expresos usan el carril de paso.','muted'));if(s.demand_profile){p.append(el('h2','Referencia de demanda'));row('Entradas del archivo diario',fmt(s.demand_profile.total));p.append(el('p','Validaciones = entradas registradas por recaudo, no pasajeros presentes ahora. Archivo oficial del 9 sep. 2026; el reparto por sentido se estima.','muted'));}
+  // Lo que explica los valores, plegado: la ficha se lee primero y se audita después.
+  const why=el('details',undefined,'why');why.append(el('summary','De dónde sale'));
+  if(s.kind!=='street')why.append(el('p',s.wagons?`${s.wagons} vagones publicados. Cada uno atiende a un bus a la vez; el carril del andén se suma al que sigue de largo.`:'Número de vagones no publicado: se suponen dos.'));
+  why.append(el('p',info.upcoming.some(a=>a.wagonSource==='published')?'El vagón de cada servicio es el que publica el tablero de la estación; donde no se conoce, se estima y se rotula.':'El vagón de cada servicio es una estimación del modelo.'));
+  if(data.station_layouts?.stations.some(l=>l.station_id===s.id))why.append(el('p','Andén y cubierta según OpenStreetMap.'));
+  if(s.coordinate_source==='route_linear_reference_estimated')why.append(el('p','Ubicación aproximada sobre el trazado publicado.'));
+  why.append(el('p','Los pasajeros esperando son una estimación en el instante del reloj. Las llegadas se estiman con el horario desde donde va cada bus.'));
+  if(s.demand_profile)why.append(el('p',`Referencia: ${fmt(s.demand_profile.total)} entradas en un día laborable medio, del archivo oficial de validaciones. Son entradas por recaudo, no pasajeros presentes; el reparto por sentido se estima.`));
+  p.append(why);
  }
  // Demanda observada por hora para el tipo de día del escenario. Son medias de los días
  // medidos, no una predicción; la curva solo agrega los perfiles de todas las estaciones.
@@ -337,14 +412,19 @@ try{
  $$('[data-mode]').forEach(b=>b.onclick=()=>{viewMode=b.dataset.mode;clearSelection();if(viewMode==='all'&&config.selection.mode!=='all'){config.selection={mode:'all'};rebuild({fit:true});}else{syncControls();renderRoutes();if(viewMode==='all'){map.fitNetwork();requestOverview();}}});
  for(const z of data.zones.filter(z=>z.id!=='?')){const b=el('button',undefined,'zone-button');b.style.setProperty('--zone',z.color);b.append(el('b',z.id),el('span',z.name));b.classList.toggle('active',selectedZones.has(z.id));b.setAttribute('aria-pressed',selectedZones.has(z.id));b.onclick=()=>{if(selectedZones.has(z.id))selectedZones.delete(z.id);else selectedZones.add(z.id);b.classList.toggle('active',selectedZones.has(z.id));b.setAttribute('aria-pressed',selectedZones.has(z.id));};$('#zones').append(b);}
  $('#apply-zones').onclick=()=>{if(!selectedZones.size){toast('Selecciona al menos una troncal.');return;}config.selection={mode:'zones',zones:[...selectedZones]};viewMode='zones';rebuild({fit:true});};
- $('#search').oninput=renderRoutes;$('#demand').oninput=()=>$('#demand-value').textContent=$('#demand').value+'×';
- $('#settings-form').onsubmit=e=>{e.preventDefault();config.params=parameters({...config.params,programmedDispatch:$('#programmed-dispatch').checked,programmedRunning:$('#programmed-running').checked,variableDispatch:$('#variable-dispatch').checked,reinforcements:$('#reinforcements').checked,signals:$('#signals').checked,beyondValidity:$('#beyond-validity').checked,peakHeadway:Number($('#peak').value)*60,offpeakHeadway:Number($('#offpeak').value)*60,demand:Number($('#demand').value),mode:$('#demand-mode').value,cruiseKmh:Number($('#cruise').value),streetKmh:Number($('#street-speed').value)});rebuild();toast('Escenario reconstruido con la nueva operación.');};
+ $('#search').oninput=renderRoutes;
+ renderSettings();
  $('#date').onchange=()=>{if(!$('#date').value)return;config.date=$('#date').value;syncControls();renderRoutes();sample(true);};$('#time').onchange=()=>{if(!$('#time').value)return;const p=$('#time').value.split(':').map(Number);jump(DAY+p[0]*3600+p[1]*60+(p[2]||0));};
  function commitScrub(){if(!scrubbing)return;const value=Number($('#scrub').value);scrubbing=false;jump(DAY+value);}
  $('#scrub').onpointerdown=()=>{scrubbing=true;};$('#scrub').oninput=()=>{scrubbing=true;$('#time').value=timeText(Number($('#scrub').value));};$('#scrub').onchange=commitScrub;$('#scrub').onpointerup=commitScrub;$('#scrub').onpointercancel=commitScrub;$('#scrub').onblur=commitScrub;
  $('#now').onclick=()=>{const {date,time}=bogotaNow();clock.time=time;following=false;config.date=date;sample(true);syncControls();updateUI();};
  $('#back').onclick=()=>jump(clock.time-900);$('#forward').onclick=()=>jump(clock.time+900);$('#pause').onclick=()=>{clock.paused=!clock.paused;syncControls();};
  $$('[data-speed]').forEach(b=>b.onclick=()=>{clock.speed=Number(b.dataset.speed);syncControls();});
+ // Vista cenital o inclinada. La brújula gira con el mapa y, al tocarla, vuelve a mirar al norte.
+ const syncView=()=>{const b=$('#view-toggle');b.textContent=map.is3D?'2D':'3D';b.setAttribute('aria-label',map.is3D?'Volver a la vista desde arriba':'Inclinar la vista en 3D');b.setAttribute('aria-pressed',String(map.is3D));};
+ map.onView=syncView;syncView();
+ $('#view-toggle').onclick=()=>{map.setView(map.is3D?'2d':'3d');setTimeout(syncView,700);};
+ $('.north').onclick=()=>map.resetNorth();
  $('#zoom-in').onclick=()=>map.zoom(1/1.4);$('#zoom-out').onclick=()=>map.zoom(1.4);$('#fit').onclick=()=>{following=false;fitSelection();};$('#context-toggle').onclick=()=>{map.contextGroup.visible=!map.contextGroup.visible;$('#context-toggle').setAttribute('aria-pressed',map.contextGroup.visible);};$('#lanes-toggle').onclick=()=>{map.carriagewaysEnabled=map.carriagewaysEnabled===false;$('#lanes-toggle').setAttribute('aria-pressed',map.carriagewaysEnabled);if(map.carriagewayGroup)map.carriagewayGroup.visible=map.carriagewaysEnabled&&map.mpp<6;};
  $('#signals-toggle').onclick=()=>{const oculto=map.signalsEnabled;map.setSignals(!oculto);$('#signals-toggle').setAttribute('aria-pressed',oculto);$('#signals-toggle').classList.toggle('active',oculto);};
  $('#corridors-toggle').onclick=()=>{const faded=!map.corridorsFaded;map.setCorridorsFaded(faded);$('#corridors-toggle').setAttribute('aria-pressed',faded);$('#corridors-toggle').classList.toggle('active',faded);};map.onPan=()=>following=false;
@@ -368,11 +448,14 @@ try{
  for(const r of data.routes.filter(r=>!r.ready)){const d=el('details');d.append(el('summary',r.code+' · '+r.name),el('p',r.issues.join(' ')));$('#pending-list').append(d);}
  for(const r of data.excluded||[]){const p=el('p',r.code+' · '+r.name+': '+r.reason,'muted');$('#pending-list').append(p);}
  let last=performance.now();document.addEventListener('visibilitychange',()=>{last=performance.now();});
- function frame(now){const dt=(now-last)/1000;last=now;if(!document.hidden){if(ready&&settled&&!clock.paused&&!scrubbing&&document.activeElement!==$('#time')){clock.time+=dt*clock.speed;if(clock.time>=2*DAY)jump(clock.time);}if(now-lastSample>=50){sample();lastSample=now;}
+ const debug=new URLSearchParams(location.search).has('depurar');
+ // En depuración el dibujo sigue aunque la pestaña esté oculta, para revisar la vista desde fuera.
+ if(debug)setInterval(()=>{if(document.hidden)frame(performance.now(),true);},100);
+ function frame(now,manual=false){const dt=(now-last)/1000;last=now;if(!document.hidden||debug){if(ready&&settled&&!clock.paused&&!scrubbing&&document.activeElement!==$('#time')){clock.time+=dt*clock.speed;if(clock.time>=2*DAY)jump(clock.time);}if(now-lastSample>=50){sample();lastSample=now;}
   map.animateBuses(now);if(following&&selection?.kind==='bus'){const b=(map.visualBuses||snap.buses).find(b=>b.id===selection.id);if(b){map.follow(b.xy,dt);}}
   map.render();if(now-lastUI>200){updateUI();renderNow();lastUI=now;}if(now-lastList>5000){if(activePanel==='routes'&&!$('#route-list').contains(document.activeElement))renderRoutes();if(activePanel==='depots'&&ready)worker.postMessage({type:'depots',generation});lastList=now;}
   if(now-lastInspect>1000){if(selection?.kind==='bus'){const focus=document.activeElement?.id;renderBus();if(focus==='follow')$('#follow')?.focus({preventScroll:true});}if(selection?.kind==='station'){if(ready&&!$('#inspector').contains(document.activeElement))worker.postMessage({type:'station',generation,id:selection.id});}lastInspect=now;}}
- requestAnimationFrame(frame);}
+ if(!manual)requestAnimationFrame(frame);}
  const dispose=registerSimulationTools(document.modelContext,{read:()=>({...snap.stats,date:config.date,paused:clock.paused,speed:clock.speed,selected:selection}),control:input=>{if('paused'in input)clock.paused=input.paused;if('speed'in input)clock.speed=input.speed;syncControls();}});
  window.addEventListener('pagehide',()=>{worker.terminate();dispose?.();},{once:true});
  document.addEventListener('keydown',e=>{if(e.code==='Space'&&!['INPUT','SELECT','BUTTON','TEXTAREA'].includes(e.target.tagName)){e.preventDefault();clock.paused=!clock.paused;syncControls();}});

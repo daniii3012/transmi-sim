@@ -1,7 +1,7 @@
-import {Operation} from './operation.mjs?v=20260928.2';
-import {JourneyPlanner} from './planner.mjs?v=20260928.2';
-import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260928.2';
-import {DAY,addDays} from './calendar.mjs?v=20260928.2';
+import {Operation} from './operation.mjs?v=20260928.3';
+import {JourneyPlanner} from './planner.mjs?v=20260928.3';
+import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260928.3';
+import {DAY,addDays} from './calendar.mjs?v=20260928.3';
 // El motor de espacio físico corre aquí. La página pide un instante —fecha y segundos desde la
 // medianoche anterior más un día, como hasta ahora— y el worker lo traduce a su día de servicio,
 // que va de las 03:00 a las 03:00: pasar la medianoche no reinicia nada, y cambiar de fecha solo
@@ -42,7 +42,11 @@ function pump(){
  const {msg,transfer}=packFrame(request);post(msg,transfer);
  if(target===request)target=null;
 }
-function schedule(){if(!timer)timer=setTimeout(pump,0);}
+// Entre tandas se cede el turno con un MessageChannel y no con setTimeout: el navegador frena los
+// temporizadores de una pestaña en segundo plano a uno por segundo, y la simulación del día se
+// arrastraba si uno cambiaba de pestaña mientras cargaba.
+const channel=new MessageChannel();channel.port1.onmessage=()=>pump();
+function schedule(){if(!timer){timer=1;channel.port2.postMessage(0);}}
 self.onmessage=({data:m})=>{
  try{
   if(m.type==='init'){
@@ -51,7 +55,9 @@ self.onmessage=({data:m})=>{
    // Los desfases semafóricos coordinados se calculan una vez y viajan a la página, que dibuja las
    // luces con los mismos.
    const probe=new Traffic(op,guide,m.date);
-   post({type:'ready',generation,buildMs:performance.now()-start,routeIds:[...op.routes.keys()],guide:guide.summary,signalOffsets:Object.fromEntries(op.signalOffsets.map)});
+   post({type:'ready',generation,buildMs:performance.now()-start,routeIds:[...op.routes.keys()],guide:guide.summary,signalOffsets:Object.fromEntries(op.signalOffsets.map),
+    // La calzada sobre la que ruedan los buses, para dibujarla con sus carriles.
+    guideway:guide.links.map(l=>({points:l.points,lanes:l.lanes,station:l.station,street:l.street,bridge:l.bridge||null}))});
    traffic=probe;
    if(m.time!=null){target={date:m.date,time:m.time,requestId:0,service:serviceOf(m.date,m.time)};schedule();}
    return;

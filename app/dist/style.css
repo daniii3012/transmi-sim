@@ -69,3 +69,4 @@ body[data-detail=closed] #selection{display:flex;align-items:center;gap:9px}
 body[data-detail=closed] #selection>*{display:none}
 body[data-detail=closed] #selection>.route-code{display:inline-flex;flex:none;margin-bottom:0}
 body[data-detail=closed] #selection>h2:first-of-type{display:block;margin:0;font-size:1rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.map-actions .north{font-size:.72rem;margin-bottom:6px;color:#657181}#view-toggle{font-size:.8rem;font-weight:750;letter-spacing:.02em}#view-toggle[aria-pressed=true]{background:#263444;color:#fff;border-color:#263444}
