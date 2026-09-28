@@ -59,12 +59,21 @@ de los que atienden en vagones anteriores al suyo; va por el carril que sigue de
 el del andén justo antes de su vagón. **Un vagón atiende a un bus a la vez**: si está ocupado, el que
 llega entra al carril del andén detrás del que atiende —así deja libre el de paso— y abre puertas solo
 al llegar a su puesto. Quien viene por el segundo carril de un tramo abierto y para en la estación
-sigue derecho a su vagón; si le tapa uno que atiende antes, lo rebasa por el de paso. Quien ya atendió
-deja el carril del andén en cuanto hay hueco.
+sigue derecho a su vagón solo si es el primero; si su vagón está más adentro, pasa al de paso antes
+de la estación, porque por el del andén quedaría detrás de cada bus que atiende en los vagones
+anteriores —en Banderas, cinco plataformas seguidas—. El que espera en el de paso a la altura de su
+vagón tiene cortesía: los que vienen por el del andén le ceden el hueco. Quien ya atendió deja el
+carril del andén en cuanto hay hueco.
 
-Los vagones son módulos físicos en puntos fijos del eje de la estación: el vagón A es el mismo lugar
-para todas las rutas, cada sentido de su lado del andén. Cada ruta proyecta ese punto sobre su
-trazado. Antes cada una estimaba el vagón desde su propio punto de la estación —que varía decenas de
+**Dónde para cada servicio.** El GTFS publicado trae cada vagón como parada hija de su estación
+—«Mandalay A - 4 ó 6»— con sus coordenadas, y cada viaje dice en cuál para
+(`tools/build_wagon_stops.py`, `wagon_stops.json`): 755 paradas de vagón en 143 estaciones y la
+secuencia de 109 servicios. Con eso el 5 y el M51 paran en el vagón A de Mandalay, que está al oriente,
+y el 5 en el vagón occidental de Pradera, como en la calle; antes la letra se contaba siempre desde el
+occidente. Donde el servicio no está en el GTFS se usa la letra del tablero de la estación con las
+coordenadas del GTFS; si tampoco, las piezas del contorno de OSM, que en la mayoría de estaciones son
+un polígono por vagón; y si tampoco, módulos a lo largo del eje. El vagón A es el mismo lugar para
+todas las rutas, cada sentido de su lado del andén. Cada ruta proyecta ese punto sobre su trazado. Antes cada una estimaba el vagón desde su propio punto de la estación —que varía decenas de
 metros de un trazado a otro— y dos servicios del mismo vagón paraban uno al lado del otro. Las lecturas de posición de la flota no sirven para
 corroborarlo —refrescan cada 15–30 s con unos 10 m de error, y un carril mide 3,4—, así que queda como
 regla declarada, coherente con la geometría de las estaciones.
@@ -102,6 +111,12 @@ desfase, y un bus tenía que encontrar en verde dos, tres o cuatro luces indepen
 Las fases reales no se publican; lo que sí se sabe es que los cruces consecutivos de una avenida se
 coordinan. Se recorre cada troncal y cada cruce se desfasa respecto del anterior lo que tarda un bus
 en llegar a 29 km/h (**onda verde estimada**). Ciclo 90 s, verde 52, amarillo 3, ajustables.
+
+Lo que se observa en la calle y OSM todavía no recoge va en `field_corrections.json`, con dónde, qué
+y por qué, y se aplica al cargar sin tocar el catálogo de origen. La primera: en la NQS hacia el
+norte, pasando Av. El Dorado, no hay semáforo —la calzada se abre en dos, por la izquierda giran los
+que van a la Calle 26 y por la derecha siguen—; el de ese cruce solo detiene el sentido sur. Con el
+semáforo de más se formaba una fila de 35 buses hasta la glorieta de la Calle 6.
 
 ### Terminales, flota y patios
 
@@ -162,10 +177,12 @@ nivel de demanda ±5 %. La misma fecha se repite igual; dos martes ya no.
 ## Validación
 
 **Contra la operación observada** —los tiempos entre paradas medidos en las lecturas de la flota,
-`observed_times.json`—, un día laborable completo con carriles medidos: mediana 1,02, percentil 10
-0,91 y 90 1,15; ninguna hora fuera de 0,96–1,06. **Contra el horario publicado**, 0,88: los buses
-reales van más rápido de lo que publica el horario, que acolcha los tramos largos. Pico de 1.666 buses
-en servicio y 2.118 vehículos en el día, dentro de la flota real.
+`observed_times.json`—, un día laborable completo con carriles medidos, vagones del GTFS y las
+correcciones en sitio: mediana 1,02, percentil 10 0,91 y 90 1,14; ninguna hora fuera de 0,96–1,06.
+**Contra el horario publicado**, 0,88: los buses reales van más rápido de lo que publica el horario,
+que acolcha los tramos largos. Pico de 1.628 buses en servicio y 2.088 vehículos en el día, dentro de
+la flota real. A las 7:40 ya no hay filas de más de diez buses: Banderas pasó de 32 detenidos a 4 y la
+NQS de 55 a ninguno.
 
 Antes de medir los carriles, con un solo carril donde OSM no decía otra cosa —la tabla que sigue—, la
 punta se alargaba entre 20 y 35 % sobre lo publicado por colas que en la calle no existen:

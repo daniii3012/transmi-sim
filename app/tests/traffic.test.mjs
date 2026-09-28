@@ -8,7 +8,7 @@ import {signalClusters,signalPhase} from '../dist/signals.mjs';
 const read=f=>JSON.parse(fs.readFileSync(new URL('../dist/'+f,import.meta.url)));
 const data=read('services.json');
 const demand=read('demand.json');const profiles=new Map(demand.profiles.map(p=>[p.station_id,p]));for(const s of data.stations)s.demand_profile=profiles.get(s.id);
-for(const [k,f] of [['busway_signals','busway_signals.json'],['station_layouts','station_layouts.json'],['station_wagons','station_wagons.json'],['schedule','schedule.json'],['speed_profiles','speed_profiles.json'],['busway_lanes','busway_lanes.json'],['busway_geometry','busway_geometry.json']])data[k]=read(f);
+for(const [k,f] of [['busway_signals','busway_signals.json'],['station_layouts','station_layouts.json'],['station_wagons','station_wagons.json'],['schedule','schedule.json'],['speed_profiles','speed_profiles.json'],['busway_lanes','busway_lanes.json'],['busway_geometry','busway_geometry.json'],['wagon_stops','wagon_stops.json'],['field_corrections','field_corrections.json']])data[k]=read(f);
 
 const WEEKDAY='2026-09-24';
 function build(config={},date=WEEKDAY){const op=new Operation(data,{date,plan:true,...config});const guide=new Guideway([...op.routes.values()],{lanes:data.busway_lanes,geometry:data.busway_geometry});return {op,guide,traffic:new Traffic(op,guide,date)};}
@@ -94,7 +94,9 @@ test('La red entera atraviesa la punta de la mañana sin atascos permanentes',()
  assert.ok(s.completed>3000,`${s.completed} viajes terminados`);
  assert.ok(s.forced<20,`${s.forced} desatascos forzados`);
  assert.ok(s.waitingToEnter<40,`${s.waitingToEnter} buses esperando entrar a la vía`);
- assert.ok(s.fleet>1200&&s.fleet<2600,`${s.fleet} buses en servicio a las 9`);
+ // Menos atascos, menos buses a la vez en la calle: sin el falso semáforo de la NQS quedan unos
+ // 1.150 a las 9, con un pico de 1.630 hacia las 7.
+ assert.ok(s.fleet>1000&&s.fleet<2600,`${s.fleet} buses en servicio a las 9`);
  assert.ok(traffic.t===9*3600&&SERVICE_START===3*3600);
 });
 
@@ -140,4 +142,18 @@ test('Pedir un instante dentro del último paso no restaura un punto de control'
  for(const dt of [.1,.2,.3,.6,.9,1.05,1.4])t.seek(7*3600+40*60+dt);
  assert.equal(restored,0,'avanzar a 1× nunca vuelve atrás');assert.ok(t.t>=at);
  t.seek(7*3600+35*60);assert.equal(restored,1,'retroceder de verdad sí restaura');
+});
+
+test('Cada servicio para en el vagón que publica el GTFS: en Mandalay el A está al oriente y en Pradera el 5 usa el occidental',()=>{
+ const {op}=build();const at=(code,station)=>{const r=[...op.routes.values()].find(r=>r.code===code&&r.visits.some(v=>v.name.startsWith(station)&&v.placement_source==='vagon_gtfs'));const v=r.visits.find(v=>v.name.startsWith(station));return {v,xy:r.path.sample(v.at_m).xy};};
+ const m51=at('M51','Mandalay'),b26=at('B26','Mandalay');
+ assert.equal(m51.v.wagonLabel,'A');assert.equal(b26.v.wagonLabel,'B');assert.ok(m51.xy[0]>b26.xy[0]+30,'el vagón A de Mandalay queda al oriente del B');
+ const five=at('5','Pradera'),m51p=at('M51','Pradera');assert.ok(five.xy[0]<m51p.xy[0]-30,'en Pradera el 5 para en el vagón occidental');
+ let placed=0,total=0;for(const r of op.routes.values())r.visits.forEach((v,i)=>{if(v.kind==='street'||i===0||i===r.visits.length-1)return;total++;if(v.placement_source==='vagon_gtfs')placed++;});
+ assert.ok(placed/total>.9,`${placed} de ${total} paradas en su vagón del GTFS`);
+});
+
+test('Las correcciones en sitio retiran el semáforo de la NQS hacia el norte y dejan el del sentido sur',()=>{
+ const {op}=build();const ids=new Set([...op.routes.values()].flatMap(r=>r.signals.map(s=>s.id)));
+ assert.ok(!ids.has('osm-node-5631009101'));assert.ok(ids.has('osm-node-13252352390'));
 });

@@ -1,4 +1,4 @@
-import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20260928.5';
+import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20260928.6';
 
 // Existence is sourced from OSM. These phases are explicitly scenario estimates.
 export const SIGNAL_CYCLE=Object.freeze({cycle:90,green:52,amber:3});
@@ -88,4 +88,11 @@ export function signalTravelAt(move,time){
   delay+=hold.end-hold.start;
  }
  return travelAt(move.profile,time-move.start-delay);
+}
+/** Aplica las correcciones observadas en la calle (`field_corrections.json`) al catálogo de semáforos:
+ * los que se retiran dejan de existir para el motor y para el mapa. Se puede llamar más de una vez. */
+export function applyFieldCorrections(data){
+ const removed=new Set((data.field_corrections?.signals_removed||[]).map(s=>s.id));
+ if(removed.size&&data.busway_signals?.signals)data.busway_signals={...data.busway_signals,signals:data.busway_signals.signals.filter(s=>!removed.has(s.id))};
+ return data;
 }

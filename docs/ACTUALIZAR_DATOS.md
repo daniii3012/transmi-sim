@@ -181,6 +181,24 @@ ese detalle para esos identificadores y **toma el resto de la metadata, vigencia
 incluida, de la instantánea base**. Cada ruta queda con `detail_snapshot`, que dice de
 qué carpeta salió su detalle. Para volver atrás basta borrar el puntero.
 
+### Vagón de cada parada
+
+```sh
+../../work/venv/bin/python tools/build_wagon_stops.py
+```
+
+Lee el ZIP del GTFS en `data/raw/gtfs/`: las paradas hijas de cada estación troncal (una por vagón y
+juego de puertas, con coordenadas) y, en `stop_times`, en cuál para cada viaje. Guarda por servicio la
+secuencia de paradas de vagón en `wagon_stops.json`. Se rehace con cada GTFS nuevo, después de
+`build_schedule.py`, que es el que empareja las rutas.
+
+### Correcciones observadas en la calle
+
+`data/curated/field_corrections.json` (y su copia en `app/dist`) guarda lo que se observó en sitio y
+los datos abiertos no recogen todavía: por ahora, semáforos que no existen para un sentido. Cada
+entrada lleva dónde, qué, por qué y la fecha. Se edita a mano; cuando OSM lo corrija, la entrada
+sobra y se borra.
+
 ### Edificios de la vista 3D
 
 ```sh

@@ -44,7 +44,7 @@ jobs:
           set -euo pipefail
           test -f app/dist/index.html
           test -f app/dist/.nojekyll
-          for f in services context demand station_layouts busway_signals busway_lanes busway_geometry station_wagons network schedule; do
+          for f in services context demand station_layouts busway_signals busway_lanes busway_geometry wagon_stops field_corrections station_wagons network schedule; do
             test -s "app/dist/$f.json" || { echo "Falta app/dist/$f.json"; exit 1; }
             python3 -c "import json;json.load(open('app/dist/$f.json'))"
           done
@@ -61,7 +61,7 @@ jobs:
             assert h['source']['sha256'], 'schedule.json no declara de qué paquete salió'; \
             print(f\"schedule.json: {len(r)} servicios, paquete {h['source']['sha256'][:12]}\")" 
           # Los JSON curados y su copia web tienen que ser idénticos byte a byte.
-          for f in station_layouts busway_signals busway_lanes busway_geometry station_wagons; do
+          for f in station_layouts busway_signals busway_lanes busway_geometry wagon_stops field_corrections station_wagons; do
             a=$(sha256sum "data/curated/$f.json" | cut -d' ' -f1)
             b=$(sha256sum "app/dist/$f.json" | cut -d' ' -f1)
             [ "$a" = "$b" ] || { echo "$f.json difiere entre data/curated y app/dist"; exit 1; }

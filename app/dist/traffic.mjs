@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260928.5';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260928.5';
-import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260928.5';
-import {hash,programmedSpeed} from './operation.mjs?v=20260928.5';
-import {vehicleSpec} from './vehicles.mjs?v=20260928.5';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260928.6';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260928.6';
+import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260928.6';
+import {hash,programmedSpeed} from './operation.mjs?v=20260928.6';
+import {vehicleSpec} from './vehicles.mjs?v=20260928.6';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -31,6 +31,7 @@ export const CHECKPOINT=900;           // un punto de control cada 15 min simula
 const CELL=5;                          // resolución del mapa de carriles, m
 const V0CELL=10;                       // resolución de la velocidad deseada, m
 export const CRUISE_QUANTILE=.75;       // qué percentil de la velocidad de rodar del tramo se toma como crucero
+const ZONE_BEFORE=70;                  // m de zona de estación antes del centro del bus en su vagón
 const LOOK=240;                        // hasta dónde mira un conductor, m
 const EMERGENCY=6;                     // frenada máxima, m/s²
 export const STATES=['moving','dwell','queue','signal','traffic'];
@@ -167,7 +168,7 @@ export class Guideway{
    const map=this.routeMaps.get(r.id);
    for(const v of r.visits){
     if(v.kind==='street')continue;
-    const from=Math.max(0,v.at_m-70),to=Math.min(r.path.length,v.at_m+60);
+    const from=Math.max(0,v.at_m-ZONE_BEFORE),to=Math.min(r.path.length,v.at_m+60);
     for(let k=0;k<map.links.length;k++){
      const a=Math.max(from,map.starts[k]),b=Math.min(to,map.starts[k+1]);if(b<=a)continue;
      const link=this.links[map.links[k]];
@@ -636,8 +637,10 @@ export class Traffic{
  mergeTarget(i){
   const a=this.a,info=this.info[a.route[i]],sR=a.sR[i];let z=a.zp[i];while(z<info.zEnd.length&&info.zEnd[z]<=sR)z++;a.zp[i]=z;
   if(z>=info.zEnd.length||info.zId[z]<0||info.zStart[z]<=sR-.5)return -1;
-  // Quien para en esa estación entra derecho al carril del andén, que es el mismo por el que viene.
-  const S=info.stopFront[a.stop[i]];if(a.lane[i]===1&&a.stop[i]<info.last&&S>=info.zStart[z]-1&&S<=info.zEnd[z]+1)return -1;
+  // Quien para en el primer vagón entra derecho al carril del andén, que es el mismo por el que viene.
+  // Si su vagón está más adentro, va por el de paso y se acomoda justo antes: por el del andén
+  // quedaría detrás de cada bus que atiende en los vagones anteriores (en Banderas, cinco).
+  const S=info.stopFront[a.stop[i]];if(a.lane[i]===1&&a.stop[i]<info.last&&S>=info.zStart[z]-1&&S<=info.zEnd[z]+1&&S-info.zStart[z]<=ZONE_BEFORE+a.len[i]+25)return -1;
   this.mt=info.zStart[z];return info.zId[z];
  }
  /** Fuera de las estaciones, el segundo carril sirve para adelantar: se toma al entrar a un tramo de
@@ -675,6 +678,20 @@ export class Traffic{
   if(follow>=0&&own-len-this.off[follow]<S0+a.v[follow]*.8)return false;
   this.removeFromList(i);a.lane[i]=1;this.insertInList(i);a.dock[i]=map.starts[k]+target;return true;
  }
+ /** El bus del carril de paso, delante de `i` en su mismo tramo, que espera a la altura de su vagón
+  * para pasarse al del andén: `i`, que va por el del andén, lo deja entrar. Deja la distancia en
+  * `this.lg`; -1 si no hay a quién ceder antes de `limit` metros. */
+ courtesy(i,limit){
+  const a=this.a,off=this.off,L=this.linkOf(i),own=off[i],list=this.lists[L*2];let who=-1,best=Math.min(limit,60);
+  for(let x=list.length-1;x>=0;x--){
+   const j=list[x],rear=off[j]-a.len[j]-own;if(rear<=.5)continue;if(rear>=best)break;
+   if(a.dock[j]!==0||a.state[j]===DWELL||a.v[j]>1.5)continue;
+   const info=this.info[a.route[j]],d=info.stopFront[a.stop[j]]-a.sR[j];
+   if(a.stop[j]>=info.last||d<-1||d>a.len[j]+30)continue;
+   best=rear;who=j;
+  }
+  this.lg=best;return who;
+ }
  /** Hasta dónde puede llegar por el carril de paso un bus cuyo vagón está ocupado: la cola del que
   * atiende, menos un metro. Si el puesto está libre, hasta el punto de atención. */
  berthHold(i,d0){
@@ -710,6 +727,10 @@ export class Traffic{
    // Detenido en cola detrás de otro detenido: sigue igual, sin más cuentas.
    if(v===0&&j>=0&&a.v[j]===0&&gap<S0+.3&&a.lane[i]===a.lane[j]){lead[x]=j;newS[x]=sR;newV[x]=0;bind[x]=BUS;continue;}
    if(j>=0&&gap<LOOK){lead[x]=j;const s=S0+Math.max(0,vT+v*(v-a.v[j])/sqrtAB),q=s/Math.max(.1,gap);term=q*q;binding=BUS;limit=gap>.4?gap-.4:0;}
+   // Cortesía en estación: por el carril del andén se cede el paso al que espera en el de paso, a
+   // la altura de su vagón, para entrar. Sin esto, en una estación larga como Banderas el que espera
+   // no encontraba nunca el hueco y tapaba el carril de paso a todos los de atrás.
+   if(a.lane[i]===1){const y=this.courtesy(i,j>=0?gap:LOOK);if(y>=0){const gy=this.lg,s=S0+Math.max(0,vT+v*(v-a.v[y])/sqrtAB),q=s/Math.max(.1,gy),tq=q*q;if(tq>term){term=tq;binding=BUS;lead[x]=y;}if(gy-.4<limit)limit=gy>.4?gy-.4:0;}}
    // La parada propia: el frente se detiene en su punto de atención. Si el vagón está ocupado, espera
    // detrás del que atiende, listo para entrar, y no a su costado tapando el carril de paso.
    let d0=(a.dock[i]>0?a.dock[i]:info.stopFront[a.stop[i]])-sR;

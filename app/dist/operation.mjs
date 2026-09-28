@@ -1,10 +1,11 @@
-import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260928.5';
-import {vehicleSpec} from './vehicles.mjs?v=20260928.5';
-import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED} from './signals.mjs?v=20260928.5';
-import {travelTimeAtDistance} from './travel.mjs?v=20260928.5';
-import {generatedPassengers,alightFraction,DEMAND_BASELINE} from './passengers.mjs?v=20260928.5';
-import {placeVisit} from './station-layouts.mjs?v=20260928.5';
-import {MetricPath} from './simulation.mjs?v=20260928.5';
+import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260928.6';
+import {vehicleSpec} from './vehicles.mjs?v=20260928.6';
+import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections} from './signals.mjs?v=20260928.6';
+import {travelTimeAtDistance} from './travel.mjs?v=20260928.6';
+import {generatedPassengers,alightFraction,DEMAND_BASELINE} from './passengers.mjs?v=20260928.6';
+import {placeVisit} from './station-layouts.mjs?v=20260928.6';
+import {visitWagons} from './wagons.mjs?v=20260928.6';
+import {MetricPath} from './simulation.mjs?v=20260928.6';
 export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1,mode:'auto',cruiseKmh:60,streetKmh:50,acceleration:.8,braking:1.1,turnaround:240,variableDispatch:true,reinforcements:true,signals:true,beyondValidity:true,programmedDispatch:true,programmedRunning:true,observedRunning:true,
  // Espacio físico (traffic.mjs). Separación en marcha y parado, ciclo semafórico y atención son
  // decisiones de modelo, rotuladas como estimación; la variación diaria cambia de una fecha a otra
@@ -128,7 +129,7 @@ class Heap{constructor(){this.a=[];this.n=0;}push(e){e.seq=this.n++;let i=this.a
 function upperBound(a,value,key){let l=0,h=a.length;while(l<h){const m=(l+h)>>1;if(key(a[m])<=value)l=m+1;else h=m;}return l;}
 export class Operation {
  constructor(data,config={}){
-  this.data=data;this.params=parameters(config.params);this.date=config.date||data.scenario_date;this.selection=config.selection||{mode:'all'};
+  applyFieldCorrections(data);this.data=data;this.params=parameters(config.params);this.date=config.date||data.scenario_date;this.selection=config.selection||{mode:'all'};
   this.vehicle=data.vehicle;this.routes=new Map();this.stations=new Map(data.stations.map(s=>[s.id,s]));this.time=DAY+7*3600;this.buses=[];
   const picked=r=>this.selection.mode==='route'?r.id===this.selection.route:this.selection.mode==='zones'?(this.selection.zones||[]).some(z=>r.served_zones.includes(z)||r.zone===z):true;
   const fields=data.speed_profiles?.routes||{};
@@ -195,13 +196,42 @@ export class Operation {
    }
    m={center,u,n,spacing};this.modules.set(key,m);return m;
   };
+  // El GTFS publica cada vagón como parada hija de su estación, con coordenadas, y dice en cuál para
+  // cada viaje (tools/build_wagon_stops.py): es el dato más directo de dónde se detiene un servicio.
+  const gtfsWagons=this.data.wagon_stops?.routes||{},stationWagons=this.data.wagon_stops?.stations||{};
+  const letterIndex=l=>/^[A-Z]$/.test(l||'')?l.charCodeAt(0)-64:/^T\d+/.test(l||'')?parseInt(l.slice(1)):null;
+  for(const r of this.routes.values()){
+   const pending=new Map();for(const w of gtfsWagons[r.id]?.stops||[]){const list=pending.get(w.station_id)||[];list.push(w);pending.set(w.station_id,list);}
+   for(let i=1;i<r.visits.length-1;i++){
+    const s=r.visits[i];if(s.kind==='street')continue;
+    const lo=(r.stops[i-1].at_m+r.stops[i].at_m)/2,hi=(r.stops[i].at_m+r.stops[i+1].at_m)/2;
+    // La parada hija de este viaje; si el servicio no está en el GTFS, la de la letra del tablero.
+    let candidates=pending.get(s.station_id)||[],fromTrip=true;
+    if(!candidates.length&&s.wagonLabel){candidates=(stationWagons[s.station_id]||[]).filter(w=>w.letter===s.wagonLabel);fromTrip=false;}
+    let best=null;for(const w of candidates){const hit=projectOnPath(r.path,w.xy,lo,hi);if(hit&&hit.distance<40&&(!best||hit.distance<best.hit.distance))best={w,hit};}
+    if(!best)continue;
+    if(fromTrip)candidates.splice(candidates.indexOf(best.w),1);
+    s.at_m=Math.max(r.visits[i-1].at_m+2,Math.min(hi-2,best.hit.at_m));s.placement_source='vagon_gtfs';s.placement_estimated=false;s.module_xy=best.w.xy;s.gtfsPlaced=true;
+    if(best.w.letter){s.wagonLabel=best.w.letter;s.wagon=letterIndex(best.w.letter)||s.wagon;s.wagonDoors=best.w.doors||s.wagonDoors;s.wagonSource='published';}
+   }
+  }
   for(const r of this.routes.values())for(let i=0;i<r.visits.length;i++){
-   const s=r.visits[i];if(s.kind==='street')continue;const layout=layouts.get(s.station_id);
+   const s=r.visits[i];if(s.kind==='street'||s.gtfsPlaced)continue;const layout=layouts.get(s.station_id);
    // En las terminales el embarque y el desembarque van en plataformas aparte: se conserva el andén
    // que dé OSM, sin módulos.
    if(i===0||i===r.visits.length-1){const placed=placeVisit(r,i,layout,hash(r.family));if(placed)Object.assign(s,placed);continue;}
+   const lo=(r.stops[i-1].at_m+r.stops[i].at_m)/2,hi=(r.stops[i].at_m+r.stops[i+1].at_m)/2;
+   // Primero, los vagones que OSM dibuja pieza por pieza: el A en el extremo de la entrada. Si la
+   // letra es estimada, un vagón donde quepa el bus: un biarticulado no para en uno corto.
+   const found=visitWagons(r.path,s.at_m,lo,hi,layout);
+   if(found&&s.wagon<=found.wagons.length){
+    let w=s.wagon;const need=vehicleSpec(r).length-3;
+    if(s.wagonSource!=='published'&&found.wagons[w-1].length<need){const alt=found.wagons.findIndex(x=>x.length>=need);if(alt>=0)w=alt+1;}
+    const W=found.wagons[w-1];s.wagon=w;
+    s.at_m=Math.max(r.visits[i-1].at_m+2,Math.min(hi-2,W.at_m));s.placement_source='vagon_osm';s.placement_estimated=s.wagonSource!=='published'||!found.entrance;s.module_xy=W.xy;s.wagon_length=Math.round(W.length);continue;
+   }
    const m=moduleOf(s.station_id,s.wagons||2),k=(s.wagon-(m.n+1)/2)*m.spacing,P=[m.center[0]+m.u[0]*k,m.center[1]+m.u[1]*k];
-   const lo=(r.stops[i-1].at_m+r.stops[i].at_m)/2,hi=(r.stops[i].at_m+r.stops[i+1].at_m)/2,hit=projectOnPath(r.path,P,lo,hi);
+   const hit=projectOnPath(r.path,P,lo,hi);
    if(hit&&hit.distance<45){s.at_m=Math.max(r.visits[i-1].at_m+2,Math.min(hi-2,hit.at_m));s.placement_source='modulo_de_estacion';s.placement_estimated=s.wagonSource!=='published';s.module_xy=P;continue;}
    const shift=(s.wagon-(s.wagons+1)/2)*64*(s.direction===0?1:-1),bound=Math.min((r.stops[i].at_m-r.stops[i-1].at_m)/4,(r.stops[i+1].at_m-r.stops[i].at_m)/4);s.at_m+=Math.max(-bound,Math.min(bound,shift));
   }

@@ -1,0 +1,12 @@
+{
+ "schema_version": 1,
+ "note": "Correcciones observadas en la calle que los datos abiertos todavía no recogen. Cada una dice qué cambia, dónde y por qué; se aplican al cargar, sin tocar los datos curados de origen.",
+ "signals_removed": [
+  {
+   "id": "osm-node-5631009101",
+   "where": "NQS hacia el norte, cruce con la conexión a la Calle 26, después de la estación Av. El Dorado",
+   "reason": "Los buses que van al norte no tienen semáforo: hay doble calzada, por la izquierda giran los que van a la troncal de la Calle 26 y por la derecha siguen derecho. El semáforo solo detiene a los que vienen de norte a sur, para que los otros puedan girar.",
+   "observed": "2026-09-28"
+  }
+ ]
+}
