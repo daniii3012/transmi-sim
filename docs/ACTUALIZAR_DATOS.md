@@ -240,6 +240,9 @@ entrada lleva dónde, qué, por qué y la fecha. Se edita a mano; cuando OSM lo 
 sobra y se borra. También lleva las paradas que un GTFS nuevo todavía no trae (`stops_added`; Patio
 Bonito estuvo ahí del 19 al 28 de septiembre de 2026): se insertan en el recorrido y el tiempo del
 tramo publicado se reparte según la distancia. Con un paquete GTFS nuevo que ya las incluya, se borran.
+Y las bifurcaciones con un carril por rama (`lane_splits`): los últimos metros antes de separarse
+tienen dos carriles, los que giran se pasan al de la izquierda y los demás siguen sin quedar detrás
+de su fila; hoy, la NQS hacia el norte antes de la conexión a la Calle 26.
 
 ### Edificios de la vista 3D
 

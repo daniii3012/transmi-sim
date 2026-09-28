@@ -58,6 +58,17 @@ al horario publicado, pico de 1.666 buses y 2.118 vehículos. 89 pruebas Node y 
 - Calles junto a la troncal, cruces en cebra y puentes peatonales (`cross_streets.json`); esquinas
   de las calles redondeadas con arcos.
 
+### Hecho el 28 sep. (quinta parte)
+
+- NQS hacia el norte antes de la Calle 26: bifurcación con un carril por rama (`lane_splits` en
+  `field_corrections.json`, `Guideway` y `splitLane` en `traffic.mjs`). En la punta de 6:30 a 8:30,
+  los que siguen al norte pasan de 4.020 a 330 bus-segundos detenidos antes de separarse.
+- La medición en la calle se busca por par de paradas cuando el paquete renumera la ruta: Z63 y otros
+  siete servicios vuelven a tener tiempos medidos; solo B27 queda sin ellos.
+- Círculos de pasajeros por encima de todo, de 6 a 30 px y de rosado a rojo según la gente (lleno con
+  250); puentes peatonales semitransparentes como los viales; capa «Puentes»; edificios más claros y
+  con menos contraste.
+
 ### Pendientes, en este orden
 
 2. ~~Rediseño de la interfaz móvil~~ hecho el 28 sep. (`mobile.css`): reloj en píldora arriba,

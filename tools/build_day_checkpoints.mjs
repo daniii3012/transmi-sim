@@ -34,7 +34,7 @@ for(const [k,f] of [['schedule','schedule.json'],['speed_profiles','speed_profil
 data.demand=read('demand.json');{const profiles=new Map(data.demand.profiles.map(p=>[p.station_id,p]));for(const s of data.stations){const p=profiles.get(s.id);if(p)s.demand_profile=p;}}
 const config={date:from,params:{...DEFAULTS},selection:{mode:'all'}};
 const op=new Operation(data,{...config,plan:true});
-const guide=new Guideway([...op.routes.values()],{lanes:data.busway_lanes,geometry:data.busway_geometry,structures:data.busway_structures});
+const guide=new Guideway([...op.routes.values()],{lanes:data.busway_lanes,geometry:data.busway_geometry,structures:data.busway_structures,splits:data.field_corrections?.lane_splits});
 
 // Un día de servicio por llave: la primera fecha en que aparece.
 const scenarios=new Map();

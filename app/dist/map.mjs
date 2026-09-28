@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260929.14';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.14';
+import {MetricPath} from './simulation.mjs?v=20260929.15';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.15';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260929.14';
+import {pieceShape} from './wagons.mjs?v=20260929.15';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -13,8 +13,8 @@ const LANE=3.4,BUS_WIDTH=2.55,BUS_HEIGHT=3.25,CELL_M=5;
 const BODIES={12:[12],18.5:[10.9,7.3],27.2:[9.8,8.4,8.4]};
 const JOINT=.3;
 const PALETTE={
- light:{crossing:'#a3afba',footbridge:'#b8c3cd',crowd:'#dc253b',depot:'#dfe4e9',parked:'#c7343f',clear:'#edf1f4',park:'#d4e3d8',water:'#c5dce8',road:'#ffffff',waterLine:'#b6d5e4',bridge:'#c1cbd5',asphalt:'#c9d1d9',berth:'#bcc6cf',laneMark:'#ffffff',platform:'#f7f9fb',platformEdge:'#8a9dac',roof:'#9fb1c1',building:'#d9dfe5',stopInner:'#ffffff'},
- dark:{crossing:'#8397a9',footbridge:'#5d7182',crowd:'#ef3b52',depot:'#1c2835',parked:'#a8323c',clear:'#131d28',park:'#1d3530',water:'#1d3547',road:'#2b3947',waterLine:'#35596c',bridge:'#607383',asphalt:'#26333f',berth:'#2f3e4c',laneMark:'#51647a',platform:'#51667a',platformEdge:'#8aa1b5',roof:'#6f879c',building:'#233140',stopInner:'#293746'},
+ light:{crossing:'#a3afba',footbridge:'#b8c3cd',crowd:'#dc253b',depot:'#dfe4e9',parked:'#c7343f',clear:'#edf1f4',park:'#d4e3d8',water:'#c5dce8',road:'#ffffff',waterLine:'#b6d5e4',bridge:'#c1cbd5',asphalt:'#c9d1d9',berth:'#bcc6cf',laneMark:'#ffffff',platform:'#f7f9fb',platformEdge:'#8a9dac',roof:'#9fb1c1',building:'#e1e5e9',buildingGlow:'#b3bcc5',stopInner:'#ffffff'},
+ dark:{crossing:'#8397a9',footbridge:'#5d7182',crowd:'#ef3b52',depot:'#1c2835',parked:'#a8323c',clear:'#131d28',park:'#1d3530',water:'#1d3547',road:'#2b3947',waterLine:'#35596c',bridge:'#607383',asphalt:'#26333f',berth:'#2f3e4c',laneMark:'#51647a',platform:'#51667a',platformEdge:'#8aa1b5',roof:'#6f879c',building:'#223040',buildingGlow:'#141e29',stopInner:'#293746'},
 };
 
 // Una tesela de edificios: paredes y techo de cada huella extruida a sus pisos, en un solo
@@ -224,7 +224,8 @@ export class NetworkMap {
     if(this.infrastructureGroup)this.infrastructureGroup.visible=near<8;
     if(this.roadBands)this.roadBands.visible=near<3;
     if(this.crossingGroup)this.crossingGroup.visible=near<1.6;
-    if(this.footbridgeGroup)this.footbridgeGroup.visible=near<4;
+    if(this.footbridgeGroup)this.footbridgeGroup.visible=near<4&&this.bridgesEnabled!==false;
+    for(const m of this.structureMeshes||[])m.visible=this.bridgesEnabled!==false;
     if(this.carriagewayGroup)this.carriagewayGroup.visible=this.carriagewaysEnabled!==false&&near<6&&!this.guidewayGroup;
     // Con la calzada a la vista, la línea de la troncal sobra: se muestra una u otra, igual en 2D y en
     // 3D. El interruptor de la calzada manda en las dos vistas.
@@ -452,11 +453,17 @@ export class NetworkMap {
   }
   /** Pasajeros esperando: un disco en el suelo de cada estación, de área proporcional a la gente. */
   setCrowd(list){
-    if(!this.crowdMesh){const g=new THREE.CircleGeometry(1,40);this.crowdMesh=new THREE.InstancedMesh(g,new THREE.MeshBasicMaterial({color:this.palette.crowd,transparent:true,opacity:.35,depthTest:true,depthWrite:false}),400);this.crowdMesh.frustumCulled=false;this.crowdMesh.renderOrder=.3;this.crowdMesh.userData.key='crowd';this.scene.add(this.crowdMesh);}
+    // Por encima de edificios y calzada, para leerlo desde lejos; el color de cada círculo va aparte.
+    if(!this.crowdMesh){const g=new THREE.CircleGeometry(1,40);this.crowdMesh=new THREE.InstancedMesh(g,new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.62,depthTest:false,depthWrite:false}),400);this.crowdMesh.frustumCulled=false;this.crowdMesh.renderOrder=9;this.scene.add(this.crowdMesh);}
     this.crowdList=list;const byId=new Map(this.data.stations.map(s=>[s.id,s]));let i=0;
-    for(const [id,waiting] of list||[]){const s=byId.get(id);if(!s||waiting<5||i>=400)continue;// Área proporcional a la gente, con un tamaño mínimo en pantalla para leerlo desde lejos.
-      const r=Math.max(Math.sqrt(waiting)*1.6,this.mpp*(3+Math.sqrt(waiting)*.32));this.object.position.set(s.xy[0],s.xy[1],.1);this.object.rotation.set(0,0,0);this.object.scale.set(r,r,1);this.object.updateMatrix();this.crowdMesh.setMatrixAt(i++,this.object.matrix);}
-    this.crowdMesh.count=i;this.crowdMesh.instanceMatrix.needsUpdate=true;this.crowdMesh.visible=!!list;
+    const low=new THREE.Color(this.dark?'#8a3a48':'#f2a7b1'),high=new THREE.Color(this.dark?'#ff3b55':'#c8102e'),color=new THREE.Color();
+    for(const [id,waiting] of list||[]){const s=byId.get(id);if(!s||waiting<5||i>=400)continue;
+      // Más gente, más grande y más rojo: en pantalla, de 6 a 30 px de radio, lleno con 250 personas
+      // esperando; de cerca nunca baja del área proporcional a la gente.
+      const f=Math.min(1,(waiting/250)**.6),px=6+24*f,r=Math.max(Math.sqrt(waiting)*1.6,this.mpp*px);
+      this.object.position.set(s.xy[0],s.xy[1],.1);this.object.rotation.set(0,0,0);this.object.scale.set(r,r,1);this.object.updateMatrix();this.crowdMesh.setMatrixAt(i,this.object.matrix);
+      this.crowdMesh.setColorAt(i++,color.copy(low).lerp(high,Math.min(1,f*1.3)));}
+    this.crowdMesh.count=i;this.crowdMesh.instanceMatrix.needsUpdate=true;if(this.crowdMesh.instanceColor)this.crowdMesh.instanceColor.needsUpdate=true;this.crowdMesh.visible=!!list;
   }
   /** Llena los patios con `idle` buses, repartidos según el área de cada uno. */
   updateDepotBuses(idle){
@@ -543,7 +550,10 @@ export class NetworkMap {
       this.buildingIndex={base,size:index.method.tile_m,floor:index.method.floor_height_m||3,coverage:index.coverage,source:index.source,tiles:index.tiles.map(([x,y,count])=>({key:x+'_'+y,x,y,count}))};
       this.buildingTiles=new Map();this.buildingLoading=0;this.small=matchMedia('(max-width:800px)').matches;
       this.buildingGroup=new THREE.Group();this.buildingGroup.visible=false;this.scene.add(this.buildingGroup);
-      this.buildingMaterial=new THREE.MeshLambertMaterial({color:this.palette.building});
+      // Tono claro y con brillo propio: las caras en sombra se acercan a las iluminadas y los edificios
+      // acompañan el mapa sin quitarle protagonismo a los buses. Opacos: translúcidos, con tantos
+      // superpuestos, se enturbiaban y costaban el doble de dibujar.
+      this.buildingMaterial=new THREE.MeshLambertMaterial({color:this.palette.building,emissive:this.palette.buildingGlow,emissiveIntensity:.42});
       this.updateBuildingTiles();
     }catch{}
   }
@@ -612,7 +622,7 @@ export class NetworkMap {
   structureMesh(vertices){
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));g.computeVertexNormals();
     const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:this.palette.bridge,transparent:true,opacity:.55,depthWrite:false,side:THREE.DoubleSide}));
-    m.renderOrder=8.2;m.userData.key='bridge';return m;
+    m.renderOrder=8.2;m.userData.key='bridge';m.visible=this.bridgesEnabled!==false;(this.structureMeshes||=[]).push(m);return m;
   }
   /** Cruces peatonales en cebra y puentes peatonales con sus rampas (tools/build_cross_streets.py). */
   setCrossings(data){
@@ -644,7 +654,8 @@ export class NetworkMap {
     this.crossingGroup?.removeFromParent();this.crossingGroup=new THREE.Group();this.crossingGroup.visible=this.mpp<1.6;this.contextGroup.add(this.crossingGroup);
     this.footbridgeGroup?.removeFromParent();this.footbridgeGroup=new THREE.Group();this.footbridgeGroup.visible=this.mpp<4;this.contextGroup.add(this.footbridgeGroup);
     if(bars.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(bars,3));const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette.crossing,depthTest:true,depthWrite:false,side:THREE.DoubleSide}));m.renderOrder=.3;m.userData.key='crossing';this.crossingGroup.add(m);}
-    if(solid.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(solid,3));g.computeVertexNormals();const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:this.palette.footbridge,side:THREE.DoubleSide}));m.renderOrder=4.5;m.userData.key='footbridge';this.footbridgeGroup.add(m);
+    // Misma estructura semitransparente que los puentes viales: deja ver lo que pasa debajo.
+    if(solid.length){this.footbridgeGroup.add(this.structureMesh(solid));
       const r=new THREE.BufferGeometry();r.setAttribute('position',new THREE.Float32BufferAttribute(rails,3));const l=new THREE.LineSegments(r,new THREE.LineBasicMaterial({color:'#7d8d9b',transparent:true,opacity:.8}));l.renderOrder=4.6;this.footbridgeGroup.add(l);}
     this.contextMeshes=[...(this.contextMeshes||[]),...this.crossingGroup.children,...this.footbridgeGroup.children];
   }
@@ -748,7 +759,7 @@ export class NetworkMap {
     const recolor=o=>{const key=o.userData?.key;if(key&&o.material&&this.palette[key])o.material.color.set(this.palette[key]);};
     for(const mesh of this.contextMeshes||[])recolor(mesh);
     this.stopInner.material.color.set(this.palette.stopInner);
-    this.stationGroup.traverse(recolor);this.stationRoofs.traverse(recolor);this.guidewayGroup?.traverse(recolor);this.buildingGroup?.traverse(recolor);this.depotGroup?.traverse(recolor);if(this.crowdMesh)recolor(this.crowdMesh);
+    this.stationGroup.traverse(recolor);this.stationRoofs.traverse(recolor);this.guidewayGroup?.traverse(recolor);this.buildingGroup?.traverse(recolor);this.depotGroup?.traverse(recolor);if(this.crowdMesh)this.setCrowd(this.crowdList);if(this.buildingMaterial)this.buildingMaterial.emissive.set(this.palette.buildingGlow);
     for(const mesh of (this.carriagewayGroup?.children||[]))mesh.material.color.set(mesh.userData.palette[this.dark?1:0]);
   }
   render(){this.renderer.render(this.scene,this.camera);}

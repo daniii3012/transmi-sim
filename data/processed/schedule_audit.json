@@ -5274,70 +5274,10 @@
   ],
   "without_segments": [
     {
-      "id": "698",
-      "code": "2",
-      "name": "Museo Nacional",
-      "reason": null
-    },
-    {
-      "id": "685",
-      "code": "2",
-      "name": "Portal 20 de Julio",
-      "reason": null
-    },
-    {
-      "id": "318",
-      "code": "B18",
-      "name": "Terminal",
-      "reason": null
-    },
-    {
       "id": "287",
       "code": "B27",
       "name": "Portal Norte",
       "reason": "el catálogo local cuenta 9 tramos y el paquete [6]"
-    },
-    {
-      "id": "619",
-      "code": "D81",
-      "name": "AV CL80 - KR114",
-      "reason": null
-    },
-    {
-      "id": "5279",
-      "code": "D81",
-      "name": "AV CL80 - KR114 Ciclovía",
-      "reason": null
-    },
-    {
-      "id": "319",
-      "code": "L18",
-      "name": "PORTAL 20 DE JULIO",
-      "reason": null
-    },
-    {
-      "id": "620",
-      "code": "L81",
-      "name": "Portal 20 de Julio",
-      "reason": null
-    },
-    {
-      "id": "622",
-      "code": "L82",
-      "name": "Portal 20 de Julio",
-      "reason": null
-    },
-    {
-      "id": "12297",
-      "code": "M82",
-      "name": "CLL134 - KR 7",
-      "reason": null
-    },
-    {
-      "id": "5451",
-      "code": "Z63",
-      "name": "Tibanica",
-      "reason": null
     }
   ]
 }

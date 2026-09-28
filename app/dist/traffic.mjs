@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260929.14';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260929.14';
-import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260929.14';
-import {hash,programmedSpeed} from './operation.mjs?v=20260929.14';
-import {vehicleSpec} from './vehicles.mjs?v=20260929.14';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260929.15';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260929.15';
+import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260929.15';
+import {hash,programmedSpeed} from './operation.mjs?v=20260929.15';
+import {vehicleSpec} from './vehicles.mjs?v=20260929.15';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -65,8 +65,8 @@ function curveCap(path,pos){
  * un vértice que los dos recorridos publican.
  */
 export class Guideway{
- constructor(routes,{lanes=null,geometry=null,structures=null}={}){
-  this.links=[];this.routeMaps=new Map();
+ constructor(routes,{lanes=null,geometry=null,structures=null,splits=null}={}){
+  this.links=[];this.routeMaps=new Map();this.splits=splits||[];
   const nodeOf=new Map(),xy=[],seq=[];
   for(const r of routes){
    const ids=[],idx=[];
@@ -229,6 +229,18 @@ export class Guideway{
   // si no, se cierra antes del final. Así cada cierre cae dentro de un tramo y es un punto concreto
   // que los buses de los dos carriles se turnan, en cremallera, igual que un empalme.
   for(const link of this.links){const n=link.lanes.length;if(link.lanes[n-1]===2&&(!link.next.size||[...link.next].some(L=>this.links[L].lanes[0]!==2)))link.lanes[n-1]=1;}
+  // Bifurcaciones con un carril por rama (field_corrections.json, `lane_splits`): los últimos metros
+  // antes de separarse tienen dos carriles y el segundo no se cierra, sigue por la rama de giro. Así
+  // los que siguen derecho no quedan detrás de la fila de los que esperan el semáforo del giro.
+  for(const sp of this.splits){
+   const codes=new Set(sp.turn_routes||[]),uses=new Map();
+   for(const r of routes){const m=this.routeMaps.get(r.id);if(m&&codes.has(r.code))for(const L of m.links)uses.set(L,true);}
+   let best=null,bd=40;
+   this.links.forEach((link,L)=>{if(link.next.size<2)return;const e=link.points.at(-1),d=Math.hypot(e[0]-sp.xy[0],e[1]-sp.xy[1]);if(d<bd&&[...link.next].some(N=>uses.has(N))&&[...link.next].some(N=>!uses.has(N))){bd=d;best=L;}});
+   if(best===null)continue;
+   const link=this.links[best],n=link.lanes.length,cells=Math.min(n,Math.ceil(sp.before_m/CELL));
+   link.lanes.fill(2,n-cells,n);link.split={from:Math.max(0,link.length-cells*CELL),turn:[...link.next].find(N=>uses.has(N))};
+  }
   this.elevate();
   this.pointBase=this.nodeCount;let points=0;
   for(const link of this.links){
@@ -515,6 +527,8 @@ export class Traffic{
   const a=this.a,map=this.info[a.route[i]].map;let k=a.k[i],link=this.g.links[map.links[k]],c=Math.min(link.lanes.length-1,Math.floor(this.off[i]/CELL));
   this.re=-1;if(link.lanes[c]!==2)return 0;
   let d=link.twoEnd[c]-this.off[i],id=link.endId[c];
+  // En una bifurcación el segundo carril no se cierra: sigue por su rama.
+  if(link.split&&id<0){this.re=-1;return look===Infinity?1e6:look+1;}
   while(id<0&&link.twoRuns&&k+1<map.links.length&&d<look){k++;link=this.g.links[map.links[k]];if(link.lanes[0]!==2)break;d+=link.twoEnd[0];id=link.endId[0];}
   this.re=id;return d>0?d:0;
  }
@@ -701,6 +715,8 @@ export class Traffic{
   * dos carriles o al salir de una estación si el de delante va lento, y hay trecho de sobra antes de
   * la próxima estación o del cierre, donde se vuelve por turnos. */
  chooseLane(i){
+  // En la bifurcación el carril de la izquierda es de los que giran: nadie más entra a adelantar.
+  {const link=this.g.links[this.linkOf(i)];if(link.split&&this.off[i]>=link.split.from-150)return;}
   const a=this.a,info=this.info[a.route[i]],sR=a.sR[i],two=this.runEnd(i,Infinity);if(two<150)return;
   // Dentro de una estación el segundo carril es el del andén: solo se entra ahí para acomodarse.
   {const link=this.g.links[this.linkOf(i)];if(link.station[Math.min(link.station.length-1,(this.off[i]/CELL)|0)])return;}
@@ -710,11 +726,20 @@ export class Traffic{
   // velocidad propia no servía, porque quien lo sigue ya va igual de lento y nunca adelantaba.
   const cells=info.cells[a.col[i]]||this.cellsFor(a.route[i],a.col[i]),v0=Math.max(1,cells[Math.min(cells.length-1,(sR/V0CELL)|0)]*a.vf[i]);
   const j=this.leader(i,0),gap=this.lg;if(!(j>=0&&gap<70&&a.v[j]<.75*v0&&a.v[j]<v0-2))return;
-  const L=this.linkOf(i),list=this.lists[L*2+1],own=this.off[i],v=a.v[i],S0=this.p.jamGap;
+  this.toSecond(i);
+ }
+ /** Pasa `i` al segundo carril si cabe entre los que van por él; true si se pasó. */
+ toSecond(i){
+  const a=this.a,L=this.linkOf(i),list=this.lists[L*2+1],own=this.off[i],v=a.v[i],S0=this.p.jamGap;
   let lead=-1,follow=-1;for(let x=0;x<list.length;x++){if(this.off[list[x]]>own)lead=list[x];else{follow=list[x];break;}}
-  if(lead>=0&&this.off[lead]-a.len[lead]-own<S0+v*.5)return;
-  if(follow>=0&&own-a.len[i]-this.off[follow]<S0+a.v[follow]*.8)return;
-  this.removeFromList(i);a.lane[i]=1;this.insertInList(i);
+  if(lead>=0&&this.off[lead]-a.len[lead]-own<S0+v*.5)return false;
+  if(follow>=0&&own-a.len[i]-this.off[follow]<S0+a.v[follow]*.8)return false;
+  this.removeFromList(i);a.lane[i]=1;this.insertInList(i);return true;
+ }
+ /** En una bifurcación con un carril por rama, el que gira se pasa al de la izquierda en cuanto cabe. */
+ splitLane(i){
+  const a=this.a,map=this.info[a.route[i]].map,link=this.g.links[map.links[a.k[i]]];
+  if(a.k[i]+1<map.links.length&&map.links[a.k[i]+1]===link.split.turn)this.toSecond(i);
  }
  /** Acomodarse en el vagón: desde el carril que sigue de largo, justo antes del punto de atención. Un
   * vagón atiende a un bus a la vez: si está ocupado, el que llega entra igual al carril del andén
@@ -847,6 +872,7 @@ export class Traffic{
     if(!two){a.runSeen[i]=0;if(a.lane[i]===1){this.removeFromList(i);a.lane[i]=0;this.insertInList(i);}}
     else if(!a.runSeen[i]){a.runSeen[i]=1;if(a.lane[i]===0)this.chooseLane(i);}
     else if(a.inZone[i]&&!zone&&a.lane[i]===0)this.chooseLane(i);
+    if(two&&a.lane[i]===0&&lk.split&&off[i]>=lk.split.from)this.splitLane(i);
     a.inZone[i]=zone;}
    const stopD=(a.dock[i]>0?a.dock[i]:info.stopFront[a.stop[i]])-a.sR[i],v=a.v[i];
    if(v<.5&&stopD<150&&a.queueSince[i]<0)a.queueSince[i]=t;

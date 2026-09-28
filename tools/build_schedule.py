@@ -283,6 +283,9 @@ OBSERVADOS = ROOT / 'data/curated/observed_times.json'
 FRANJAS = {'peak': 'punta', 'weekday': 'laborable', 'saturday': 'sabado', 'holiday': 'festivo'}
 
 
+POR_PAR = {}
+
+
 def observado(medidos, fila):
     """[base, punta, laborable, sábado, festivo] medidos para ese tramo, o None si no hay bastante.
 
@@ -292,6 +295,19 @@ def observado(medidos, fila):
     para ese tramo, que es lo que hacía antes.
     """
     registro = medidos.get(f"{fila['route_id']}|{fila['from_stop']}|{fila['to_stop']}")
+    if not registro:
+        # La medición es del trecho de vía, no del registro: si el paquete nuevo renumeró la ruta
+        # (la vuelta FZ63 pasó de 13226 a 13789), el mismo par de paradas medido en otro registro
+        # sirve. Entre varios, el de más observaciones.
+        por_par = POR_PAR.get(id(medidos))
+        if por_par is None:
+            por_par = {}
+            for clave_tramo, valor in medidos.items():
+                par = clave_tramo.split('|', 1)[1]
+                if par not in por_par or valor.get('n', 0) > por_par[par].get('n', 0):
+                    por_par[par] = valor
+            POR_PAR[id(medidos)] = por_par
+        registro = por_par.get(f"{fila['from_stop']}|{fila['to_stop']}")
     if not registro:
         return None
     base = registro['base']

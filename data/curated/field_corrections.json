@@ -11,5 +11,24 @@
   }
  ],
  "stations_status": [],
- "stops_added": []
+ "stops_added": [],
+ "lane_splits": [
+  {
+   "near_signal": "osm-node-5631009101",
+   "xy": [
+    6245.4,
+    212.7
+   ],
+   "before_m": 60,
+   "turn_routes": [
+    "J73",
+    "K16",
+    "K43",
+    "K53"
+   ],
+   "where": "NQS hacia el norte, antes de la conexión a la Calle 26, después de la estación Av. El Dorado",
+   "reason": "La calzada se abre en dos antes del semáforo: por la izquierda esperan los que giran hacia la troncal de la Calle 26 y por la derecha siguen los demás hacia el norte sin quedar detrás de esa fila.",
+   "observed": "2026-09-28"
+  }
+ ]
 }

@@ -11,7 +11,7 @@ const demand=read('demand.json');const profiles=new Map(demand.profiles.map(p=>[
 for(const [k,f] of [['busway_signals','busway_signals.json'],['station_layouts','station_layouts.json'],['station_wagons','station_wagons.json'],['schedule','schedule.json'],['speed_profiles','speed_profiles.json'],['busway_lanes','busway_lanes.json'],['busway_geometry','busway_geometry.json'],['wagon_stops','wagon_stops.json'],['field_corrections','field_corrections.json'],['od_profiles','od_profiles.json'],['busway_structures','busway_structures.json']])data[k]=read(f);
 
 const WEEKDAY='2026-09-24';
-function build(config={},date=WEEKDAY){const op=new Operation(data,{date,plan:true,...config});const guide=new Guideway([...op.routes.values()],{lanes:data.busway_lanes,geometry:data.busway_geometry,structures:data.busway_structures});return {op,guide,traffic:new Traffic(op,guide,date)};}
+function build(config={},date=WEEKDAY){const op=new Operation(data,{date,plan:true,...config});const guide=new Guideway([...op.routes.values()],{lanes:data.busway_lanes,geometry:data.busway_geometry,structures:data.busway_structures,splits:data.field_corrections?.lane_splits});return {op,guide,traffic:new Traffic(op,guide,date)};}
 // Troncal Caracas sur y sus alimentaciones: bastante tráfico para que haya colas, pocos servicios
 // para que las pruebas no tarden lo que tarda la red entera.
 const SMALL={selection:{mode:'zones',zones:['H']}};
@@ -35,7 +35,10 @@ test('Cada estación tiene carril de andén junto a cada punto de atención, y n
   const loc=guide.locate(r.id,Math.min(r.path.length-.1,v.at_m));
   assert.equal(guide.lanesAt(loc.link,loc.offset),2,`${r.code} en ${v.name}`);
  }
- for(const link of guide.links){const n=link.lanes.length;if(link.lanes[n-1]===2)for(const L of link.next)assert.equal(guide.links[L].lanes[0],2,'un segundo carril solo sigue si todos los siguientes lo tienen');}
+ for(const link of guide.links){const n=link.lanes.length;if(link.lanes[n-1]===2&&!link.split)for(const L of link.next)assert.equal(guide.links[L].lanes[0],2,'un segundo carril solo sigue si todos los siguientes lo tienen');}
+ // Salvo en una bifurcación con un carril por rama (field_corrections.json): ahí el segundo carril
+ // sigue por la rama de giro y se ve que la corrección se aplicó.
+ assert.ok(guide.links.some(l=>l.split),'la bifurcación de la NQS hacia la Calle 26 tiene dos carriles');
 });
 
 test('El mismo instante da el mismo estado se llegue avanzando, retrocediendo o desde cero',()=>{
