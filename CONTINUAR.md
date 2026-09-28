@@ -11,7 +11,7 @@ Todo esto está en `main` **solo en local** (desde `da1c904`; no se ha empujado 
 - **Carriles medidos** de la calzada exclusiva (`tools/build_busway_geometry.py`, capa Calzada del
   Mapa de Referencia): 237 km con dos carriles y 72 con uno.
 - **Vista 3D** en `map.mjs`: cámara en perspectiva, buses con cuerpos y fuelles, andenes con
-  cubierta, edificios de Catastro por teselas (`tools/build_buildings.py`, 81.950 construcciones).
+  cubierta, edificios de Catastro por teselas (`tools/build_buildings.py`, 272.598 construcciones a 350 m).
 - **Estaciones**: 109 de 151 con andén o contorno de OSM (`build_station_layouts.py --keep`).
 - **Puntos de control guardados**: binario compacto e idéntico a simular (`exportCheckpoint`),
   llave de escenario, IndexedDB en el navegador y precalculados del escenario inicial al publicar
@@ -43,9 +43,6 @@ al horario publicado, pico de 1.666 buses y 2.118 vehículos. 86 pruebas Node y 
 
 ### Pendientes, en este orden
 
-1. **Edificios a 350 m** de las troncales: la descarga corre fuera del repositorio
-   (`work/lanes/fetch_construcciones_350.py`, registro en `fetch_bld350.log`, ~5 h). Al terminar:
-   `../../work/venv/bin/python tools/build_buildings.py`, revisar tamaño de teselas y guardar.
 2. **Rediseño de la interfaz móvil** con la nueva agrupación de capas.
 3. Paradas que quedan fuera del vagón o estaciones que pisan una calzada: revisión caso a caso contra
    imagen satelital; solo con datos, no a ojo.

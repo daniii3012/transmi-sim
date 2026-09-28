@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260929.5';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.5';
+import {MetricPath} from './simulation.mjs?v=20260929.6';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.6';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260929.5';
+import {pieceShape} from './wagons.mjs?v=20260929.6';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -384,7 +384,7 @@ export class NetworkMap {
       const shape=pieceShape(pts),u=shape.u,v=[-u[1],u[0]],half=shape.length/2,w=Math.max(shape.length,shape.width)*.75,slots=[],ang=Math.atan2(v[1],v[0]);
       for(let b=-w;b<=w;b+=2*19.5+11)for(const depth of [9.75,29.25])for(let a=-half;a<=half;a+=3.6){const bb=b+depth,x=shape.center[0]+u[0]*a+v[0]*bb,y=shape.center[1]+u[1]*a+v[1]*bb;
         if([[-1.6,-9.5],[1.6,-9.5],[-1.6,9.5],[1.6,9.5]].every(([da,db])=>inside(pts,x+u[0]*da+v[0]*db,y+u[1]*da+v[1]*db)))slots.push([x,y,ang]);}
-      this.depotSlots.push({depot:d,slots});
+      this.depotSlots.push({depot:d,slots:d.slots?.length?d.slots:slots});
     }
     if(fill.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(fill,3));const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette.depot,depthTest:true,depthWrite:false}));m.renderOrder=.15;m.userData.key='depot';this.depotGroup.add(m);}
     const capacity=this.depotSlots.reduce((s,d)=>s+d.slots.length,0),box=new THREE.BoxGeometry(1,1,1);box.translate(0,0,.5);
@@ -403,9 +403,10 @@ export class NetworkMap {
   /** Llena los patios con `idle` buses, repartidos según el área de cada uno. */
   updateDepotBuses(idle){
     if(!this.depotBuses||idle===this.depotParked)return;this.depotParked=idle;
-    const total=this.depotSlots.reduce((s,d)=>s+d.depot.area_m2,0)||1;let i=0;
+    // Se reparten según los puestos de cada patio (sus zonas de parqueo), no por su área total.
+    const total=this.depotSlots.reduce((s,d)=>s+d.slots.length,0)||1;let i=0;
     for(const {depot,slots} of this.depotSlots){
-      const n=Math.min(slots.length,Math.round(idle*depot.area_m2/total));
+      const n=Math.min(slots.length,Math.round(idle*slots.length/total));
       // Articulado de 18,5 m con su fuelle a 10,9 m del frente.
       for(let k=0;k<n;k++){const [x,y,ang]=slots[k],c=Math.cos(ang),s=Math.sin(ang);this.object.position.set(x,y,0);this.object.rotation.set(0,0,ang);this.object.scale.set(18.5,2.55,3.1);this.object.updateMatrix();this.depotBuses.setMatrixAt(i,this.object.matrix);
         this.object.position.set(x+c*(9.25-10.9),y+s*(9.25-10.9),.25);this.object.scale.set(.8,2.3,2.7);this.object.updateMatrix();this.depotJoints.setMatrixAt(i,this.object.matrix);i++;}
