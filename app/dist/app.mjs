@@ -1,10 +1,10 @@
-import {mountShell} from './shell.mjs?v=20260929.3';
-import {NetworkMap} from './map.mjs?v=20260929.3';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260929.3';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260929.3';
-import {STATES} from './traffic.mjs?v=20260929.3';
-import {applyFieldCorrections} from './signals.mjs?v=20260929.3';
-import {registerSimulationTools} from './webmcp.mjs?v=20260929.3';
+import {mountShell} from './shell.mjs?v=20260929.4';
+import {NetworkMap} from './map.mjs?v=20260929.4';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260929.4';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260929.4';
+import {STATES} from './traffic.mjs?v=20260929.4';
+import {applyFieldCorrections} from './signals.mjs?v=20260929.4';
+import {registerSimulationTools} from './webmcp.mjs?v=20260929.4';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -46,11 +46,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260929.3',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260929.4',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260929.3',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260929.4',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -436,6 +436,10 @@ try{
  $('#buildings-toggle').onclick=()=>{const on=map.buildingsEnabled===false;map.buildingsEnabled=on;$('#buildings-toggle').setAttribute('aria-pressed',on);map.updateCamera();};
  $('#crowd-toggle').onclick=()=>{const on=!map.crowdEnabled;map.crowdEnabled=on;$('#crowd-toggle').setAttribute('aria-pressed',on);if(on)requestCrowd();else map.setCrowd(null);};
  for(const b of $$('.map-actions button'))if(!b.title)b.title=b.getAttribute('aria-label')||'';
+ // En escritorio las cifras del instante van a la cabeza del panel lateral, junto a «La red ahora»,
+ // y dejan libre el mapa; en el teléfono siguen arriba del mapa.
+ const placeMetrics=()=>{const wide=matchMedia('(min-width:1101px)').matches,metrics=$('#metrics');if(wide&&metrics.parentElement!==$('#sidebar'))$('#sidebar').prepend(metrics);else if(!wide&&metrics.parentElement===$('#sidebar'))$('#map').append(metrics);document.body.classList.toggle('metrics-in-panel',wide);};
+ placeMetrics();addEventListener('resize',placeMetrics);
  map.onView=syncView;syncView();
  $('#view-toggle').onclick=()=>{map.setView(map.is3D?'2d':'3d');setTimeout(syncView,700);};
  $('.north').onclick=()=>map.resetNorth();

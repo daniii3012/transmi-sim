@@ -101,3 +101,9 @@ details.why>p,details.why>a{margin:0 14px 12px;display:block;font-size:.76rem;li
 /* Listas de próximas llegadas y servicios: bordes iguales y aire entre filas. */
 #inspector li,#inspector .route-row{border:1px solid var(--line);border-radius:var(--radius-card);margin:0 0 8px;background:var(--surface)}
 #inspector ul,#inspector ol{padding:0;list-style:none}
+/* Cifras del instante en la cabeza del panel lateral (escritorio). */
+body.metrics-in-panel #metrics{position:sticky;top:0;left:auto;bottom:auto;z-index:4;display:grid;grid-template-columns:repeat(4,1fr);margin:0;border-radius:0;border:0;border-bottom:1px solid var(--line);box-shadow:none;padding:14px 8px;background:var(--surface);backdrop-filter:none}
+body.metrics-in-panel #metrics>div{min-width:0;padding:0 8px}
+body.metrics-in-panel #metrics strong{font-size:1.15rem}
+body.metrics-in-panel #metrics span{font-size:.66rem}
+body.metrics-in-panel #load-legend{grid-column:1/-1;flex-direction:row;align-items:center;border-left:0;padding:10px 8px 0}

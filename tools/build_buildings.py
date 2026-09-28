@@ -31,7 +31,8 @@ from collections import defaultdict
 from datetime import datetime, timezone
 
 from pyproj import Transformer
-from shapely.geometry import Polygon
+from shapely.geometry import LineString, Polygon
+from shapely.strtree import STRtree
 from shapely.geometry.polygon import orient
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -53,6 +54,12 @@ def main() -> None:
     projection = json.loads((ROOT / "app/dist/services.json").read_text())["projection"]
     to_xy = Transformer.from_crs("EPSG:4326", projection, always_xy=True)
 
+    # La calzada de TransMilenio: una construcción que la pisa —cubiertas, pasos, polígonos de
+    # Catastro que se montan sobre la vía, como junto a Museo del Oro— no se dibuja.
+    services = json.loads((ROOT / "app/dist/services.json").read_text())
+    busway = [LineString(r["points"]).buffer(4.0) for r in services["routes"] if r.get("ready") and len(r["points"]) > 1]
+    busway_tree = STRtree(busway)
+    over_busway = 0
     tiles: dict[tuple[int, int], list[tuple[int, list[tuple[float, float]]]]] = defaultdict(list)
     kept = dropped = 0
     floors_seen = []
@@ -75,6 +82,9 @@ def main() -> None:
         poly = orient(Polygon(shell.exterior).simplify(SIMPLIFY, preserve_topology=True), 1.0)
         if poly.is_empty or poly.area < MIN_AREA or poly.geom_type != "Polygon":
             dropped += 1
+            continue
+        if any(busway[i].intersection(poly).area > 0.25 * poly.area or busway[i].contains(poly.centroid) for i in busway_tree.query(poly)):
+            over_busway += 1
             continue
         coords = list(poly.exterior.coords)[:-1]
         if len(coords) < 3 or len(coords) > MAX_VERTICES:
@@ -126,6 +136,7 @@ def main() -> None:
         "coverage": {
             "buildings": kept,
             "dropped": dropped,
+            "over_busway": over_busway,
             "tiles": len(index),
             "bytes": total,
             "floors_median": floors_seen[len(floors_seen) // 2] if floors_seen else 0,
