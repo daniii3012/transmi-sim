@@ -95,8 +95,8 @@ hora pico.
 
 Es un modelo **agregado y determinista**, no una encuesta origen-destino ni personas individuales.
 
-Las llegadas a cada estación y sentido salen de las validaciones diarias del SITP: 28.014.777
-registros de 17 días observados, en perfiles por estación, hora y tipo de día. Hacia dónde
+Las llegadas a cada estación y sentido salen de las validaciones diarias del SITP: 22.233.675
+registros de 14 días observados (del 14 al 27 de septiembre de 2026), en perfiles por estación, hora y tipo de día. Hacia dónde
 sale la gente de cada estación y cuánta se baja en cada una también se miden de esas validaciones
 (`od_profiles.json`); en las paradas de calle, donde no hay dato, quedan los supuestos anteriores,
 marcados como tales.

@@ -20,7 +20,7 @@ Todo esto está en `main` **solo en local** (desde `da1c904`; no se ha empujado 
   ocupación, procedencia de cifras en «Datos», móvil revisado.
 
 Validación del día laborable: mediana 1,02 frente a lo observado (p10 0,91, p90 1,15), 0,88 frente
-al horario publicado, pico de 1.666 buses y 2.118 vehículos. 86 pruebas Node y 47 Python.
+al horario publicado, pico de 1.666 buses y 2.118 vehículos. 89 pruebas Node y 47 Python.
 
 ### Hecho el 28 sep. (segunda parte)
 
@@ -40,6 +40,23 @@ al horario publicado, pico de 1.666 buses y 2.118 vehículos. 86 pruebas Node y 
 - Calzada que ningún recorrido usa (`busway_context.json`): la media glorieta de Banderas y otros 55 km.
 - Patios troncales (`depots.json`, IDECA) llenos con los buses fuera de servicio.
 - Estaciones sin geometría OSM: vagones donde el GTFS pone sus paradas.
+
+### Hecho el 28 sep. (cuarta parte): base al día
+
+- Catálogo de rutas del 28 sep., GTFS del 28 sep. y validaciones del 14 al 27 sep. (dos semanas
+  completas, 22.233.675 registros). Patio Bonito ya viene operativa en las fuentes con sus 12
+  recorridos y sus dos vagones; se retiró su corrección de campo.
+- `build_services.py`: lo que la instantánea nueva no trae completo (registro sin trazado, variante
+  de Ciclovía que deja de listarse, trazado nuevo que deja las paradas lejos) se toma de la anterior
+  más reciente que sí lo tenga; cada ruta dice de qué carpeta salió. 119 servicios listos (antes 117).
+- Los paraderos SITP se quedan en la instantánea del 10 sep.: la del 28 reasignó códigos de cenefa.
+- `build_schedule.py` alinea por nombre de estación cuando el recorrido local empieza o termina una
+  parada antes que el paquete (Z63). `aggregate_validation_period.py` promedia una estación que abre
+  a mitad del periodo desde su primer día.
+- En calle el ritmo del horario no baja de 15 km/h: un tramo con tiempo de sobra no pone al bus a
+  gatear; llega antes.
+- Calles junto a la troncal, cruces en cebra y puentes peatonales (`cross_streets.json`); esquinas
+  de las calles redondeadas con arcos.
 
 ### Pendientes, en este orden
 

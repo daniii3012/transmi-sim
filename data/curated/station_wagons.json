@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "snapshot": "20260912T034826Z",
-  "built_at": "2026-09-12T14:36:16.365304+00:00",
-  "source": "Tablero de salidas de un servicio configurado localmente; la dirección no se versiona.",
+  "built_at": "2026-09-28T19:50:06.727702+00:00",
+  "source": "servicio configurado localmente",
   "source_sha256": "433213feaa63c49d6b1c0c349c265a90a58dfbfe35dd3a2a1fe845c967bd6768",
   "reference_date": "2026-09-10",
   "windows": [
@@ -13,10 +13,10 @@
     "20:00"
   ],
   "coverage": {
-    "trunk_visits_in_catalogue": 1557,
-    "visits_with_published_point": 1305,
-    "ambiguous": 44,
-    "unmatched_departures": 79,
+    "trunk_visits_in_catalogue": 1590,
+    "visits_with_published_point": 1321,
+    "ambiguous": 43,
+    "unmatched_departures": 64,
     "stations_with_board": 139,
     "stations_in_catalogue": 151
   },
@@ -1271,6 +1271,18 @@
     },
     {
       "station_id": "12002",
+      "route_id": "1188",
+      "code": "A61",
+      "destination": "Polo - FINCOMERCIO",
+      "kind": "wagon",
+      "label": "A",
+      "wagon": 1,
+      "doors": [
+        2
+      ]
+    },
+    {
+      "station_id": "12002",
       "route_id": "383",
       "code": "B28",
       "destination": "Portal Norte - Unicervantes",
@@ -1409,6 +1421,18 @@
     },
     {
       "station_id": "12007",
+      "route_id": "1188",
+      "code": "A61",
+      "destination": "Polo - FINCOMERCIO",
+      "kind": "wagon",
+      "label": "A",
+      "wagon": 1,
+      "doors": [
+        2
+      ]
+    },
+    {
+      "station_id": "12007",
       "route_id": "383",
       "code": "B28",
       "destination": "Portal Norte - Unicervantes",
@@ -1506,6 +1530,18 @@
       "doors": [
         2,
         5
+      ]
+    },
+    {
+      "station_id": "14001",
+      "route_id": "1188",
+      "code": "A61",
+      "destination": "Polo - FINCOMERCIO",
+      "kind": "wagon",
+      "label": "B",
+      "wagon": 2,
+      "doors": [
+        1
       ]
     },
     {
@@ -7174,16 +7210,6 @@
     },
     {
       "station_id": "5000",
-      "route_id": "397",
-      "code": "J23",
-      "destination": "Las Aguas - Centro Colombo Americano",
-      "kind": "terminal",
-      "label": "T6",
-      "wagon": 6,
-      "doors": []
-    },
-    {
-      "station_id": "5000",
       "route_id": "398",
       "code": "M51",
       "destination": "Museo Nacional",
@@ -7320,19 +7346,6 @@
       "doors": [
         4,
         6
-      ]
-    },
-    {
-      "station_id": "5002",
-      "route_id": "397",
-      "code": "J23",
-      "destination": "Las Aguas - Centro Colombo Americano",
-      "kind": "wagon",
-      "label": "B",
-      "wagon": 2,
-      "doors": [
-        2,
-        5
       ]
     },
     {
@@ -7829,6 +7842,19 @@
     },
     {
       "station_id": "5103",
+      "route_id": "1188",
+      "code": "A61",
+      "destination": "Polo - FINCOMERCIO",
+      "kind": "wagon",
+      "label": "B",
+      "wagon": 2,
+      "doors": [
+        2,
+        5
+      ]
+    },
+    {
+      "station_id": "5103",
       "route_id": "383",
       "code": "B28",
       "destination": "Portal Norte - Unicervantes",
@@ -7995,18 +8021,6 @@
       ]
     },
     {
-      "station_id": "5105",
-      "route_id": "5451",
-      "code": "Z63",
-      "destination": "Tibanica - Primavera",
-      "kind": "wagon",
-      "label": "B",
-      "wagon": 2,
-      "doors": [
-        4
-      ]
-    },
-    {
       "station_id": "5107",
       "route_id": "690",
       "code": "5",
@@ -8040,6 +8054,19 @@
       "kind": "wagon",
       "label": "B",
       "wagon": 2,
+      "doors": [
+        2,
+        5
+      ]
+    },
+    {
+      "station_id": "5107",
+      "route_id": "1188",
+      "code": "A61",
+      "destination": "Polo - FINCOMERCIO",
+      "kind": "wagon",
+      "label": "A",
+      "wagon": 1,
       "doors": [
         2,
         5
@@ -12285,6 +12312,18 @@
     },
     {
       "station_id": "7111",
+      "route_id": "1188",
+      "code": "A61",
+      "destination": "Polo - FINCOMERCIO",
+      "kind": "wagon",
+      "label": "F",
+      "wagon": 6,
+      "doors": [
+        1
+      ]
+    },
+    {
+      "station_id": "7111",
       "route_id": "346",
       "code": "B11",
       "destination": "Terminal",
@@ -13762,6 +13801,16 @@
     },
     {
       "station_id": "90004",
+      "route_id": "1214",
+      "code": "J76",
+      "destination": "Universidades CityU",
+      "kind": "terminal",
+      "label": "T2D",
+      "wagon": 2,
+      "doors": []
+    },
+    {
+      "station_id": "90004",
       "route_id": "316",
       "code": "K54",
       "destination": "Portal El Dorado – C.C Nuestro Bogotá",
@@ -13938,6 +13987,19 @@
     },
     {
       "station_id": "90008",
+      "route_id": "1214",
+      "code": "J76",
+      "destination": "Universidades CityU",
+      "kind": "wagon",
+      "label": "A",
+      "wagon": 1,
+      "doors": [
+        3,
+        6
+      ]
+    },
+    {
+      "station_id": "90008",
       "route_id": "316",
       "code": "K54",
       "destination": "Portal El Dorado – C.C Nuestro Bogotá",
@@ -14068,6 +14130,19 @@
     },
     {
       "station_id": "9001",
+      "route_id": "1214",
+      "code": "J76",
+      "destination": "Universidades CityU",
+      "kind": "wagon",
+      "label": "A",
+      "wagon": 1,
+      "doors": [
+        3,
+        6
+      ]
+    },
+    {
+      "station_id": "9001",
       "route_id": "316",
       "code": "K54",
       "destination": "Portal El Dorado – C.C Nuestro Bogotá",
@@ -14140,6 +14215,19 @@
       "wagon": 2,
       "doors": [
         1
+      ]
+    },
+    {
+      "station_id": "9002",
+      "route_id": "1214",
+      "code": "J76",
+      "destination": "Universidades CityU",
+      "kind": "wagon",
+      "label": "A",
+      "wagon": 1,
+      "doors": [
+        3,
+        6
       ]
     },
     {
@@ -14230,6 +14318,19 @@
       "doors": [
         2,
         5
+      ]
+    },
+    {
+      "station_id": "9003",
+      "route_id": "1214",
+      "code": "J76",
+      "destination": "Universidades CityU",
+      "kind": "wagon",
+      "label": "B",
+      "wagon": 2,
+      "doors": [
+        4,
+        6
       ]
     },
     {
@@ -14334,6 +14435,19 @@
       "doors": [
         2,
         5
+      ]
+    },
+    {
+      "station_id": "9004",
+      "route_id": "1214",
+      "code": "J76",
+      "destination": "Universidades CityU",
+      "kind": "wagon",
+      "label": "A",
+      "wagon": 1,
+      "doors": [
+        4,
+        6
       ]
     },
     {
@@ -14520,6 +14634,19 @@
     },
     {
       "station_id": "9100",
+      "route_id": "1214",
+      "code": "J76",
+      "destination": "Universidades CityU",
+      "kind": "wagon",
+      "label": "C",
+      "wagon": 3,
+      "doors": [
+        3,
+        6
+      ]
+    },
+    {
+      "station_id": "9100",
       "route_id": "316",
       "code": "K54",
       "destination": "Portal El Dorado – C.C Nuestro Bogotá",
@@ -14805,6 +14932,19 @@
       "doors": [
         2,
         5
+      ]
+    },
+    {
+      "station_id": "9104",
+      "route_id": "1214",
+      "code": "J76",
+      "destination": "Universidades CityU",
+      "kind": "wagon",
+      "label": "A",
+      "wagon": 1,
+      "doors": [
+        4,
+        6
       ]
     },
     {
@@ -15332,6 +15472,19 @@
     },
     {
       "station_id": "9110",
+      "route_id": "1214",
+      "code": "J76",
+      "destination": "Universidades CityU",
+      "kind": "wagon",
+      "label": "A",
+      "wagon": 1,
+      "doors": [
+        4,
+        6
+      ]
+    },
+    {
+      "station_id": "9110",
       "route_id": "316",
       "code": "K54",
       "destination": "Portal El Dorado – C.C Nuestro Bogotá",
@@ -15416,6 +15569,19 @@
       "kind": "wagon",
       "label": "B",
       "wagon": 2,
+      "doors": [
+        4,
+        6
+      ]
+    },
+    {
+      "station_id": "9113",
+      "route_id": "1188",
+      "code": "A61",
+      "destination": "Polo - FINCOMERCIO",
+      "kind": "wagon",
+      "label": "A",
+      "wagon": 1,
       "doors": [
         4,
         6
@@ -15735,6 +15901,19 @@
     },
     {
       "station_id": "9116",
+      "route_id": "1188",
+      "code": "A61",
+      "destination": "Polo - FINCOMERCIO",
+      "kind": "wagon",
+      "label": "C",
+      "wagon": 3,
+      "doors": [
+        4,
+        6
+      ]
+    },
+    {
+      "station_id": "9116",
       "route_id": "318",
       "code": "B18",
       "destination": "Terminal",
@@ -16099,6 +16278,19 @@
     },
     {
       "station_id": "9119",
+      "route_id": "1188",
+      "code": "A61",
+      "destination": "Polo - FINCOMERCIO",
+      "kind": "wagon",
+      "label": "B",
+      "wagon": 2,
+      "doors": [
+        4,
+        6
+      ]
+    },
+    {
+      "station_id": "9119",
       "route_id": "320",
       "code": "B23",
       "destination": "Alcalá - Colegio S. Tomás Dominicos",
@@ -16284,6 +16476,19 @@
       "route_id": "696",
       "code": "8",
       "destination": "Terminal",
+      "kind": "wagon",
+      "label": "B",
+      "wagon": 2,
+      "doors": [
+        4,
+        6
+      ]
+    },
+    {
+      "station_id": "9121",
+      "route_id": "1188",
+      "code": "A61",
+      "destination": "Polo - FINCOMERCIO",
       "kind": "wagon",
       "label": "B",
       "wagon": 2,
@@ -17100,30 +17305,6 @@
       ]
     },
     {
-      "station_id": "5105",
-      "route_id": "5451",
-      "code": "FZ63",
-      "destination": "Tibanica - Primavera",
-      "points": [
-        {
-          "kind": "wagon",
-          "label": "B",
-          "index": 2,
-          "doors": [
-            2
-          ]
-        },
-        {
-          "kind": "wagon",
-          "label": "B",
-          "index": 2,
-          "doors": [
-            4
-          ]
-        }
-      ]
-    },
-    {
       "station_id": "6000",
       "route_id": "355",
       "code": "B16",
@@ -17552,27 +17733,9 @@
       "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
     },
     {
-      "station_id": "12002",
-      "line": "A61",
-      "destination": "Polo - FINCOMERCIO",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
       "station_id": "12004",
       "line": "F23",
       "destination": "Banderas",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "12007",
-      "line": "A61",
-      "destination": "Polo - FINCOMERCIO",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "14001",
-      "line": "A61",
-      "destination": "Polo - FINCOMERCIO",
       "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
     },
     {
@@ -17615,7 +17778,7 @@
       "station_id": "3006",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "3009",
@@ -17627,7 +17790,7 @@
       "station_id": "3009",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "3010",
@@ -17639,7 +17802,7 @@
       "station_id": "3010",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "3012",
@@ -17651,7 +17814,7 @@
       "station_id": "3012",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "3014",
@@ -17663,7 +17826,7 @@
       "station_id": "3014",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "4104",
@@ -17684,15 +17847,21 @@
       "note": "2 servicios del catálogo terminan ahí"
     },
     {
-      "station_id": "5102",
-      "line": "F23",
-      "destination": "Banderas",
+      "station_id": "5000",
+      "line": "J23",
+      "destination": "Las Aguas - Centro Colombo Americano",
       "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
     },
     {
-      "station_id": "5103",
-      "line": "A61",
-      "destination": "Polo - FINCOMERCIO",
+      "station_id": "5002",
+      "line": "J23",
+      "destination": "Las Aguas - Centro Colombo Americano",
+      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+    },
+    {
+      "station_id": "5102",
+      "line": "F23",
+      "destination": "Banderas",
       "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
     },
     {
@@ -17702,9 +17871,15 @@
       "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
     },
     {
-      "station_id": "5107",
-      "line": "A61",
-      "destination": "Polo - FINCOMERCIO",
+      "station_id": "5105",
+      "line": "FZ63",
+      "destination": "Tibanica - Primavera",
+      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+    },
+    {
+      "station_id": "5105",
+      "line": "Z63",
+      "destination": "Tibanica - Primavera",
       "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
     },
     {
@@ -17717,7 +17892,7 @@
       "station_id": "7104",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "7107",
@@ -17729,7 +17904,7 @@
       "station_id": "7107",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "7108",
@@ -17741,7 +17916,7 @@
       "station_id": "7108",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "7110",
@@ -17753,13 +17928,7 @@
       "station_id": "7110",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "7111",
-      "line": "A61",
-      "destination": "Polo - FINCOMERCIO",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "7111",
@@ -17777,7 +17946,7 @@
       "station_id": "7201",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "90004",
@@ -17789,13 +17958,7 @@
       "station_id": "90004",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "90004",
-      "line": "J76",
-      "destination": "Universidades CityU",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "90007",
@@ -17807,7 +17970,7 @@
       "station_id": "90007",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "90008",
@@ -17819,19 +17982,7 @@
       "station_id": "90008",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "90008",
-      "line": "J76",
-      "destination": "Universidades CityU",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "9001",
-      "line": "J76",
-      "destination": "Universidades CityU",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "9002",
@@ -17843,13 +17994,7 @@
       "station_id": "9002",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "9002",
-      "line": "J76",
-      "destination": "Universidades CityU",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "9003",
@@ -17861,13 +18006,7 @@
       "station_id": "9003",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "9003",
-      "line": "J76",
-      "destination": "Universidades CityU",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "9004",
@@ -17879,19 +18018,7 @@
       "station_id": "9004",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "9004",
-      "line": "J76",
-      "destination": "Universidades CityU",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "9100",
-      "line": "J76",
-      "destination": "Universidades CityU",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "9101",
@@ -17903,7 +18030,7 @@
       "station_id": "9101",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "9104",
@@ -17915,13 +18042,7 @@
       "station_id": "9104",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "9104",
-      "line": "J76",
-      "destination": "Universidades CityU",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "9107",
@@ -17933,42 +18054,12 @@
       "station_id": "9107",
       "line": "C17",
       "destination": "Suba - Tv. 91",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
+      "note": "El destino del tablero no es una estación del catálogo"
     },
     {
       "station_id": "9110",
       "line": "F23",
       "destination": "Banderas",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "9110",
-      "line": "J76",
-      "destination": "Universidades CityU",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "9113",
-      "line": "A61",
-      "destination": "Polo - FINCOMERCIO",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "9116",
-      "line": "A61",
-      "destination": "Polo - FINCOMERCIO",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "9119",
-      "line": "A61",
-      "destination": "Polo - FINCOMERCIO",
-      "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
-    },
-    {
-      "station_id": "9121",
-      "line": "A61",
-      "destination": "Polo - FINCOMERCIO",
       "note": "El catálogo no tiene aquí un servicio con ese código y terminal"
     }
   ],

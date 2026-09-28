@@ -278,6 +278,11 @@ def observado(medidos, fila):
     return [base] + [registro.get(FRANJAS[b], base) for b in BUCKETS]
 
 
+# Nombre de la estación de cada parada del paquete, para alinear recorridos que empiezan o terminan
+# en otra parada; lo llena main().
+STOP_NAMES = {}
+
+
 def running_times(service, found, by_route, segments, medidos=None):
     """(list of [base, peak, weekday, saturday, holiday] seconds per stretch, or None and a reason).
 
@@ -295,6 +300,23 @@ def running_times(service, found, by_route, segments, medidos=None):
     # días laborables y otro el sábado. Para cada tipo de día manda el que más viajes aportó a ese
     # tipo; quedarse solo con el registro mayor daría al sábado los tiempos de un martes.
     usable = [r for r in found if len(segments.get(r['route_id']) or []) == wanted]
+    if not usable and STOP_NAMES:
+        # El buscador a veces empieza o termina el recorrido una parada antes que el paquete (la Z63
+        # arranca en Banderas y el paquete en Pradera). Si las paradas locales aparecen una sola
+        # vez seguidas dentro de las del paquete, por nombre de estación, se toman esos tramos.
+        local = [clave(x.get('name')) for x in service['stops']]
+        trimmed = {}
+        for r in found:
+            rows = sorted(segments.get(r['route_id']) or [], key=lambda x: int(x['index']))
+            if len(rows) <= wanted:
+                continue
+            names = [STOP_NAMES.get(x['from_stop']) for x in rows] + [STOP_NAMES.get(rows[-1]['to_stop'])]
+            hits = [i for i in range(len(names) - wanted) if names[i:i + wanted + 1] == local]
+            if len(hits) == 1:
+                trimmed[r['route_id']] = rows[hits[0]:hits[0] + wanted]
+        if trimmed:
+            segments = dict(segments, **trimmed)
+            usable = [r for r in found if r['route_id'] in trimmed]
     if not usable:
         counts = sorted({len(segments.get(r['route_id']) or []) for r in found})
         return None, f'el catálogo local cuenta {wanted} tramos y el paquete {counts}', None
@@ -335,6 +357,10 @@ def main():
     trips = read(source / 'trunk_trips.csv')
     tramos_crudos = read(source / 'trunk_segments.csv') if (source / 'trunk_segments.csv').exists() else []
     catalogue = json.loads(CATALOGUE.read_text(encoding='utf-8'))['routes']
+    if (source / 'stops.txt').exists():
+        stops = {r['stop_id']: r for r in read(source / 'stops.txt')}
+        for k, r in stops.items():
+            STOP_NAMES[k] = clave((stops.get(r.get('parent_station')) or r)['stop_name'])
     # Tiempos medidos en la calle, si los hay. Sin este archivo el horario sale como siempre: el
     # motor usa lo publicado y nada cambia.
     medicion = json.loads(OBSERVADOS.read_text(encoding='utf-8')) if OBSERVADOS.exists() else {}

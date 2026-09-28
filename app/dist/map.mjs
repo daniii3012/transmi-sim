@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260929.9';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.9';
+import {MetricPath} from './simulation.mjs?v=20260929.11';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.11';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260929.9';
+import {pieceShape} from './wagons.mjs?v=20260929.11';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -31,6 +31,25 @@ function buildingGeometry(buffer,ox,oy,floorHeight){
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.computeVertexNormals();geometry.computeBoundingSphere();
   return geometry;
 }
+// Redondea las esquinas de una polilínea con arcos: en cada vértice que gira se cambia la esquina
+// por un arco tangente a los dos lados, con tangente de hasta `reach` metros y nunca más de 45 % de
+// cada lado. Las calles de OSM traen pocos vértices en las curvas y la franja salía quebrada.
+function fillet(P,reach=15){
+  if(P.length<3)return P;
+  const out=[P[0]];
+  for(let i=1;i<P.length-1;i++){
+    const a=P[i-1],b=P[i],c=P[i+1],l1=Math.hypot(b[0]-a[0],b[1]-a[1]),l2=Math.hypot(c[0]-b[0],c[1]-b[1]);
+    if(!l1||!l2){out.push(b);continue;}
+    const u=[(b[0]-a[0])/l1,(b[1]-a[1])/l1],w=[(c[0]-b[0])/l2,(c[1]-b[1])/l2],turn=Math.acos(Math.max(-1,Math.min(1,u[0]*w[0]+u[1]*w[1]))),bz=b.length>2?b[2]:undefined;
+    if(turn<.04||turn>2.6){out.push(b);continue;}
+    const t=Math.min(reach,.45*l1,.45*l2),n=Math.max(2,Math.ceil(turn/.12));
+    const p0=[b[0]-u[0]*t,b[1]-u[1]*t],p2=[b[0]+w[0]*t,b[1]+w[1]*t];
+    for(let k=0;k<=n;k++){const f=k/n,g=1-f,pt=[g*g*p0[0]+2*g*f*b[0]+f*f*p2[0],g*g*p0[1]+2*g*f*b[1]+f*f*p2[1]];if(bz!==undefined)pt.push(bz);out.push(pt);}
+  }
+  out.push(P.at(-1));
+  return out;
+}
+
 export class NetworkMap {
   constructor(host, labels, data, onSelect) {
     this.host=host;this.labels=labels;this.labelEntries=new Map();this.data=data;this.onSelect=onSelect;
@@ -539,7 +558,7 @@ export class NetworkMap {
     for(const f of [...data.features,...streets]){
       if(f.kind!=='road'||f.closed||f.tunnel||f.points.length<2)continue;
       const W=(f.width||7.2)/2;
-      const P=f.points,cum=[0];for(let i=1;i<P.length;i++)cum.push(cum[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));
+      const P=fillet(f.points),cum=[0];for(let i=1;i<P.length;i++)cum.push(cum[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));
       const L=cum.at(-1),H=f.bridge?Math.max(1,Number(f.layer)||1)*5.5:0,ramp=Math.min(60,L/3),z=s=>H?H*Math.min(1,s/ramp,(L-s)/ramp):0;
       for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],len=cum[i]-cum[i-1];if(!len)continue;const nx=-(b[1]-a[1])/len*W,ny=(b[0]-a[0])/len*W,za=z(cum[i-1]),zb=z(cum[i]);
         bands.push(a[0]+nx,a[1]+ny,za,a[0]-nx,a[1]-ny,za,b[0]+nx,b[1]+ny,zb,b[0]+nx,b[1]+ny,zb,a[0]-nx,a[1]-ny,za,b[0]-nx,b[1]-ny,zb);

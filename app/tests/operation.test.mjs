@@ -69,8 +69,9 @@ test('A refreshed detail records which snapshot it came from',()=>{
  for(const r of refreshed){
   assert.equal(r.ready,true,`${r.code}/${r.id}`);
   assert.ok(r.points.length>1&&r.stops.length>1);
-  // Validity still comes from the base catalogue, never from the refreshed detail.
-  assert.match(r.valid_until,/^\d{4}-\d{2}-\d{2}$/);
+  // Validity still comes from the base catalogue, never from the refreshed detail. An empty end
+  // date is an open validity: the catalogue publishes some services without fechaHasta.
+  assert.match(r.valid_until,/^(\d{4}-\d{2}-\d{2})?$/);
  }
  for(const r of source.routes)assert.ok(typeof r.detail_snapshot==='string'&&r.detail_snapshot.length>0,`${r.id} sin procedencia de detalle`);
 });

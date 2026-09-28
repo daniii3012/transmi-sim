@@ -111,10 +111,23 @@ def main() -> None:
     for date in per_day:
         by_type[day_type(date)].append(date)
 
+    # Una estación que abre a mitad del periodo —Patio Bonito, el 19 de septiembre de 2026— se
+    # promedia desde su primer día con validaciones: los días anteriores no existía, no tuvo cero.
+    first_seen = {}
+    for date in sorted(per_day):
+        for (code, _, _), value in per_day[date].items():
+            if value:
+                first_seen.setdefault(code, date)
+
     profiles = []
     for code, name in sorted(names.items()):
         entry = {"station_code": code, "name": name, "day_types": {}}
+        if first_seen.get(code, min(per_day)) > min(per_day):
+            entry["opened_in_period"] = str(first_seen[code])
         for kind, dates in sorted(by_type.items()):
+            dates = [d for d in dates if d >= first_seen.get(code, min(per_day))]
+            if not dates:
+                continue
             hourly_mean, hourly_days = [], []
             for hour in range(24):
                 values = [per_day[d].get((code, name, hour), 0) for d in dates]

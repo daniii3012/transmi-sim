@@ -137,7 +137,14 @@ cat data/raw/services/latest.json      # {"snapshot": "20260910T185326Z"}
 cat data/raw/dual_stops/latest.json
 ```
 
-Cambia el campo `snapshot` por el nombre de la carpeta nueva. Después revisa la
+Cambia el campo `snapshot` por el nombre de la carpeta nueva. `build_services.py` no pierde lo que
+la instantánea nueva trae incompleto: un registro publicado sin trazado, una variante de Ciclovía
+que dejó de listarse o un trazado nuevo que deja las paradas a kilómetros se toman de la instantánea
+anterior más reciente que sí los tenga, y `detail_snapshot` dice de cuál. Los paraderos de calle no
+se cambian a ciegas: la capa del 28 sep. 2026 reasignó códigos de cenefa y dejaba paradas a varios
+kilómetros de su recorrido, así que sigue la del 10 sep. Comparar las dos antes de mover el puntero.
+
+Después revisa la
 curación en `data/curated/services.json`, que es donde viven las decisiones humanas:
 
 - `excluded`: registros que no entran y por qué. Hoy están la C15 zonal (366) y la
@@ -396,7 +403,7 @@ que usan servicios y paraderos.
 ### Llegan datos nuevos de pasajeros
 
 Descarga los ZIP oficiales a un directorio de trabajo **fuera del repositorio**. La
-demanda vigente se mide sobre 17 días; para actualizarla conviene bajar semanas completas
+demanda vigente se mide sobre 14 días (14–27 sep. 2026); para actualizarla conviene bajar semanas completas
 de lunes a domingo, para que cada tipo de día tenga varios representantes:
 
 ```sh

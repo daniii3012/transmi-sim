@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-12T01:20:34.778330+00:00",
+  "generated_at": "2026-09-28T19:38:15.102860+00:00",
   "source_dataset": "OpenStreetMap API 0.6 XML",
   "source_snapshot": "20260912T012000Z",
   "origin_lon_lat": [
@@ -1753,23 +1753,9 @@
       "way_source": [
         {
           "node_url": "https://api.openstreetmap.org/api/0.6/node/261630647",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/90693835/full",
-          "node_sha256": "04b9fd6b8d0359510bf39bcba9fc9455ccf782f0f5668b7b58eeb9323c13d2be",
-          "way_sha256": "bfd19b2854f21fe486e617d6cd3d31cf16287da548df06a99fb8efa7b6af2e74",
-          "hash_basis": "raw XML response files in details/"
-        },
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/261630647",
           "way_url": "https://api.openstreetmap.org/api/0.6/way/1158826729/full",
           "node_sha256": "04b9fd6b8d0359510bf39bcba9fc9455ccf782f0f5668b7b58eeb9323c13d2be",
           "way_sha256": "632f2f9359148fbc967ba40cd097f5276afc31e8598a1546d8567fe8c3f973cd",
-          "hash_basis": "raw XML response files in details/"
-        },
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/261630647",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1158826730/full",
-          "node_sha256": "04b9fd6b8d0359510bf39bcba9fc9455ccf782f0f5668b7b58eeb9323c13d2be",
-          "way_sha256": "45c6e03d6b8859d023ac206a79b0b9d0ef0d815f87e18967f80c5eeef98037ff",
           "hash_basis": "raw XML response files in details/"
         },
         {
@@ -1781,7 +1767,7 @@
         }
       ],
       "axis": "busway/service way local tangent",
-      "angle": 45.47,
+      "angle": 134.316,
       "direction": {
         "traffic_signals:direction": "135"
       },
@@ -1793,27 +1779,6 @@
           "traffic_signals:direction": "135"
         },
         "qualifying_ways": [
-          {
-            "way_id": 90693835,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/90693835/full",
-            "tags": {
-              "alt_name": "Avenida Agoberto Mejía",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Transversal 80G",
-              "oneway": "yes",
-              "surface": "asphalt"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 45.47,
-            "directed_angle_deg": 45.47,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          },
           {
             "way_id": 1158826729,
             "way_url": "https://api.openstreetmap.org/api/0.6/way/1158826729/full",
@@ -1835,27 +1800,6 @@
             "oneway": "yes",
             "direction_restrictions": {
               "access": "no",
-              "oneway": "yes"
-            }
-          },
-          {
-            "way_id": 1158826730,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1158826730/full",
-            "tags": {
-              "alt_name": "Avenida Agoberto Mejía",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Transversal 80G",
-              "oneway": "yes",
-              "surface": "asphalt"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 45.44,
-            "directed_angle_deg": 45.44,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
               "oneway": "yes"
             }
           },
@@ -1903,20 +1847,6 @@
       "way_source": [
         {
           "node_url": "https://api.openstreetmap.org/api/0.6/node/261630672",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/90693835/full",
-          "node_sha256": "0da00c31dfbcd5b6c15c56e4fae7bd106256892666125c35eb495b766da3656d",
-          "way_sha256": "bfd19b2854f21fe486e617d6cd3d31cf16287da548df06a99fb8efa7b6af2e74",
-          "hash_basis": "raw XML response files in details/"
-        },
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/261630672",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/960113858/full",
-          "node_sha256": "0da00c31dfbcd5b6c15c56e4fae7bd106256892666125c35eb495b766da3656d",
-          "way_sha256": "5f91c86ab0810f4fbfed0dbffd9cb65b5bc9a4d5e44b9764d34895695c1473dc",
-          "hash_basis": "raw XML response files in details/"
-        },
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/261630672",
           "way_url": "https://api.openstreetmap.org/api/0.6/way/1432415634/full",
           "node_sha256": "0da00c31dfbcd5b6c15c56e4fae7bd106256892666125c35eb495b766da3656d",
           "way_sha256": "93ab0ad0b6b40e3c86e71136f7f14ae5c0f2f3f06afd4f949d595e3a662e6301",
@@ -1924,7 +1854,7 @@
         }
       ],
       "axis": "busway/service way local tangent",
-      "angle": 45.47,
+      "angle": 133.332,
       "direction": {
         "traffic_signals:direction": "315"
       },
@@ -1936,48 +1866,6 @@
           "traffic_signals:direction": "315"
         },
         "qualifying_ways": [
-          {
-            "way_id": 90693835,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/90693835/full",
-            "tags": {
-              "alt_name": "Avenida Agoberto Mejía",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Transversal 80G",
-              "oneway": "yes",
-              "surface": "asphalt"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 45.47,
-            "directed_angle_deg": 45.47,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          },
-          {
-            "way_id": 960113858,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/960113858/full",
-            "tags": {
-              "alt_name": "Avenida Agoberto Mejía",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Transversal 80G",
-              "oneway": "yes",
-              "surface": "asphalt"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 45.447,
-            "directed_angle_deg": 45.447,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          },
           {
             "way_id": 1432415634,
             "way_url": "https://api.openstreetmap.org/api/0.6/way/1432415634/full",
@@ -7436,7 +7324,7 @@
       "axis": "busway/service way local tangent",
       "angle": 115.895,
       "direction": {},
-      "route_distance_m": 2.693,
+      "route_distance_m": 0.391,
       "evidence": {
         "node_tags": {
           "highway": "traffic_signals",
@@ -15134,152 +15022,6 @@
             "oneway": "yes",
             "direction_restrictions": {
               "access": "no",
-              "oneway": "yes"
-            }
-          }
-        ],
-        "direct_membership": true
-      },
-      "timings": null
-    },
-    {
-      "id": "osm-node-2164846995",
-      "osm_node_id": 2164846995,
-      "xy": [
-        -2996.441,
-        481.872
-      ],
-      "lon_lat": [
-        -74.1630052,
-        4.6346271
-      ],
-      "source": "OpenStreetMap highway=traffic_signals node with direct qualifying way membership",
-      "carriageway": "street",
-      "way_source": [
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/2164846995",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/963803842/full",
-          "node_sha256": "d0a685279100d467fcca2bb10ba83c1136889c9c520f8ee08c6042bdb52fd477",
-          "way_sha256": "485990eef8ceeab5cdbacc077baf6215cbf941677da3af2709bdd2d5c1ceaafc",
-          "hash_basis": "raw XML response files in details/"
-        },
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/2164846995",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142963/full",
-          "node_sha256": "d0a685279100d467fcca2bb10ba83c1136889c9c520f8ee08c6042bdb52fd477",
-          "way_sha256": "47944f16ac7e452b47e53eb1af7e5a6af2cdfb622c1872f9a58443bf1faded69",
-          "hash_basis": "raw XML response files in details/"
-        },
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/2164846995",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1106827359/full",
-          "node_sha256": "d0a685279100d467fcca2bb10ba83c1136889c9c520f8ee08c6042bdb52fd477",
-          "way_sha256": "7baef90faed1cc2ea5c238c604bace55071bacf3db9772ba216fb3e02ab9ee17",
-          "hash_basis": "raw XML response files in details/"
-        },
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/2164846995",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1199619370/full",
-          "node_sha256": "d0a685279100d467fcca2bb10ba83c1136889c9c520f8ee08c6042bdb52fd477",
-          "way_sha256": "5c9cbb8ecc443287b13807421f32f44e52d0fffabe9c322301854594a29dfacc",
-          "hash_basis": "raw XML response files in details/"
-        }
-      ],
-      "axis": "busway/service way local tangent",
-      "angle": 40.746,
-      "direction": {},
-      "route_distance_m": 1.413,
-      "evidence": {
-        "node_tags": {
-          "highway": "traffic_signals",
-          "traffic_signals": "signal"
-        },
-        "qualifying_ways": [
-          {
-            "way_id": 963803842,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/963803842/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Avenida Carrera 86",
-              "note": "Revisar si después de finalizada la obra, quedan restricciones de giro en Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate",
-              "surface": "asphalt"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 40.746,
-            "directed_angle_deg": 220.746,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          },
-          {
-            "way_id": 1078142963,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142963/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 41.984,
-            "directed_angle_deg": 221.984,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          },
-          {
-            "way_id": 1106827359,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1106827359/full",
-            "tags": {
-              "highway": "tertiary",
-              "lanes": "2",
-              "name": "Calle 38 Sur",
-              "oneway": "yes",
-              "surface": "asphalt"
-            },
-            "qualification": "highway=tertiary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 133.091,
-            "directed_angle_deg": 133.091,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          },
-          {
-            "way_id": 1199619370,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1199619370/full",
-            "tags": {
-              "alt_name": "Avenida de los Muiscas",
-              "highway": "tertiary",
-              "lanes": "2",
-              "maxspeed": "30",
-              "name": "Diagonal 38 Sur",
-              "oneway": "yes",
-              "surface": "asphalt"
-            },
-            "qualification": "highway=tertiary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 133.153,
-            "directed_angle_deg": 133.153,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
               "oneway": "yes"
             }
           }
@@ -28803,7 +28545,7 @@
       "direction": {
         "traffic_signals:direction": "forward"
       },
-      "route_distance_m": 8.999,
+      "route_distance_m": 8.47,
       "evidence": {
         "node_tags": {
           "highway": "traffic_signals",
@@ -28964,251 +28706,6 @@
       "timings": null
     },
     {
-      "id": "osm-node-9884611134",
-      "osm_node_id": 9884611134,
-      "xy": [
-        -3126.323,
-        342.212
-      ],
-      "lon_lat": [
-        -74.1641757,
-        4.6333641
-      ],
-      "source": "OpenStreetMap highway=traffic_signals node with direct qualifying way membership",
-      "carriageway": "street",
-      "way_source": [
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/9884611134",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1083633807/full",
-          "node_sha256": "9fde3b89cb8d8bcbe2f79aa1a33e5bc1156243e69cef8378f091c70709d38e1b",
-          "way_sha256": "7278acf08fd19ade1544b1237a2e113b3ce0982f9b482b79962a4dc9c2cb60db",
-          "hash_basis": "raw XML response files in details/"
-        }
-      ],
-      "axis": "busway/service way local tangent",
-      "angle": 40.357,
-      "direction": {
-        "traffic_signals:direction": "forward"
-      },
-      "route_distance_m": 11.483,
-      "evidence": {
-        "node_tags": {
-          "highway": "traffic_signals",
-          "traffic_signals": "signal",
-          "traffic_signals:direction": "forward"
-        },
-        "qualifying_ways": [
-          {
-            "way_id": 1083633807,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1083633807/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 40.357,
-            "directed_angle_deg": 40.357,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          }
-        ],
-        "direct_membership": true
-      },
-      "timings": null
-    },
-    {
-      "id": "osm-node-9884611166",
-      "osm_node_id": 9884611166,
-      "xy": [
-        -3128.541,
-        370.93
-      ],
-      "lon_lat": [
-        -74.1641957,
-        4.6336238
-      ],
-      "source": "OpenStreetMap highway=traffic_signals node with direct qualifying way membership",
-      "carriageway": "street",
-      "way_source": [
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/9884611166",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1078130491/full",
-          "node_sha256": "6522cc73bfa0ff5166f66ecbe850707d7d6b0535284a3ceaeedbfefd9e5eb115",
-          "way_sha256": "aae37318417684e2ae574b3ce06cc00b14dd5f475419a66d22a4d211f0469045",
-          "hash_basis": "raw XML response files in details/"
-        }
-      ],
-      "axis": "busway/service way local tangent",
-      "angle": 39.791,
-      "direction": {
-        "traffic_signals:direction": "forward"
-      },
-      "route_distance_m": 1.378,
-      "evidence": {
-        "node_tags": {
-          "highway": "traffic_signals",
-          "traffic_signals": "signal",
-          "traffic_signals:direction": "forward"
-        },
-        "qualifying_ways": [
-          {
-            "way_id": 1078130491,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1078130491/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 39.791,
-            "directed_angle_deg": 219.791,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          }
-        ],
-        "direct_membership": true
-      },
-      "timings": null
-    },
-    {
-      "id": "osm-node-9884628626",
-      "osm_node_id": 9884628626,
-      "xy": [
-        -2632.489,
-        793.588
-      ],
-      "lon_lat": [
-        -74.1597252,
-        4.6374461
-      ],
-      "source": "OpenStreetMap highway=traffic_signals node with direct qualifying way membership",
-      "carriageway": "street",
-      "way_source": [
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/9884628626",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142962/full",
-          "node_sha256": "ce61e5eb519017c9eedec2fa0825df0464eb6b94e72c55c1d91a10e193a6191d",
-          "way_sha256": "1f161141e7726e09f9d4af0c82d104d0f188db1cff5c48e36c970755fbd469a8",
-          "hash_basis": "raw XML response files in details/"
-        }
-      ],
-      "axis": "busway/service way local tangent",
-      "angle": 42.583,
-      "direction": {
-        "traffic_signals:direction": "forward"
-      },
-      "route_distance_m": 5.049,
-      "evidence": {
-        "node_tags": {
-          "highway": "traffic_signals",
-          "traffic_signals": "signal",
-          "traffic_signals:direction": "forward"
-        },
-        "qualifying_ways": [
-          {
-            "way_id": 1078142962,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142962/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 42.583,
-            "directed_angle_deg": 42.583,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          }
-        ],
-        "direct_membership": true
-      },
-      "timings": null
-    },
-    {
-      "id": "osm-node-9884628689",
-      "osm_node_id": 9884628689,
-      "xy": [
-        -2447.284,
-        955.098
-      ],
-      "lon_lat": [
-        -74.1580561,
-        4.6389067
-      ],
-      "source": "OpenStreetMap highway=traffic_signals node with direct qualifying way membership",
-      "carriageway": "street",
-      "way_source": [
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/9884628689",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142962/full",
-          "node_sha256": "a1e97487fc63f8df96ac78a1909d84acbd9631deafa4118e6c0f626a238e9084",
-          "way_sha256": "1f161141e7726e09f9d4af0c82d104d0f188db1cff5c48e36c970755fbd469a8",
-          "hash_basis": "raw XML response files in details/"
-        }
-      ],
-      "axis": "busway/service way local tangent",
-      "angle": 40.74,
-      "direction": {},
-      "route_distance_m": 7.87,
-      "evidence": {
-        "node_tags": {
-          "crossing": "traffic_signals",
-          "highway": "traffic_signals"
-        },
-        "qualifying_ways": [
-          {
-            "way_id": 1078142962,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142962/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 40.74,
-            "directed_angle_deg": 40.74,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          }
-        ],
-        "direct_membership": true
-      },
-      "timings": null
-    },
-    {
       "id": "osm-node-9884628690",
       "osm_node_id": 9884628690,
       "xy": [
@@ -29330,65 +28827,6 @@
       "timings": null
     },
     {
-      "id": "osm-node-9884628692",
-      "osm_node_id": 9884628692,
-      "xy": [
-        -2464.416,
-        973.079
-      ],
-      "lon_lat": [
-        -74.1582105,
-        4.6390693
-      ],
-      "source": "OpenStreetMap highway=traffic_signals node with direct qualifying way membership",
-      "carriageway": "street",
-      "way_source": [
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/9884628692",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1153629516/full",
-          "node_sha256": "ee9afd68e82d5c986576a7283bf64c4dbaa62a7e0cd419b308e5fba5a7e49c5d",
-          "way_sha256": "8b2bd5235c14809d9f74caf75c560ad204eae5188e9b8c774eaccf7b915a82ad",
-          "hash_basis": "raw XML response files in details/"
-        }
-      ],
-      "axis": "busway/service way local tangent",
-      "angle": 41.123,
-      "direction": {},
-      "route_distance_m": 8.339,
-      "evidence": {
-        "node_tags": {
-          "crossing": "traffic_signals",
-          "highway": "traffic_signals"
-        },
-        "qualifying_ways": [
-          {
-            "way_id": 1153629516,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1153629516/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 41.123,
-            "directed_angle_deg": 221.123,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          }
-        ],
-        "direct_membership": true
-      },
-      "timings": null
-    },
-    {
       "id": "osm-node-9884628702",
       "osm_node_id": 9884628702,
       "xy": [
@@ -29404,28 +28842,14 @@
       "way_source": [
         {
           "node_url": "https://api.openstreetmap.org/api/0.6/node/9884628702",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/963803843/full",
-          "node_sha256": "7068472cc29eed095d3b69883fef3c765d8df196d486010bc6fbf86840801ee9",
-          "way_sha256": "988a2ae1f98bb5688d374efc23b2ff356699741d95ef0372da86772100a98ae8",
-          "hash_basis": "raw XML response files in details/"
-        },
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/9884628702",
           "way_url": "https://api.openstreetmap.org/api/0.6/way/1078130470/full",
           "node_sha256": "7068472cc29eed095d3b69883fef3c765d8df196d486010bc6fbf86840801ee9",
           "way_sha256": "1b3d4bdb9af2e8282832e4f90d58bbacebb5ce105d7904d1a821a982112fa01d",
           "hash_basis": "raw XML response files in details/"
-        },
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/9884628702",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1199619370/full",
-          "node_sha256": "7068472cc29eed095d3b69883fef3c765d8df196d486010bc6fbf86840801ee9",
-          "way_sha256": "5c9cbb8ecc443287b13807421f32f44e52d0fffabe9c322301854594a29dfacc",
-          "hash_basis": "raw XML response files in details/"
         }
       ],
       "axis": "busway/service way local tangent",
-      "angle": 133.062,
+      "angle": 41.192,
       "direction": {},
       "route_distance_m": 3.206,
       "evidence": {
@@ -29434,28 +28858,6 @@
           "traffic_signals": "signal"
         },
         "qualifying_ways": [
-          {
-            "way_id": 963803843,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/963803843/full",
-            "tags": {
-              "alt_name": "Avenida de los Muiscas",
-              "highway": "tertiary",
-              "lanes": "2",
-              "maxspeed": "30",
-              "name": "Diagonal 38 Sur",
-              "oneway": "yes",
-              "surface": "asphalt"
-            },
-            "qualification": "highway=tertiary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 133.062,
-            "directed_angle_deg": 133.062,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          },
           {
             "way_id": 1078130470,
             "way_url": "https://api.openstreetmap.org/api/0.6/way/1078130470/full",
@@ -29476,28 +28878,6 @@
             "oneway": "yes",
             "direction_restrictions": {
               "access": "no",
-              "oneway": "yes"
-            }
-          },
-          {
-            "way_id": 1199619370,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1199619370/full",
-            "tags": {
-              "alt_name": "Avenida de los Muiscas",
-              "highway": "tertiary",
-              "lanes": "2",
-              "maxspeed": "30",
-              "name": "Diagonal 38 Sur",
-              "oneway": "yes",
-              "surface": "asphalt"
-            },
-            "qualification": "highway=tertiary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 133.153,
-            "directed_angle_deg": 133.153,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
               "oneway": "yes"
             }
           }
@@ -33897,7 +33277,7 @@
       "direction": {
         "traffic_signals:direction": "forward"
       },
-      "route_distance_m": 3.022,
+      "route_distance_m": 0.222,
       "evidence": {
         "node_tags": {
           "highway": "traffic_signals",
@@ -40980,68 +40360,6 @@
       "timings": null
     },
     {
-      "id": "osm-node-13243826088",
-      "osm_node_id": 13243826088,
-      "xy": [
-        -2638.923,
-        820.515
-      ],
-      "lon_lat": [
-        -74.1597832,
-        4.6376896
-      ],
-      "source": "OpenStreetMap highway=traffic_signals node with direct qualifying way membership",
-      "carriageway": "street",
-      "way_source": [
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/13243826088",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1153629516/full",
-          "node_sha256": "001018267a94b4b0976ccef50633521b456120590607aaf3de88d090a3db7b5f",
-          "way_sha256": "8b2bd5235c14809d9f74caf75c560ad204eae5188e9b8c774eaccf7b915a82ad",
-          "hash_basis": "raw XML response files in details/"
-        }
-      ],
-      "axis": "busway/service way local tangent",
-      "angle": 41.555,
-      "direction": {
-        "traffic_signals:direction": "forward"
-      },
-      "route_distance_m": 8.368,
-      "evidence": {
-        "node_tags": {
-          "highway": "traffic_signals",
-          "traffic_signals": "signal",
-          "traffic_signals:direction": "forward"
-        },
-        "qualifying_ways": [
-          {
-            "way_id": 1153629516,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1153629516/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 41.555,
-            "directed_angle_deg": 221.555,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          }
-        ],
-        "direct_membership": true
-      },
-      "timings": null
-    },
-    {
       "id": "osm-node-13252276645",
       "osm_node_id": 13252276645,
       "xy": [
@@ -47169,68 +46487,6 @@
       "timings": null
     },
     {
-      "id": "osm-node-13394060701",
-      "osm_node_id": 13394060701,
-      "xy": [
-        -3001.324,
-        449.14
-      ],
-      "lon_lat": [
-        -74.1630492,
-        4.6343311
-      ],
-      "source": "OpenStreetMap highway=traffic_signals node with direct qualifying way membership",
-      "carriageway": "street",
-      "way_source": [
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/13394060701",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1195023608/full",
-          "node_sha256": "3438b4c6ed0d36beb7d238b38fe540f73c1c69cd2ce576df0199d4814a7d82b0",
-          "way_sha256": "5fe2323f8d8511e3086e4a8973864fce7335566f432124b50bd652fe8622f88b",
-          "hash_basis": "raw XML response files in details/"
-        }
-      ],
-      "axis": "busway/service way local tangent",
-      "angle": 41.292,
-      "direction": {
-        "traffic_signals:direction": "forward"
-      },
-      "route_distance_m": 8.697,
-      "evidence": {
-        "node_tags": {
-          "highway": "traffic_signals",
-          "traffic_signals": "signal",
-          "traffic_signals:direction": "forward"
-        },
-        "qualifying_ways": [
-          {
-            "way_id": 1195023608,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1195023608/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 41.292,
-            "directed_angle_deg": 41.292,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          }
-        ],
-        "direct_membership": true
-      },
-      "timings": null
-    },
-    {
       "id": "osm-node-13394060702",
       "osm_node_id": 13394060702,
       "xy": [
@@ -47294,68 +46550,6 @@
       "timings": null
     },
     {
-      "id": "osm-node-13394060704",
-      "osm_node_id": 13394060704,
-      "xy": [
-        -2989.939,
-        487.71
-      ],
-      "lon_lat": [
-        -74.1629466,
-        4.6346799
-      ],
-      "source": "OpenStreetMap highway=traffic_signals node with direct qualifying way membership",
-      "carriageway": "street",
-      "way_source": [
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/13394060704",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142963/full",
-          "node_sha256": "47fb3d59681492c36c705879aeea0670f5f779288ef75cec8de07d11d6a5a794",
-          "way_sha256": "47944f16ac7e452b47e53eb1af7e5a6af2cdfb622c1872f9a58443bf1faded69",
-          "hash_basis": "raw XML response files in details/"
-        }
-      ],
-      "axis": "busway/service way local tangent",
-      "angle": 41.85,
-      "direction": {
-        "traffic_signals:direction": "forward"
-      },
-      "route_distance_m": 1.618,
-      "evidence": {
-        "node_tags": {
-          "highway": "traffic_signals",
-          "traffic_signals": "signal",
-          "traffic_signals:direction": "forward"
-        },
-        "qualifying_ways": [
-          {
-            "way_id": 1078142963,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142963/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 41.85,
-            "directed_angle_deg": 221.85,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          }
-        ],
-        "direct_membership": true
-      },
-      "timings": null
-    },
-    {
       "id": "osm-node-13394060705",
       "osm_node_id": 13394060705,
       "xy": [
@@ -47410,68 +46604,6 @@
             "oneway": "yes",
             "direction_restrictions": {
               "access": "no",
-              "oneway": "yes"
-            }
-          }
-        ],
-        "direct_membership": true
-      },
-      "timings": null
-    },
-    {
-      "id": "osm-node-13394060714",
-      "osm_node_id": 13394060714,
-      "xy": [
-        -2821.565,
-        646.753
-      ],
-      "lon_lat": [
-        -74.1614292,
-        4.6361182
-      ],
-      "source": "OpenStreetMap highway=traffic_signals node with direct qualifying way membership",
-      "carriageway": "street",
-      "way_source": [
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/13394060714",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142963/full",
-          "node_sha256": "c3ef7b34bca4beb38d4cb61754172d9eff053179e856a15ebdd193a1f885ae03",
-          "way_sha256": "47944f16ac7e452b47e53eb1af7e5a6af2cdfb622c1872f9a58443bf1faded69",
-          "hash_basis": "raw XML response files in details/"
-        }
-      ],
-      "axis": "busway/service way local tangent",
-      "angle": 43.563,
-      "direction": {
-        "traffic_signals:direction": "forward"
-      },
-      "route_distance_m": 2.747,
-      "evidence": {
-        "node_tags": {
-          "highway": "traffic_signals",
-          "traffic_signals": "signal",
-          "traffic_signals:direction": "forward"
-        },
-        "qualifying_ways": [
-          {
-            "way_id": 1078142963,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142963/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 43.563,
-            "directed_angle_deg": 223.563,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
               "oneway": "yes"
             }
           }
@@ -47607,68 +46739,6 @@
       "timings": null
     },
     {
-      "id": "osm-node-13394060717",
-      "osm_node_id": 13394060717,
-      "xy": [
-        -2813.544,
-        624.98
-      ],
-      "lon_lat": [
-        -74.1613569,
-        4.6359213
-      ],
-      "source": "OpenStreetMap highway=traffic_signals node with direct qualifying way membership",
-      "carriageway": "street",
-      "way_source": [
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/13394060717",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142962/full",
-          "node_sha256": "ba0cec9bcf1c7b211a597ecdee887bb934e3f4a5c3b4371cade57ab243d09dba",
-          "way_sha256": "1f161141e7726e09f9d4af0c82d104d0f188db1cff5c48e36c970755fbd469a8",
-          "hash_basis": "raw XML response files in details/"
-        }
-      ],
-      "axis": "busway/service way local tangent",
-      "angle": 43.487,
-      "direction": {
-        "traffic_signals:direction": "forward"
-      },
-      "route_distance_m": 8.646,
-      "evidence": {
-        "node_tags": {
-          "highway": "traffic_signals",
-          "traffic_signals": "signal",
-          "traffic_signals:direction": "forward"
-        },
-        "qualifying_ways": [
-          {
-            "way_id": 1078142962,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142962/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 43.487,
-            "directed_angle_deg": 43.487,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          }
-        ],
-        "direct_membership": true
-      },
-      "timings": null
-    },
-    {
       "id": "osm-node-13394060737",
       "osm_node_id": 13394060737,
       "xy": [
@@ -47795,68 +46865,6 @@
       "timings": null
     },
     {
-      "id": "osm-node-13394060741",
-      "osm_node_id": 13394060741,
-      "xy": [
-        -2452.733,
-        950.409
-      ],
-      "lon_lat": [
-        -74.1581052,
-        4.6388643
-      ],
-      "source": "OpenStreetMap highway=traffic_signals node with direct qualifying way membership",
-      "carriageway": "street",
-      "way_source": [
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/13394060741",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142962/full",
-          "node_sha256": "9d4b1402d64f58e9d69d1fc5b26bb7a57238e0145548fb7dd6e7fe2ba8e9558f",
-          "way_sha256": "1f161141e7726e09f9d4af0c82d104d0f188db1cff5c48e36c970755fbd469a8",
-          "hash_basis": "raw XML response files in details/"
-        }
-      ],
-      "axis": "busway/service way local tangent",
-      "angle": 40.749,
-      "direction": {
-        "traffic_signals:direction": "forward"
-      },
-      "route_distance_m": 7.648,
-      "evidence": {
-        "node_tags": {
-          "highway": "traffic_signals",
-          "traffic_signals": "signal",
-          "traffic_signals:direction": "forward"
-        },
-        "qualifying_ways": [
-          {
-            "way_id": 1078142962,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1078142962/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "2",
-              "name": "Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 40.749,
-            "directed_angle_deg": 40.749,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
-              "oneway": "yes"
-            }
-          }
-        ],
-        "direct_membership": true
-      },
-      "timings": null
-    },
-    {
       "id": "osm-node-13394060742",
       "osm_node_id": 13394060742,
       "xy": [
@@ -47974,68 +46982,6 @@
             "oneway": "yes",
             "direction_restrictions": {
               "access": "no",
-              "oneway": "yes"
-            }
-          }
-        ],
-        "direct_membership": true
-      },
-      "timings": null
-    },
-    {
-      "id": "osm-node-13394060744",
-      "osm_node_id": 13394060744,
-      "xy": [
-        -2453.386,
-        982.577
-      ],
-      "lon_lat": [
-        -74.1581111,
-        4.6391552
-      ],
-      "source": "OpenStreetMap highway=traffic_signals node with direct qualifying way membership",
-      "carriageway": "street",
-      "way_source": [
-        {
-          "node_url": "https://api.openstreetmap.org/api/0.6/node/13394060744",
-          "way_url": "https://api.openstreetmap.org/api/0.6/way/1462629232/full",
-          "node_sha256": "dde625ebdd0bd9657a3383f002db5aa4ad074ca80b9184d7a0ecdb3c316285b2",
-          "way_sha256": "c5acfc1cb56e90dd2c6696ca13626dfed54f8f84f7c2ce8dbaac7cdd758d74d2",
-          "hash_basis": "raw XML response files in details/"
-        }
-      ],
-      "axis": "busway/service way local tangent",
-      "angle": 40.524,
-      "direction": {
-        "traffic_signals:direction": "forward"
-      },
-      "route_distance_m": 8.41,
-      "evidence": {
-        "node_tags": {
-          "highway": "traffic_signals",
-          "traffic_signals": "signal",
-          "traffic_signals:direction": "forward"
-        },
-        "qualifying_ways": [
-          {
-            "way_id": 1462629232,
-            "way_url": "https://api.openstreetmap.org/api/0.6/way/1462629232/full",
-            "tags": {
-              "alt_name": "Avenida Ciudad de Cali",
-              "highway": "primary",
-              "lanes": "3",
-              "name": "Avenida Carrera 86",
-              "official_name": "AK 86",
-              "oneway": "yes",
-              "sidewalk": "separate"
-            },
-            "qualification": "highway=primary shared with general traffic on a street section",
-            "carriageway": "street",
-            "axis_angle_deg": 40.524,
-            "directed_angle_deg": 220.524,
-            "tangent_direction": "way node order (0°=east, 90°=north)",
-            "oneway": "yes",
-            "direction_restrictions": {
               "oneway": "yes"
             }
           }
@@ -52484,14 +51430,14 @@
   ],
   "audit": {
     "signal_nodes_seen": 2588,
-    "accepted": 723,
+    "accepted": 710,
     "accepted_by_carriageway": {
       "busway": 450,
-      "street": 273
+      "street": 260
     },
     "rejected": {
       "outside_route_tolerance": 1541,
-      "no_direct_busway_or_explicit_service": 324,
+      "no_direct_busway_or_explicit_service": 337,
       "missing_way_geometry": 0,
       "no_archived_membership_evidence": 0
     }

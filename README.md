@@ -80,7 +80,7 @@ lo que ya simuló de cualquier otro, así que volver a una hora abre al instante
 | Recorridos, paradas, horarios, colores | Catálogo de servicios de TRANSMILENIO | 137 registros del catálogo ampliado, con vigencia, trazado y estaciones |
 | Salidas y tiempos entre paradas | GTFS abierto de TRANSMILENIO S.A. | 115 de los 117 servicios utilizables despachan a las horas publicadas, 47.190 salidas |
 | **Tipo de bus y velocidad por trecho** | Lecturas de posición de la flota, desde el 12 de septiembre de 2026 | La etiqueta de flota de cada vehículo: 108 servicios resueltos. Y 113,8 km de corredor en cubetas de 100 m con su velocidad y su tiempo detenido |
-| Demanda de pasajeros | [Validaciones diarias SITP](https://datosabiertos.bogota.gov.co/dataset/validaciones-diarias-sitp) | 28.014.777 validaciones en 17 días; perfil por hora, estación y tipo de día |
+| Demanda de pasajeros | [Validaciones diarias SITP](https://datosabiertos.bogota.gov.co/dataset/validaciones-diarias-sitp) | 22.233.675 validaciones en 14 días (14–27 sep. 2026); perfil por hora, estación y tipo de día |
 | Calzada, semáforos, estaciones | [OpenStreetMap](https://www.openstreetmap.org/copyright) · Overpass | 723 semáforos con evidencia y 109 estaciones con geometría (andén o contorno) |
 | Carriles de la calzada exclusiva | [Mapa de Referencia](https://datosabiertos.bogota.gov.co/dataset/mapa-de-referencia) · IDECA / UAECD | Ancho medido de cada calzada: 237 km con dos carriles y 72 con uno |
 | Andenes, separadores, construcciones | [Datos Abiertos Bogotá](https://datosabiertos.bogota.gov.co/) · IDECA | Contexto urbano fechado y con licencia por ficha |

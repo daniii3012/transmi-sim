@@ -10,34 +10,6 @@
    "applies_to": "turning"
   }
  ],
- "stations_status": [
-  {
-   "id": "5001",
-   "name": "Patio Bonito",
-   "status": "Operativa",
-   "since": "2026-09-19",
-   "reason": "Reabrió el 19 de septiembre de 2026 tras la ampliación de la Av. Ciudad de Cali (anuncio de la Alcaldía de Bogotá). El GTFS del 12 de septiembre todavía la trae cerrada y sin servicios: hasta un paquete nuevo, se muestra operativa pero ningún servicio simulado para ahí."
-  }
- ],
- "stops_added": [
-  {
-   "station_id": "5001",
-   "name": "Patio Bonito",
-   "since": "2026-09-19",
-   "wagons": {
-    "F51": 1,
-    "F60": 1,
-    "Z63": 1,
-    "F63": 1,
-    "M51": 1,
-    "5": 1,
-    "F26": 2,
-    "F32": 2,
-    "A60": 2,
-    "B26": 2,
-    "E32": 2
-   },
-   "reason": "Reabrió el 19 de septiembre de 2026 con 12 servicios troncales (anuncio de TRANSMILENIO recogido por la prensa): vagón 1 F51, F60, Z63, 5, F63 y M51; vagón 2 5, F26, F32, A60, B26 y E32. El GTFS del 12 de septiembre no los trae; la parada se agrega a esos servicios, repartiendo el tiempo del tramo publicado según la distancia. El 5 aparece en los dos vagones; aquí va en el 1."
-  }
- ]
+ "stations_status": [],
+ "stops_added": []
 }

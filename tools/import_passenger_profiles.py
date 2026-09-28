@@ -11,7 +11,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PERIOD = ROOT / 'data/processed/validations_20260824_20260909.json'
+# El agregado de periodo más reciente (validations_<desde>_<hasta>.json) manda sobre los anteriores.
+PERIOD = max(ROOT.glob('data/processed/validations_????????_????????.json'), default=ROOT / 'data/processed/validations_20260824_20260909.json')
 SINGLE = ROOT / 'data/processed/validations_20260909.json'
 DAY_TYPES = ('weekday', 'saturday', 'holiday')
 

@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-09-12T01:20:39.813Z",
+  "generated_at": "2026-09-28T19:38:16.382Z",
   "services_source": "app/dist/services.json",
-  "services_revision": "services-v2-20260910T185326Z",
+  "services_revision": "services-v2-20260928T192737Z",
   "signals_source": "app/dist/busway_signals.json",
-  "signals": 723,
-  "matched": 669,
-  "routeVariants": 117,
-  "routeSignalMatches": 4807,
-  "usableRoutes": 117,
+  "signals": 710,
+  "matched": 656,
+  "routeVariants": 119,
+  "routeSignalMatches": 4816,
+  "usableRoutes": 119,
   "unmatched": [
     "osm-node-260697850",
     "osm-node-263369091",
@@ -66,16 +66,6 @@
   ],
   "routes": [
     {
-      "id": "157",
-      "code": "C19",
-      "count": 106
-    },
-    {
-      "id": "5466",
-      "code": "F19",
-      "count": 105
-    },
-    {
       "id": "620",
       "code": "L81",
       "count": 105
@@ -91,9 +81,9 @@
       "count": 102
     },
     {
-      "id": "5467",
-      "code": "Z61",
-      "count": 102
+      "id": "157",
+      "code": "C19",
+      "count": 100
     },
     {
       "id": "3915",
@@ -101,9 +91,24 @@
       "count": 99
     },
     {
+      "id": "5466",
+      "code": "F19",
+      "count": 98
+    },
+    {
       "id": "367",
       "code": "H15",
       "count": 97
+    },
+    {
+      "id": "1188",
+      "code": "A61",
+      "count": 96
+    },
+    {
+      "id": "5467",
+      "code": "Z61",
+      "count": 95
     },
     {
       "id": "5279",
@@ -136,16 +141,6 @@
       "count": 78
     },
     {
-      "id": "3848",
-      "code": "F60",
-      "count": 78
-    },
-    {
-      "id": "5711",
-      "code": "A60",
-      "count": 78
-    },
-    {
       "id": "282",
       "code": "B13",
       "count": 76
@@ -156,14 +151,24 @@
       "count": 76
     },
     {
-      "id": "297",
-      "code": "C17",
-      "count": 66
+      "id": "5711",
+      "code": "A60",
+      "count": 72
+    },
+    {
+      "id": "3848",
+      "code": "F60",
+      "count": 71
     },
     {
       "id": "298",
       "code": "H17",
       "count": 66
+    },
+    {
+      "id": "297",
+      "code": "C17",
+      "count": 65
     },
     {
       "id": "12297",
@@ -186,11 +191,6 @@
       "count": 60
     },
     {
-      "id": "399",
-      "code": "F51",
-      "count": 60
-    },
-    {
       "id": "312",
       "code": "H21",
       "count": 58
@@ -201,13 +201,13 @@
       "count": 58
     },
     {
-      "id": "398",
-      "code": "M51",
-      "count": 58
-    },
-    {
       "id": "1213",
       "code": "H76",
+      "count": 56
+    },
+    {
+      "id": "1214",
+      "code": "J76",
       "count": 56
     },
     {
@@ -216,24 +216,19 @@
       "count": 56
     },
     {
-      "id": "396",
-      "code": "F23",
-      "count": 56
-    },
-    {
-      "id": "397",
-      "code": "J23",
-      "count": 55
-    },
-    {
       "id": "313",
       "code": "D21",
       "count": 54
     },
     {
-      "id": "689",
-      "code": "5",
-      "count": 51
+      "id": "399",
+      "code": "F51",
+      "count": 53
+    },
+    {
+      "id": "398",
+      "code": "M51",
+      "count": 52
     },
     {
       "id": "311",
@@ -246,13 +241,13 @@
       "count": 50
     },
     {
-      "id": "1192",
-      "code": "F26",
+      "id": "310",
+      "code": "D24",
       "count": 49
     },
     {
-      "id": "310",
-      "code": "D24",
+      "id": "396",
+      "code": "F23",
       "count": 49
     },
     {
@@ -266,8 +261,8 @@
       "count": 48
     },
     {
-      "id": "690",
-      "code": "5",
+      "id": "646",
+      "code": "M83",
       "count": 48
     },
     {
@@ -281,11 +276,6 @@
       "count": 48
     },
     {
-      "id": "1191",
-      "code": "B26",
-      "count": 47
-    },
-    {
       "id": "339",
       "code": "H72",
       "count": 47
@@ -296,44 +286,29 @@
       "count": 47
     },
     {
-      "id": "646",
-      "code": "M83",
-      "count": 47
-    },
-    {
       "id": "645",
       "code": "H83",
       "count": 44
     },
     {
-      "id": "5450",
-      "code": "F63",
-      "count": 43
+      "id": "689",
+      "code": "5",
+      "count": 44
     },
     {
-      "id": "5451",
-      "code": "Z63",
-      "count": 43
+      "id": "1192",
+      "code": "F26",
+      "count": 42
     },
     {
-      "id": "352",
-      "code": "F28",
-      "count": 40
+      "id": "690",
+      "code": "5",
+      "count": 42
     },
     {
-      "id": "353",
-      "code": "E32",
-      "count": 40
-    },
-    {
-      "id": "354",
-      "code": "F32",
-      "count": 40
-    },
-    {
-      "id": "383",
-      "code": "B28",
-      "count": 40
+      "id": "1191",
+      "code": "B26",
+      "count": 41
     },
     {
       "id": "623",
@@ -351,6 +326,11 @@
       "count": 38
     },
     {
+      "id": "5450",
+      "code": "F63",
+      "count": 37
+    },
+    {
       "id": "1185",
       "code": "M86",
       "count": 36
@@ -358,6 +338,11 @@
     {
       "id": "321",
       "code": "K23",
+      "count": 35
+    },
+    {
+      "id": "5451",
+      "code": "Z63",
       "count": 35
     },
     {
@@ -371,8 +356,28 @@
       "count": 34
     },
     {
+      "id": "353",
+      "code": "E32",
+      "count": 34
+    },
+    {
+      "id": "383",
+      "code": "B28",
+      "count": 34
+    },
+    {
       "id": "289",
       "code": "J74",
+      "count": 33
+    },
+    {
+      "id": "352",
+      "code": "F28",
+      "count": 33
+    },
+    {
+      "id": "354",
+      "code": "F32",
       "count": 33
     },
     {
@@ -388,6 +393,11 @@
     {
       "id": "370",
       "code": "G30",
+      "count": 31
+    },
+    {
+      "id": "397",
+      "code": "J23",
       "count": 31
     },
     {

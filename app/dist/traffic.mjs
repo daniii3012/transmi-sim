@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260929.9';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260929.9';
-import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260929.9';
-import {hash,programmedSpeed} from './operation.mjs?v=20260929.9';
-import {vehicleSpec} from './vehicles.mjs?v=20260929.9';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260929.11';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260929.11';
+import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260929.11';
+import {hash,programmedSpeed} from './operation.mjs?v=20260929.11';
+import {vehicleSpec} from './vehicles.mjs?v=20260929.11';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -285,6 +285,8 @@ function rollingLimit(field){
  return at=>{let lo=0,hi=field.at.length;while(lo<hi){const m=(lo+hi)>>1;if(field.at[m]<=at)lo=m+1;else hi=m;}const i=Math.max(0,lo-1);return field.v[i]/(1-Math.min(.8,field.stop[i]));};
 }
 
+const STREET_FLOOR=15/3.6;
+
 /** Velocidad deseada cada 10 m de un recorrido, para una columna del horario.
  *
  * Es el mismo reparto que usa el motor anterior, hecho de una vez por servicio en vez de por viaje:
@@ -319,7 +321,9 @@ export function speedCells(r,column,params,schedule){
    else if(target>0)f=3;
    if(params.calibrateField)speedAt=c=>Math.max(2,Math.min(cap,curve[c],base(c)*f));
   }else{
-   const v=target>0?programmedSpeed(target-dwell,to-from,cap,a,b,crossings):cap;
+   // En calle el horario da el ritmo del tráfico mixto, pero nunca por debajo de 15 km/h: un tramo
+   // con tiempo publicado de sobra no pone al bus a gatear para cumplirlo; llega antes y ya.
+   const v=target>0?Math.max(STREET_FLOOR,programmedSpeed(target-dwell,to-from,cap,a,b,crossings)):cap;
    speedAt=c=>Math.max(2,Math.min(v,curve[c]));
   }
   for(let c=c0;c<=c1;c++)out[c]=speedAt(c);

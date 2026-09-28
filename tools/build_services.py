@@ -71,7 +71,7 @@ def speed_profiles(routes,corridors,field):
         if perfil:salida[r['id']]={'coverage':round(enganchadas/max(1,muestras),3),'profile':perfil}
     return salida
 
-def build():
+def build(prefer_old=frozenset()):
     snapshot = read(ROOT/'data/raw/services/latest.json')['snapshot']
     folder = ROOT/'data/raw/services'/snapshot
     catalog = read(folder/'selected_catalog.json')
@@ -80,12 +80,41 @@ def build():
     map_catalog = read(folder/'map_catalog.json')
     supplement=ROOT/'data/raw/services/supplement_20260910'
     extra=read(supplement/'selected_catalog.json') if (supplement/'selected_catalog.json').exists() else []
+    # El buscador publica a veces un registro sin trazado, o deja de listar por unos días las
+    # variantes de Ciclovía. Lo que la instantánea nueva no trae completo se toma de la anterior
+    # más reciente que sí lo tenga, y la ruta dice de qué carpeta salió (`detail_snapshot`).
+    raw_services=ROOT/'data/raw/services'
+    stamp=lambda d:d.name.removeprefix('refresh_')
+    previous=sorted((d for d in raw_services.iterdir() if d.is_dir() and len(stamp(d))==16 and stamp(d)[8]=='T' and stamp(d)<snapshot),key=stamp,reverse=True)
+    def complete(path):
+        if not path.exists():return False
+        d=read(path);return bool(d.get('trazado')) and bool(d.get('estaciones'))
+    fallback={}
+    listed={str(r['id']) for r in catalog}
+    for old in previous:
+        if not (old/'selected_catalog.json').exists() or old.name.startswith('refresh_'):continue
+        for r in read(old/'selected_catalog.json'):
+            sid=str(r['id'])
+            if sid not in listed and complete(old/'details'/f'{sid}.json'):
+                catalog.append(r);listed.add(sid);fallback[sid]=old
+    for r in catalog:
+        sid=str(r['id'])
+        if sid in fallback or (sid not in prefer_old and complete(folder/'details'/f'{sid}.json')):continue
+        for old in previous:
+            if complete(old/'details'/f'{sid}.json'):fallback[sid]=old;break
+    # El suplemento solo cubre registros que el catálogo base no trae: una descarga nueva que ya
+    # los incluye manda con su propio detalle.
+    base_ids={str(r['id']) for r in catalog}
+    extra=[r for r in extra if str(r['id']) not in base_ids]
     extra_ids={str(r['id']) for r in extra}
     catalog+=extra
     # A refresh re-downloads the published detail of named records only. Catalogue metadata,
     # including validity, still comes from the base snapshot, so one record gaining a shape
     # never silently restates the rest of the catalogue.
     pointer=ROOT/'data/raw/services/refresh_latest.json'
+    # Un refresco anterior a la instantánea base quedó superado por ella y no se aplica.
+    if pointer.exists() and read(pointer)['snapshot'].removeprefix('refresh_')<snapshot:
+        pointer=ROOT/'data/raw/services/refresh_latest.none'
     refresh=ROOT/'data/raw/services'/read(pointer)['snapshot'] if pointer.exists() else None
     refresh_ids={str(i) for i in read(pointer)['ids']} if pointer.exists() else set()
     stations = {}
@@ -128,7 +157,7 @@ def build():
         if sid in curated['excluded']:
             excluded.append(dict(curated['excluded'][sid],id=sid,name=row['nombre']))
             continue
-        detail_folder=refresh if sid in refresh_ids else supplement if sid in extra_ids else folder
+        detail_folder=refresh if sid in refresh_ids else supplement if sid in extra_ids else fallback.get(sid,folder)
         d=read(detail_folder/'details'/f'{sid}.json'); meta=row.get('metadata') or {}
         z=(meta.get('troncal') or {}).get('zona')
         issues=[]; warnings=[]; calendar=[]
@@ -245,7 +274,17 @@ def build():
        'fleet_types':{k:fleet[k] for k in ('observed_from','method','fleet_seen','observed_ranges','sources')}}
 
 if __name__=='__main__':
-    data=build();write(ROOT/'app/dist/services.json',data)
+    data=build()
+    # Un registro que el detalle nuevo deja pendiente —el buscador le cambió el trazado y sus
+    # paradas quedan lejos— se rehace con el último detalle completo anterior, si lo hay.
+    pending={r['id'] for r in data['routes'] if not r['ready']}
+    if pending:
+        again=build(prefer_old=frozenset(pending))
+        fixed={r['id'] for r in again['routes'] if r['ready'] and r['id'] in pending}
+        if fixed:
+            data=build(prefer_old=frozenset(fixed))
+            print('Detalle anterior para',len(fixed),'registros:',sorted(fixed))
+    write(ROOT/'app/dist/services.json',data)
     field=read(ROOT/'data/curated/speed_field.json')
     profiles=speed_profiles(data['routes'],data['corridors'],field)
     write(ROOT/'app/dist/speed_profiles.json',{'schema_version':1,'step_m':PASO_PERFIL,

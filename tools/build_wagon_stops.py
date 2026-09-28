@@ -53,7 +53,7 @@ def main() -> None:
             x, y = to_xy.transform(float(s["stop_lon"]), float(s["stop_lat"]))
             children[s["stop_id"]] = {
                 "stop_id": s["stop_id"], "station_id": parent, "name": s["stop_name"].strip(),
-                "letter": m["letter"].upper() if m else None, "doors": (m["doors"] or "").strip() if m else "",
+                "letter": m["letter"].upper() if m else None, "doors": (m["doors"] or "").strip().rstrip(".").strip() if m else "",
                 "xy": [round(x, 2), round(y, 2)],
             }
 
