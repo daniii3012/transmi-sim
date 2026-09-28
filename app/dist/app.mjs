@@ -1,10 +1,10 @@
-import {mountShell} from './shell.mjs?v=20260929.12';
-import {NetworkMap} from './map.mjs?v=20260929.12';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260929.12';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260929.12';
-import {STATES} from './traffic.mjs?v=20260929.12';
-import {applyFieldCorrections} from './signals.mjs?v=20260929.12';
-import {registerSimulationTools} from './webmcp.mjs?v=20260929.12';
+import {mountShell} from './shell.mjs?v=20260929.13';
+import {NetworkMap} from './map.mjs?v=20260929.13';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260929.13';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260929.13';
+import {STATES} from './traffic.mjs?v=20260929.13';
+import {applyFieldCorrections} from './signals.mjs?v=20260929.13';
+import {registerSimulationTools} from './webmcp.mjs?v=20260929.13';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -46,11 +46,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260929.12',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260929.13',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260929.12',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260929.13',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -454,7 +454,7 @@ try{
  $('#back').onclick=()=>jump(clock.time-900);$('#forward').onclick=()=>jump(clock.time+900);$('#pause').onclick=()=>{clock.paused=!clock.paused;syncControls();};
  $$('[data-speed]').forEach(b=>b.onclick=()=>{clock.speed=Number(b.dataset.speed);syncControls();});
  // Vista cenital o inclinada. La brújula gira con el mapa y, al tocarla, vuelve a mirar al norte.
- const syncView=()=>{const b=$('#view-toggle');b.textContent=map.is3D?'2D':'3D';b.setAttribute('aria-label',map.is3D?'Volver a la vista desde arriba':'Inclinar la vista en 3D');b.title=b.getAttribute('aria-label');b.setAttribute('aria-pressed',String(map.is3D));$('#orbit').hidden=!map.is3D;};
+ const syncView=()=>{const b=$('#view-toggle');b.textContent=map.is3D?'2D':'3D';b.setAttribute('aria-label',map.is3D?'Volver a la vista desde arriba':'Inclinar la vista en 3D');b.title=b.getAttribute('aria-label');b.setAttribute('aria-pressed',String(map.is3D));$('#orbit').hidden=!map.is3D;const turned=Math.min(map.bearing,2*Math.PI-map.bearing)>.03;if(document.body.dataset.rotated!==String(turned))document.body.dataset.rotated=String(turned);};
  // Girar e inclinar sin arrastrar: en escritorio el arrastre con botón derecho no se adivina.
  for(const [id,db,dt] of [['#rotate-left',Math.PI/12,0],['#rotate-right',-Math.PI/12,0],['#tilt-up',0,.12],['#tilt-down',0,-.12]])$(id).onclick=()=>map.rotate(db,dt);
  // Capas: un solo botón despliega las opciones visuales; los mandos del mapa quedan siempre a la vista.

@@ -1,0 +1,79 @@
+/* Teléfono: el mapa primero. Arriba la marca, el reloj en una píldora y los controles del mapa; abajo
+   una sola hoja que asoma, llega a media altura o se abre entera, con los paneles dentro. La ficha de
+   un bus o una estación es esa misma hoja. Esta hoja de estilo va la última y manda en pantallas de
+   hasta 800 px; en una pantalla ancha no hace nada. */
+.sheet-grab{display:none}
+@media(max-width:800px){
+ :root{--top:env(safe-area-inset-top,0px);--bottom:env(safe-area-inset-bottom,0px);--pill:44px;--peek:156px;--seg:#e9eef2}
+ body[data-theme=dark]{--seg:#ffffff14}
+ main{height:100dvh!important;min-height:0}
+
+ /* La marca se reduce al logo, flotando como un control más. */
+ header{position:absolute;top:calc(var(--top) + 8px);left:8px;right:auto;width:var(--pill);height:var(--pill)!important;padding:0!important;border:1px solid var(--edge);border-radius:13px;background:var(--surface);box-shadow:0 4px 16px #10233514;z-index:12;justify-content:center}
+ header .brand{display:grid;place-items:center;width:100%;height:100%}.brand>div,.header-right{display:none!important}
+ .brand>b{width:28px;height:29px;font-size:1.15rem}
+
+ /* El reloj en una píldora entre la marca y los controles. */
+ #timeline{top:calc(var(--top) + 8px);bottom:auto!important;left:calc(var(--pill) + 16px);right:calc(var(--pill) + 16px);height:auto!important;padding:3px 4px 3px 12px;border-radius:14px;gap:4px;z-index:11}
+ .date-controls{display:flex;align-items:center;gap:2px;min-height:36px}
+ .date-controls #time{flex:1 1 auto;min-width:0!important;width:auto!important;max-width:128px;border:0;background:transparent;padding:0;font-size:.98rem!important;font-weight:650;text-align:left;min-height:36px}
+ .date-controls #day-type{display:none}
+ .date-controls #pause{margin-left:auto}
+ .date-controls #pause{flex:none;width:36px;min-width:36px;min-height:36px;padding:0;border-radius:10px}
+ #speed-pill{flex:none;min-width:40px;min-height:36px;padding:0 6px;font-size:.74rem;font-weight:650;border:0;background:transparent}
+ #timeline-toggle{min-width:32px;width:32px;min-height:36px;margin-left:0;border:0;background:transparent}
+ .time-main{display:flex;gap:6px;padding:4px 8px 0 0}
+ .time-main #date{flex:1 0 94px;min-width:94px;width:auto;font-size:.8rem!important;font-weight:600;border:0;background:transparent;padding:0}
+ .time-main #now{flex:none;min-height:36px;padding:4px 8px;font-size:.72rem}
+ .time-main #back,.time-main #forward{flex:none;min-width:40px;min-height:36px;padding:4px 2px;font-size:.78rem}
+ .time-main .speed-controls,.time-main .period{display:none}
+ .scrub-row{padding:0 8px 6px 0}
+ body[data-clock=closed] .time-main,body[data-clock=closed] .scrub-row{display:none}
+
+ /* Métricas: una línea bajo la píldora, solo con el reloj plegado. */
+ #metrics{top:calc(var(--top) + var(--pill) + 16px);left:calc(var(--pill) + 16px);right:auto;bottom:auto;max-width:calc(100% - 2 * var(--pill) - 32px);padding:5px 4px;border-radius:12px;z-index:10}
+ #metrics>div{padding:0 8px}#metrics>div:nth-child(n+3){display:none}
+ #metrics strong{font-size:.82rem}#metrics span{font-size:.56rem}
+ body[data-clock=open] #metrics{display:none}
+
+ /* Controles del mapa: 3D, capas, encuadrar y tema. Acercar se hace con los dedos; el norte aparece
+    solo con el mapa girado; girar e inclinar, con dos dedos. */
+ .map-actions{top:calc(var(--top) + 8px);right:8px;gap:6px}
+ .map-actions button{width:var(--pill);min-height:var(--pill);border-radius:13px}
+ #zoom-in,#zoom-out,.map-actions .orbit{display:none!important}
+ .map-actions .north{display:none}body[data-rotated=true] .map-actions .north{display:block}
+ .map-caption{display:none}
+ .map-bottom{top:auto!important;bottom:calc(var(--peek) + 8px)!important;left:12px!important;right:12px!important;align-items:end;gap:10px}
+ .map-bottom small{max-width:62%;line-height:1.3}
+ body[data-inspect=true] .map-bottom{display:none}
+ .layers-panel{top:0;right:calc(var(--pill) + 8px)}
+
+ /* Una sola hoja abajo, con tirador y los paneles como selector. */
+ #sidebar{top:auto!important;left:0!important;right:0!important;bottom:0!important;width:auto!important;border-radius:18px 18px 0 0!important;border-bottom:0;padding:0 0 var(--bottom)!important;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;transition:height .22s ease;z-index:9}
+ body[data-sheet-size=peek] #sidebar{height:var(--peek)!important}
+ body[data-sheet-size=half] #sidebar{height:52%!important}
+ body[data-sheet-size=full] #sidebar{height:calc(100% - var(--top) - var(--pill) - 24px)!important}
+ body[data-sheet=closed] #sidebar>.panel{display:block}
+ #panel-toggle{display:none!important}
+ .sheet-grab{position:sticky;top:0;z-index:7;height:22px;display:grid;place-items:center;background:var(--surface);cursor:grab;touch-action:none}
+ .sheet-grab:before{content:'';width:36px;height:4px;border-radius:2px;background:var(--muted);opacity:.45}
+ #sidebar>nav{position:sticky!important;top:22px;z-index:7;display:flex;gap:2px;height:auto!important;margin:0 14px 10px;padding:3px!important;border:0!important;border-radius:11px;background:var(--seg)!important;box-shadow:0 0 0 6px var(--surface)}
+ #sidebar>nav>button,#sidebar>nav>#more-menu{flex:1;min-width:0}
+ #sidebar>nav #more-menu summary{display:grid;place-items:center}
+ #sidebar>nav button,#sidebar>nav #more-menu summary{min-height:36px!important;padding:6px 4px!important;border:0!important;border-radius:9px!important;background:transparent!important;color:var(--muted);font-size:.8rem!important;font-weight:550;text-align:center}
+ #sidebar>nav button.nav-active{background:var(--surface)!important;color:var(--ink)!important;font-weight:650;box-shadow:0 1px 4px #1023351f}
+ /* «Más» se abre como hoja de acciones sobre todo lo demás. */
+ #more-menu[open] .more-options{position:fixed;left:10px;right:10px;top:auto;bottom:calc(10px + var(--bottom));z-index:40;padding:8px;border-radius:16px;box-shadow:0 12px 40px #10233540}
+ #more-menu .more-options button{min-height:48px;font-size:.9rem;border-radius:10px}
+ .panel{padding:0 18px 22px}
+
+ /* La ficha es la misma hoja: plegada deja el resumen, abierta llega a tres cuartos. */
+ body{--sheet-bottom:0px!important}
+ #inspector{left:0!important;right:0!important;bottom:0!important;top:auto!important;width:auto!important;max-height:46%;overflow-y:auto;overscroll-behavior:contain;border-radius:18px 18px 0 0!important;border-bottom:0;padding:22px 18px calc(18px + var(--bottom))!important;z-index:9}
+ body[data-detail=closed] #inspector{padding:18px 112px calc(16px + var(--bottom)) 18px!important;min-height:0}
+ #inspector:before{content:'';position:absolute;top:8px;left:50%;width:36px;height:4px;margin-left:-18px;border-radius:2px;background:var(--muted);opacity:.45}
+
+ #loading{top:calc(var(--top) + var(--pill) + 58px)!important;left:calc(var(--pill) + 16px)!important;right:calc(var(--pill) + 16px)!important;width:auto!important;max-width:none!important}
+ #toast{bottom:calc(var(--peek) + 14px)!important}
+ body[data-inspect=true] #toast{bottom:calc(40% + 14px)!important}
+}

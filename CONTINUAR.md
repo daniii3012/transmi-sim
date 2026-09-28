@@ -60,7 +60,9 @@ al horario publicado, pico de 1.666 buses y 2.118 vehículos. 89 pruebas Node y 
 
 ### Pendientes, en este orden
 
-2. **Rediseño de la interfaz móvil** con la nueva agrupación de capas.
+2. ~~Rediseño de la interfaz móvil~~ hecho el 28 sep. (`mobile.css`): reloj en píldora arriba,
+   métricas en una línea, controles del mapa reducidos a 3D, capas, encuadrar y tema, y una sola hoja
+   abajo con tirador de tres alturas y los paneles como selector; la ficha es esa misma hoja.
 3. Paradas que quedan fuera del vagón o estaciones que pisan una calzada: revisión caso a caso contra
    imagen satelital; solo con datos, no a ojo.
 4. Posición real de los buses en los patios (hoy en filas por área): no hay dato abierto de puestos.
