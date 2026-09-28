@@ -2,7 +2,7 @@ import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedD
 import {vehicleSpec} from './vehicles.mjs?v=20260928.6';
 import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections} from './signals.mjs?v=20260928.6';
 import {travelTimeAtDistance} from './travel.mjs?v=20260928.6';
-import {generatedPassengers,alightFraction,DEMAND_BASELINE} from './passengers.mjs?v=20260928.6';
+import {generatedPassengers,alightFraction,demandBase} from './passengers.mjs?v=20260928.6';
 import {placeVisit} from './station-layouts.mjs?v=20260928.6';
 import {visitWagons} from './wagons.mjs?v=20260928.6';
 import {MetricPath} from './simulation.mjs?v=20260928.6';
@@ -10,7 +10,7 @@ export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1
  // Espacio físico (traffic.mjs). Separación en marcha y parado, ciclo semafórico y atención son
  // decisiones de modelo, rotuladas como estimación; la variación diaria cambia de una fecha a otra
  // sin perder la reproducibilidad: la misma fecha y la misma versión dan siempre lo mismo.
- physical:true,headwayTime:1.2,jamGap:2.5,signalCycle:90,signalGreen:52,dwellBase:13,boardingRate:.9,dayVariation:false,dispatchJitter:60,variant:0,fleet:2252});
+ physical:true,headwayTime:1.2,jamGap:2.5,signalCycle:90,signalGreen:52,dwellBase:13,boardingRate:.9,dayVariation:false,dispatchJitter:60,variant:0,fleet:2252,odDemand:true});
 export function parameters(input={}){const p={...DEFAULTS,...input};for(const [k,min,max] of [['peakHeadway',120,1200],['offpeakHeadway',180,1800],['demand',.25,3],['cruiseKmh',25,75],['streetKmh',20,60],['acceleration',.4,1.4],['braking',.5,1.8],['turnaround',60,900],['headwayTime',.6,3],['jamGap',1,8],['signalCycle',50,180],['signalGreen',15,150],['dwellBase',5,40],['boardingRate',.3,2],['dispatchJitter',0,300],['variant',0,999],['fleet',200,8000]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw new Error('Parámetro fuera de rango: '+k);if(typeof p.variableDispatch!=='boolean'||typeof p.reinforcements!=='boolean'||typeof p.signals!=='boolean'||typeof p.beyondValidity!=='boolean'||typeof p.programmedDispatch!=='boolean'||typeof p.programmedRunning!=='boolean'||typeof p.observedRunning!=='boolean'||typeof p.physical!=='boolean'||typeof p.dayVariation!=='boolean')throw new Error('Opciones de despacho inválidas');if(p.signalGreen>=p.signalCycle-3)throw new Error('Parámetro fuera de rango: signalGreen');if(!Number.isInteger(p.variant))throw new Error('Parámetro fuera de rango: variant');if(!['auto','peak','offpeak'].includes(p.mode))throw new Error('Demanda inválida');return p;}
 // Distancia entre centros de vagón donde OSM no publica el andén: la que ya usaba el dibujo.
 export const MODULE_SPACING=64;
@@ -131,6 +131,9 @@ export class Operation {
  constructor(data,config={}){
   applyFieldCorrections(data);this.data=data;this.params=parameters(config.params);this.date=config.date||data.scenario_date;this.selection=config.selection||{mode:'all'};
   this.vehicle=data.vehicle;this.routes=new Map();this.stations=new Map(data.stations.map(s=>[s.id,s]));this.time=DAY+7*3600;this.buses=[];
+  // Sentido de salida y descenso medidos (od_profiles.json) viajan con cada estación; con el
+  // parámetro apagado se retiran y vuelven los supuestos.
+  for(const s of data.stations){const od=this.params.odDemand?data.od_profiles?.stations?.[s.id]:null;if(od)s.od_profile=od;else delete s.od_profile;}
   const picked=r=>this.selection.mode==='route'?r.id===this.selection.route:this.selection.mode==='zones'?(this.selection.zones||[]).some(z=>r.served_zones.includes(z)||r.zone===z):true;
   const fields=data.speed_profiles?.routes||{};
   for(const r of data.routes.filter(r=>r.ready&&picked(r)))this.routes.set(r.id,{...r,typeSource:vehicleSpec(r).typeSource,path:new MetricPath(r.points),field:routeField(fields[r.id])});
@@ -157,7 +160,7 @@ export class Operation {
      const period=demandPeriod(t,date,this.params.mode),nominal=period==='peak'?this.params.peakHeadway:this.params.offpeakHeadway;
      const seed=hash(r.id+'/'+this.dispatchTag(date)+'/'+sequence++),jitter=this.params.variableDispatch?(seed%25-12)/100:0;
      out.push({time:t,rid:r.id,date,departure:t});
-     const hour=Math.floor((t%DAY)/3600),pressure=Math.max(...r.visits.slice(0,-1).map(s=>{const station=this.stations.get(s.station_id),share=this.demandShares.get(s.station_id+'/'+s.direction);return (station.demand_profile?.hourly[hour]||0)*.5*DEMAND_BASELINE*this.params.demand/Math.max(1,share?.all||1)/3600*nominal;}));
+     const hour=Math.floor((t%DAY)/3600),pressure=Math.max(...r.visits.slice(0,-1).map(s=>{const station=this.stations.get(s.station_id),share=this.demandShares.get(s.station_id+'/'+s.direction);return (station.demand_profile?.hourly[hour]||0)*.5*demandBase(this.params)*this.params.demand/Math.max(1,share?.all||1)/3600*nominal;}));
      if(this.params.reinforcements&&period==='peak'&&nominal>=210&&seed%7===0&&pressure>vehicleSpec(r).capacity*.9&&t+120<end)out.push({time:t+120,rid:r.id,date,departure:t+120,reinforcement:true});
      t+=nominal*(1+jitter);
     }
@@ -263,7 +266,7 @@ export class Operation {
       const seed=hash(r.id+'/'+this.dispatchTag(date)+'/'+sequence++),jitter=this.params.variableDispatch?(seed%25-12)/100:0;
       queue.push({type:'dispatch',time:offset+t,rid:r.id,date,departure:t});
       // At most one interleaved reinforcement on a minority of peak departures.
-      const hour=Math.floor((t%DAY)/3600),pressure=Math.max(...r.visits.slice(0,-1).map(s=>{const station=this.stations.get(s.station_id),share=this.demandShares.get(s.station_id+'/'+s.direction);return (station.demand_profile?.hourly[hour]||0)*.5*DEMAND_BASELINE*this.params.demand/Math.max(1,share?.all||1)/3600*nominal;}));
+      const hour=Math.floor((t%DAY)/3600),pressure=Math.max(...r.visits.slice(0,-1).map(s=>{const station=this.stations.get(s.station_id),share=this.demandShares.get(s.station_id+'/'+s.direction);return (station.demand_profile?.hourly[hour]||0)*.5*demandBase(this.params)*this.params.demand/Math.max(1,share?.all||1)/3600*nominal;}));
       if(this.params.reinforcements&&period==='peak'&&nominal>=210&&seed%7===0&&pressure>vehicleSpec(r).capacity*.9&&t+120<end)queue.push({type:'dispatch',time:offset+t+120,rid:r.id,date,departure:t+120,reinforcement:true});
       t+=nominal*(1+jitter);
      }
@@ -290,7 +293,7 @@ export class Operation {
    const trip=this.trips[e.trip],r=this.routes.get(trip.routeId),s=r.visits[e.index],isLast=e.index===r.visits.length-1;
    const actualDate=addDays(this.date,Math.floor(e.time/DAY)-1),period=demandPeriod(e.time,actualDate,this.params.mode),station=this.stations.get(s.station_id),angle=r.path.sample(s.at_m).angle;
    const passengerKey=s.station_id+'/'+s.direction,share=this.demandShares.get(passengerKey)||{all:1,selected:1,angle},group=waiting.get(passengerKey)||{time:Math.max(0,Math.floor(e.time/DAY)*DAY+4*3600),count:0};
-   const alight=isLast?trip.passengers:Math.min(trip.passengers,Math.floor(trip.passengers*alightFraction(station,e.time)));
+   const alight=isLast?trip.passengers:Math.min(trip.passengers,Math.floor(trip.passengers*alightFraction(station,e.time,actualDate)));
    let board=0,offered=0,abandoned=0;
    if(!isLast){
     // Explicit aggregate impatience model: no hidden maximum queue or vanished buses.

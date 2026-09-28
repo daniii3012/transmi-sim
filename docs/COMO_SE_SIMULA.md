@@ -96,9 +96,10 @@ hora pico.
 Es un modelo **agregado y determinista**, no una encuesta origen-destino ni personas individuales.
 
 Las llegadas a cada estación y sentido salen de las validaciones diarias del SITP: 28.014.777
-registros de 17 días observados, en perfiles por estación, hora y tipo de día. Sobre ese perfil
-actúan supuestos marcados como tales: un factor direccional hacia el centro de empleo en la mañana y
-al revés en la tarde, una fracción de descenso por hora y centralidad, y una línea base de demanda.
+registros de 17 días observados, en perfiles por estación, hora y tipo de día. Hacia dónde
+sale la gente de cada estación y cuánta se baja en cada una también se miden de esas validaciones
+(`od_profiles.json`); en las paradas de calle, donde no hay dato, quedan los supuestos anteriores,
+marcados como tales.
 
 Cada bus que atiende sube su parte de la espera: la gente de un andén reparte su elección entre tres
 servicios útiles, no se sube toda al primero. Quien no alcanza a subir se queda esperando, y esa

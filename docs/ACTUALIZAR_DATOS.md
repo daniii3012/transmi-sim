@@ -71,6 +71,7 @@ los `build_*` escriben ambas.
 | Rutas, paradas, horarios, trazados, colores | Catálogo público de rutas de TRANSMILENIO | `fetch_services.py`, `fetch_service_supplement.py` | `build_services.py` | `app/dist/services.json` |
 | Paraderos de calle de los duales | Capa oficial de paraderos SITP | `fetch_dual_stops.py` | (lo consume `build_services.py`) | dentro de `services.json` |
 | Contexto urbano: vías, parques, agua | OpenStreetMap / Overpass | (consulta registrada en `data/raw/context`) | `build_context.py` | `app/dist/context.json` |
+| Sentido de salida y descenso por estación | Validaciones diarias SITP (datos abiertos) | archivos oficiales fuera del repositorio | `build_od_matrix.py` y `build_od_profiles.py` | `app/dist/od_profiles.json` |
 | Edificios de la vista 3D | Mapa de Referencia (IDECA / UAECD), capa Construcción | descarga fuera del repositorio | `build_buildings.py` | `app/dist/buildings/` |
 | Geometría física de estaciones y portales | OpenStreetMap API 0.6 y Overpass | `fetch_station_layouts.py` | `build_station_layouts.py` | `app/dist/station_layouts.json` |
 | Salidas programadas de cada servicio | GTFS abierto de TRANSMILENIO S.A. | `fetch_gtfs.py` | `build_schedule.py` | `app/dist/schedule.json` |

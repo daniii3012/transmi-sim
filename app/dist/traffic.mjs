@@ -538,7 +538,7 @@ export class Traffic{
  // 30 min; baja una fracción según la hora y la centralidad, y sube lo que quepa.
  beginDwell(i,t,wait){
   const a=this.a,info=this.info[a.route[i]],r=info.r,x=a.stop[i],v=r.visits[x],isLast=x===info.last,station=this.op.stations.get(v.station_id);
-  let board=0,alight=isLast?a.load[i]:Math.min(a.load[i],Math.floor(a.load[i]*alightFraction(station,t)));
+  let board=0,alight=isLast?a.load[i]:Math.min(a.load[i],Math.floor(a.load[i]*alightFraction(station,t,addDays(this.date,Math.floor(t/DAY)))));
   if(!isLast){
    const key=info.keys[x],share=this.op.demandShares.get(key)||{all:1,selected:1,angle:r.path.sample(v.at_m).angle};
    const g=this.groups.get(key)||{time:Math.max(SERVICE_START,4*3600),count:0};
