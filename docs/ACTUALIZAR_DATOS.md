@@ -237,14 +237,15 @@ sale cada bus.
 `data/curated/field_corrections.json` (y su copia en `app/dist`) guarda lo que se observó en sitio y
 los datos abiertos no recogen todavía: por ahora, semáforos que no existen para un sentido. Cada
 entrada lleva dónde, qué, por qué y la fecha. Se edita a mano; cuando OSM lo corrija, la entrada
-sobra y se borra. También lleva las paradas que un GTFS nuevo todavía no trae (`stops_added`, hoy
-Patio Bonito desde el 19 de septiembre de 2026): se insertan en el recorrido y el tiempo del tramo
-publicado se reparte según la distancia. Con un paquete GTFS nuevo que ya las incluya, se borran.
+sobra y se borra. También lleva las paradas que un GTFS nuevo todavía no trae (`stops_added`; Patio
+Bonito estuvo ahí del 19 al 28 de septiembre de 2026): se insertan en el recorrido y el tiempo del
+tramo publicado se reparte según la distancia. Con un paquete GTFS nuevo que ya las incluya, se borran.
 
 ### Edificios de la vista 3D
 
 ```sh
-# descarga fuera del repositorio: construcciones a 120 m de la calzada exclusiva
+# descargas fuera del repositorio: construcciones a 350 m de la calzada exclusiva y una muestra
+# del 30 % de toda la ciudad
 ../../work/venv/bin/python tools/build_buildings.py
 ```
 
@@ -255,6 +256,12 @@ la simplifica a 0,4 m, descarta las de menos de 12 m² y le da 3 m por piso
 (`CONNPISOS`). Las agrupa en teselas de 1 km por centroide, en binario (formato en el
 propio script), con `index.json` de procedencia. La vista 3D pide solo las teselas cerca
 de la cámara.
+
+Más allá de esa franja, `data/raw/construcciones_ciudad/<instantánea>/construccion.jsonl` trae el 30 %
+de las construcciones de toda la ciudad, elegidas por `MOD(OBJECTID,10)<3` para que la muestra sea
+siempre la misma. El script toma de ella las que la franja no trae (por OBJECTID), con un mínimo de
+30 m²: cerca de la troncal la ciudad está entera y lejos, a menor densidad. Hoy son 544.022 edificios
+en 600 teselas (14,5 MB); la vista pide teselas hasta 5 km y guarda 72 (2,5 km y 40 en un teléfono).
 
 ### Cambia la ubicación o la geometría física de una estación o un portal
 

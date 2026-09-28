@@ -11,7 +11,7 @@ Todo esto está en `main` **solo en local** (desde `da1c904`; no se ha empujado 
 - **Carriles medidos** de la calzada exclusiva (`tools/build_busway_geometry.py`, capa Calzada del
   Mapa de Referencia): 237 km con dos carriles y 72 con uno.
 - **Vista 3D** en `map.mjs`: cámara en perspectiva, buses con cuerpos y fuelles, andenes con
-  cubierta, edificios de Catastro por teselas (`tools/build_buildings.py`, 272.598 construcciones a 350 m).
+  cubierta, edificios de Catastro por teselas (`tools/build_buildings.py`, 272.598 construcciones a 350 m y 271.424 de fondo en el resto de la ciudad).
 - **Estaciones**: 109 de 151 con andén o contorno de OSM (`build_station_layouts.py --keep`).
 - **Puntos de control guardados**: binario compacto e idéntico a simular (`exportCheckpoint`),
   llave de escenario, IndexedDB en el navegador y precalculados del escenario inicial al publicar

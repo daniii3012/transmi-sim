@@ -4,8 +4,11 @@
 La capa Construcción del Mapa de Referencia (IDECA / UAECD, datos de Catastro) publica cada
 construcción de la ciudad con su huella y su número de pisos: en un kilómetro cuadrado de Chapinero
 trae diez veces más edificios que OpenStreetMap, que además casi no tiene alturas. El simulador solo
-necesita el paisaje de las troncales: la instantánea cruda trae lo que hay a 120 m de la calzada
+necesita el paisaje de las troncales: la instantánea cruda trae lo que hay a 350 m de la calzada
 exclusiva (la descarga una herramienta fuera del repositorio; ver docs/ACTUALIZAR_DATOS.md).
+Más allá de esa franja el paisaje es de fondo: una segunda instantánea trae el 30 % de las
+construcciones de toda la ciudad (muestra determinista por OBJECTID) y de ella se toman las que la
+franja no trae, así que cerca de la troncal la ciudad está entera y lejos, a menor densidad.
 
 Cada huella se simplifica (0,4 m), pierde los patios interiores y guarda sus pisos; la altura es de
 3 m por piso. Se agrupan por el kilómetro que contiene su centroide y cada tesela es un binario
@@ -15,7 +18,8 @@ pequeño que la vista 3D pide solo cuando la cámara está cerca:
 
 con coordenadas en decímetros relativas a la esquina de la tesela, en la proyección de la red.
 
-Entrada: `data/raw/construcciones/<instantánea>/construccion.json`. Salida: `app/dist/buildings/`
+Entradas: `data/raw/construcciones/<instantánea>/construccion.json` y, si existe,
+`data/raw/construcciones_ciudad/<instantánea>/construccion.jsonl`. Salida: `app/dist/buildings/`
 con `index.json` —teselas, procedencia y licencia— y un `.bin` por tesela.
 """
 from __future__ import annotations
@@ -39,6 +43,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 TILE = 1000        # m
 SIMPLIFY = 0.4     # m
 MIN_AREA = 12.0    # m²: casetas y voladizos sueltos no se ven desde la cámara
+MIN_AREA_FAR = 30.0  # m²: en el fondo, solo lo que se alcanza a ver de lejos
 MAX_VERTICES = 255
 MAX_FLOORS = 70
 
@@ -46,11 +51,15 @@ MAX_FLOORS = 70
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--snapshot", help="carpeta de data/raw/construcciones; por omisión la de latest.json")
+    parser.add_argument("--city", help="carpeta de data/raw/construcciones_ciudad; por omisión la de latest.json si existe")
     args = parser.parse_args()
     raw_root = ROOT / "data/raw/construcciones"
     snapshot = args.snapshot or json.loads((raw_root / "latest.json").read_text())["snapshot"]
     folder = raw_root / snapshot
     manifest = json.loads((folder / "manifest.json").read_text())
+    city_root = ROOT / "data/raw/construcciones_ciudad"
+    city = args.city or (json.loads((city_root / "latest.json").read_text())["snapshot"] if (city_root / "latest.json").exists() else None)
+    city_manifest = json.loads((city_root / city / "manifest.json").read_text()) if city else None
     projection = json.loads((ROOT / "app/dist/services.json").read_text())["projection"]
     to_xy = Transformer.from_crs("EPSG:4326", projection, always_xy=True)
 
@@ -63,7 +72,21 @@ def main() -> None:
     tiles: dict[tuple[int, int], list[tuple[int, list[tuple[float, float]]]]] = defaultdict(list)
     kept = dropped = 0
     floors_seen = []
-    for f in json.loads((folder / "construccion.json").read_text())["features"]:
+    near_ids = set()
+    far_kept = 0
+
+    def features():
+        for f in json.loads((folder / "construccion.json").read_text())["features"]:
+            near_ids.add((f.get("attributes") or {}).get("OBJECTID"))
+            yield f, False
+        if city:
+            with open(city_root / city / "construccion.jsonl") as fh:
+                for line in fh:
+                    f = json.loads(line)
+                    if (f.get("attributes") or {}).get("OBJECTID") not in near_ids:
+                        yield f, True
+
+    for f, far in features():
         rings = (f.get("geometry") or {}).get("rings") or []
         if not rings or len(rings[0]) < 4:
             dropped += 1
@@ -80,7 +103,7 @@ def main() -> None:
             continue
         shell = max(shells, key=lambda p: p.area)
         poly = orient(Polygon(shell.exterior).simplify(SIMPLIFY, preserve_topology=True), 1.0)
-        if poly.is_empty or poly.area < MIN_AREA or poly.geom_type != "Polygon":
+        if poly.is_empty or poly.area < (MIN_AREA_FAR if far else MIN_AREA) or poly.geom_type != "Polygon":
             dropped += 1
             continue
         if any(busway[i].intersection(poly).area > 0.25 * poly.area or busway[i].contains(poly.centroid) for i in busway_tree.query(poly)):
@@ -94,6 +117,7 @@ def main() -> None:
         tiles[(math.floor(c.x / TILE), math.floor(c.y / TILE))].append((floors, coords))
         floors_seen.append(floors)
         kept += 1
+        far_kept += far
 
     out = ROOT / "app/dist/buildings"
     shutil.rmtree(out, ignore_errors=True)
@@ -123,6 +147,7 @@ def main() -> None:
             "features": manifest["features"],
             "sha256": manifest["sha256"],
             "license": "Datos Abiertos Bogotá, IDECA; atribución a la entidad productora",
+            "city": {"snapshot": city, "features": city_manifest["features"], "sha256": city_manifest["sha256"], "method": city_manifest["method"]} if city else None,
         },
         "method": {
             "tile_m": TILE,
@@ -130,11 +155,13 @@ def main() -> None:
             "simplify_m": SIMPLIFY,
             "min_area_m2": MIN_AREA,
             "floor_height_m": 3.0,
-            "rule": "huella exterior más grande de cada construcción, simplificada; pisos de CONNPISOS (mínimo 1)",
+            "min_area_far_m2": MIN_AREA_FAR,
+            "rule": "huella exterior más grande de cada construcción, simplificada; pisos de CONNPISOS (mínimo 1). A 350 m de la troncal, todas; más lejos, la muestra del 30 % de la ciudad",
         },
         "projection": projection,
         "coverage": {
             "buildings": kept,
+            "background": far_kept,
             "dropped": dropped,
             "over_busway": over_busway,
             "tiles": len(index),

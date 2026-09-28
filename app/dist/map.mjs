@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260929.13';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.13';
+import {MetricPath} from './simulation.mjs?v=20260929.14';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.14';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260929.13';
+import {pieceShape} from './wagons.mjs?v=20260929.14';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -541,7 +541,7 @@ export class NetworkMap {
     try{
       const r=await fetch(base+'index.json');if(!r.ok)return;const index=await r.json();
       this.buildingIndex={base,size:index.method.tile_m,floor:index.method.floor_height_m||3,coverage:index.coverage,source:index.source,tiles:index.tiles.map(([x,y,count])=>({key:x+'_'+y,x,y,count}))};
-      this.buildingTiles=new Map();this.buildingLoading=0;
+      this.buildingTiles=new Map();this.buildingLoading=0;this.small=matchMedia('(max-width:800px)').matches;
       this.buildingGroup=new THREE.Group();this.buildingGroup.visible=false;this.scene.add(this.buildingGroup);
       this.buildingMaterial=new THREE.MeshLambertMaterial({color:this.palette.building});
       this.updateBuildingTiles();
@@ -549,7 +549,7 @@ export class NetworkMap {
   }
   updateBuildingTiles(){
     const idx=this.buildingIndex;if(!idx||this.buildingsEnabled===false||this.mpp>=(this.is3D?14:6))return;
-    const size=idx.size,[cx,cy]=this.target,reach=Math.min(5000,Math.max(900,this.distance*1.6)),want=[];
+    const size=idx.size,[cx,cy]=this.target,reach=Math.min(this.small?2500:5000,Math.max(900,this.distance*1.6)),want=[];
     for(const t of idx.tiles){const dx=Math.max(0,Math.abs(cx-(t.x+.5)*size)-size/2),dy=Math.max(0,Math.abs(cy-(t.y+.5)*size)-size/2),d=Math.hypot(dx,dy);if(d<reach)want.push([d,t]);}
     want.sort((a,b)=>a[0]-b[0]);
     for(const [,t] of want){
@@ -561,11 +561,11 @@ export class NetworkMap {
         mesh.renderOrder=4.7;mesh.userData={key:'building',tile:t};this.buildingGroup.add(mesh);this.buildingTiles.set(t.key,mesh);
       }).catch(()=>this.buildingTiles.delete(t.key)).finally(()=>{this.buildingLoading--;this.updateBuildingTiles();});
     }
-    // Más de 72 teselas en memoria: fuera las más lejanas.
-    const loaded=[...this.buildingTiles.values()].filter(Boolean);
-    if(loaded.length>72){
+    // Más de 72 teselas en memoria (40 en un teléfono): fuera las más lejanas.
+    const loaded=[...this.buildingTiles.values()].filter(Boolean),keep=this.small?40:72;
+    if(loaded.length>keep){
       loaded.sort((a,b)=>Math.hypot(cx-(b.userData.tile.x+.5)*size,cy-(b.userData.tile.y+.5)*size)-Math.hypot(cx-(a.userData.tile.x+.5)*size,cy-(a.userData.tile.y+.5)*size));
-      for(const mesh of loaded.slice(0,loaded.length-72)){this.buildingGroup.remove(mesh);mesh.geometry.dispose();this.buildingTiles.delete(mesh.userData.tile.key);}
+      for(const mesh of loaded.slice(0,loaded.length-keep)){this.buildingGroup.remove(mesh);mesh.geometry.dispose();this.buildingTiles.delete(mesh.userData.tile.key);}
     }
   }
   setContext(data,streets=[]){

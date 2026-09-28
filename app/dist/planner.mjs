@@ -1,8 +1,8 @@
-import {DAY,addDays,dateNumber,serviceWindows,demandPeriod} from './calendar.mjs?v=20260929.13';
-import {MetricPath} from './simulation.mjs?v=20260929.13';
-import {travelProfile} from './travel.mjs?v=20260929.13';
-import {parameters,hash} from './operation.mjs?v=20260929.13';
-import {placeVisit} from './station-layouts.mjs?v=20260929.13';
+import {DAY,addDays,dateNumber,serviceWindows,demandPeriod} from './calendar.mjs?v=20260929.14';
+import {MetricPath} from './simulation.mjs?v=20260929.14';
+import {travelProfile} from './travel.mjs?v=20260929.14';
+import {parameters,hash} from './operation.mjs?v=20260929.14';
+import {placeVisit} from './station-layouts.mjs?v=20260929.14';
 
 // Alternativas distintas que se ofrecen por cada cantidad de transbordos.
 export const ALTERNATIVES=3;
