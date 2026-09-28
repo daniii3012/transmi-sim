@@ -22,20 +22,29 @@ Todo esto está en `main` **solo en local** (desde `da1c904`; no se ha empujado 
 Validación del día laborable: mediana 1,02 frente a lo observado (p10 0,91, p90 1,15), 0,88 frente
 al horario publicado, pico de 1.666 buses y 2.118 vehículos. 86 pruebas Node y 47 Python.
 
+### Hecho el 28 sep. (segunda parte)
+
+- Reproducción fluida: un instante dentro del último paso ya no restaura un punto de control.
+- Cada parada en su vagón del GTFS (`wagon_stops.json`); Mandalay, Pradera, Ricaurte y Banderas
+  corregidos. `field_corrections.json` retira el semáforo de la NQS hacia el norte (Av. El Dorado).
+- En estación, al vagón del fondo se llega por el carril de paso, con cortesía del de andén.
+- Biarticulados con tres cuerpos; ficha y hoja de móvil restauradas (reglas CSS cortadas).
+- Sentido de salida y descenso medidos por estación (`od_profiles.json`).
+
 ### Pendientes, en este orden
 
-1. **Empujar a `origin`** cuando Daniel lo confirme, y publicar Pages a mano si lo pide.
-2. **Puentes y deprimidos exclusivos en 3D**: altura por etiquetas `bridge`/`tunnel`/`layer` de OSM
-   sobre la calzada de TransMilenio. En el motor ya no crean cruces falsos.
-3. **Patios y regulación visible**: ubicar patios reales (capa Patios SITP de IDECA) y dibujar los
-   buses que esperan en terminal; no animar recorridos en vacío, que no tienen trazado publicado.
-4. **Estaciones sin geometría** (42): probar la capa de estaciones del IDU o dibujarlas a mano en OSM.
-5. **Datos**: revisar si hay catálogo de rutas más reciente (la vigencia terminó el 19 sep.); más
-   días de validaciones y, si el archivo trae número de tarjeta, encadenar viajes para estimar
-   origen-destino y corregir descensos.
-6. **Rendimiento**: aplanar arreglos del motor (~2×) para móviles lentos.
-7. Clashes residuales de un mismo vagón en estaciones dobles (Ricaurte, Jiménez, Mazurén): 34
-   muestras en la mañana.
+1. **Carriles en puentes y transiciones.** Ricaurte (NQS): el puente sobre la Calle 13 tiene un
+   carril y el motor pone dos. Revisar los cortes 2→1 de ambos sentidos en puentes (deben coincidir)
+   y dibujar las transiciones graduales, no en escalón. Conviene contrastar con imagen satelital.
+2. **Banderas:** falta la media glorieta alrededor del monumento, que no está en el trazado.
+3. **Patios**, según lo que señaló Daniel: cerca al aeropuerto sobre la Calle 26 (retirado), detrás
+   de Portal Américas, Portal 80, Portal Suba, Portal 20 de Julio, Portal Usme, Portal Sur, uno por
+   la AK 51 cerca a Portal Sur (Muzú) y Portal Tunal. Corroborar en OSM (landuse / amenity=bus_station
+   / nombre) y dibujar los buses guardados.
+4. **Las 42 estaciones sin geometría** y **puentes y deprimidos** en 3D.
+5. Otras causas de congestión: revisar semáforos dudosos y la fila residual en Country Sur a las 7:40.
+6. **Rediseño de la interfaz móvil** y revisión final de la interfaz (Daniel lo pidió para el final).
+7. Empujar a `origin` cuando Daniel lo confirme; publicar Pages solo si lo pide.
 
 ## Qué es y qué no
 
