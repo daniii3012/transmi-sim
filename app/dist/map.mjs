@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260928.9';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260928.9';
+import {MetricPath} from './simulation.mjs?v=20260929.1';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.1';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260928.9';
+import {pieceShape} from './wagons.mjs?v=20260929.1';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -520,6 +520,7 @@ export class NetworkMap {
       this.busJoint=new THREE.InstancedMesh(box.clone(),new THREE.MeshLambertMaterial({color:'#2a3138'}),this.busCapacity);
       this.busMesh.renderOrder=5;this.busNose.renderOrder=6;this.busJoint.renderOrder=5;for(const m of [this.busMesh,this.busNose,this.busJoint]){m.frustumCulled=false;m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);this.scene.add(m);}
     }
+    this.trailers||=new Map();const seen=new Set();
     this.busSamples=[];let i=0,nose=0,joint=0;const color=new THREE.Color(),cells=new Map(),clusters=[];
     // De lejos cada bus es un volumen de tamaño mínimo en pantalla y los dos sentidos se separan un
     // poco; de cerca, cada cuerpo en su carril, con su largo, doblando en las rótulas.
@@ -533,20 +534,38 @@ export class NetworkMap {
       if(this.busColor==='load'){const u=Math.min(1,b.load/Math.max(1,b.capacity));color.setHSL((1-u)*.33,.72,.47);}else color.set(b.color);
       const len=b.length_m||18.5,width=Math.max(BUS_WIDTH,this.mpp*3.4),height=Math.max(BUS_HEIGHT,width*1.15);
       const bodies=close&&bodiesOf(len)?bodiesOf(len):[Math.max(len,this.mpp*8)];
-      const path=close&&bodies.length>1?this.metricPaths.get(b.routeId):null;
-      let back=0;
-      for(let k=0;k<bodies.length;k++){
-        const body=bodies[k];let px=xy[0],py=xy[1],ang=b.angle;
-        let pz=0;
-        if(path){const center=b.s+len/2-back-body/2,pose=path.sample(center);ang=pose.angle;px=pose.xy[0]+Math.sin(ang)*b.lat;py=pose.xy[1]-Math.cos(ang)*b.lat;pz=this.elevationAt(b.routeId,center);}
-        else if(this.routeLinks)pz=this.elevationAt(b.routeId,b.s);
-        this.object.position.set(px,py,pz);this.object.rotation.set(0,0,ang);this.object.scale.set(body-(bodies.length>1?JOINT:0),width,height);this.object.updateMatrix();
-        this.busMesh.setMatrixAt(i,this.object.matrix);this.busMesh.setColorAt(i,color);i++;
-        if(k===0){this.object.position.set(px+Math.cos(ang)*(body/2-.45),py+Math.sin(ang)*(body/2-.45),pz+height*.35);this.object.scale.set(.8,width*1.01,height*.5);this.object.updateMatrix();this.busNose.setMatrixAt(nose++,this.object.matrix);}
-        if(k>0){const jx=px+Math.cos(ang)*(body/2),jy=py+Math.sin(ang)*(body/2);this.object.position.set(jx,jy,pz+.25);this.object.rotation.set(0,0,ang);this.object.scale.set(JOINT+.5,width*.86,height*.82);this.object.updateMatrix();this.busJoint.setMatrixAt(joint++,this.object.matrix);}
-        back+=body+JOINT;
+      // De cerca, cada cuerpo es un remolque del anterior: el primero va donde manda el trazado —con
+      // su desvío de carril y la altura de la calzada— y cada uno sigue la unión del que lleva
+      // delante, en planta y en pendiente. Así el bus se dobla en las curvas, en los cambios de carril
+      // y en las rampas, en vez de mover cuerpos paralelos y sueltos.
+      const path=close?this.metricPaths.get(b.routeId):null;
+      if(path){
+        const front=Math.min(path.length,b.s+len/2),pose=path.sample(front),at=(s,l)=>{const q=path.sample(Math.max(0,Math.min(path.length,s)));return [q.xy[0]+Math.sin(q.angle)*l,q.xy[1]-Math.cos(q.angle)*l,this.elevationAt(b.routeId,s)];};
+        let F=[pose.xy[0]+Math.sin(pose.angle)*b.lat,pose.xy[1]-Math.cos(pose.angle)*b.lat,this.elevationAt(b.routeId,front)],back=0;
+        const prev=this.trailers.get(b.id),rears=[];
+        for(let k=0;k<bodies.length;k++){
+          const body=bodies[k];let R=prev?.[k];
+          const d=R?Math.hypot(F[0]-R[0],F[1]-R[1],F[2]-R[2]):0;
+          if(!R||d>body*1.6||d<body*.5)R=at(front-back-body,b.lat);
+          let dx=F[0]-R[0],dy=F[1]-R[1],dz=F[2]-R[2];const l=Math.hypot(dx,dy,dz)||1;dx/=l;dy/=l;dz/=l;
+          R=[F[0]-dx*body,F[1]-dy*body,F[2]-dz*body];rears.push(R);
+          const yaw=Math.atan2(dy,dx),pitch=Math.asin(Math.max(-1,Math.min(1,dz))),cx=F[0]-dx*body/2,cy=F[1]-dy*body/2,cz=F[2]-dz*body/2;
+          this.object.rotation.order='ZYX';
+          this.object.position.set(cx,cy,cz);this.object.rotation.set(0,-pitch,yaw);this.object.scale.set(body-(bodies.length>1?JOINT:0),width,height);this.object.updateMatrix();
+          this.busMesh.setMatrixAt(i,this.object.matrix);this.busMesh.setColorAt(i,color);i++;
+          if(k===0){this.object.position.set(F[0]-dx*.45,F[1]-dy*.45,F[2]-dz*.45+height*.35);this.object.scale.set(.8,width*1.01,height*.5);this.object.updateMatrix();this.busNose.setMatrixAt(nose++,this.object.matrix);}
+          else{this.object.position.set(F[0]+dx*JOINT/2,F[1]+dy*JOINT/2,F[2]+.25);this.object.scale.set(JOINT+.5,width*.86,height*.82);this.object.updateMatrix();this.busJoint.setMatrixAt(joint++,this.object.matrix);}
+          F=[R[0]-dx*JOINT,R[1]-dy*JOINT,R[2]-dz*JOINT];back+=body+JOINT;
+        }
+        this.object.rotation.order='XYZ';this.trailers.set(b.id,rears);seen.add(b.id);
+        continue;
       }
+      const body=bodies[0],pz=this.routeLinks?this.elevationAt(b.routeId,b.s):0;
+      this.object.position.set(xy[0],xy[1],pz);this.object.rotation.set(0,0,b.angle);this.object.scale.set(body,width,height);this.object.updateMatrix();
+      this.busMesh.setMatrixAt(i,this.object.matrix);this.busMesh.setColorAt(i,color);i++;
+      this.object.position.set(xy[0]+Math.cos(b.angle)*(body/2-.45),xy[1]+Math.sin(b.angle)*(body/2-.45),pz+height*.35);this.object.scale.set(.8,width*1.01,height*.5);this.object.updateMatrix();this.busNose.setMatrixAt(nose++,this.object.matrix);
     }
+    if(this.trailers.size>seen.size*2+200)for(const id of [...this.trailers.keys()])if(!seen.has(id))this.trailers.delete(id);
     if((forceClusters||!this.lastClusterTime||performance.now()-this.lastClusterTime>300)){this.lastClusterTime=performance.now();this.clusterLayer.replaceChildren();for(const c of clusters.filter(c=>c.count>5).sort((a,b)=>b.count-a.count).slice(0,32)){const el=document.createElement('div');el.className='cluster-label';el.textContent=c.count;el.style.left=c.screen[0]+5+'px';el.style.top=c.screen[1]-16+'px';this.clusterLayer.append(el);}}
     this.visibleBuses=this.busSamples.length;this.busMesh.count=i;this.busNose.count=nose;this.busJoint.count=joint;this.busMesh.instanceMatrix.needsUpdate=true;if(this.busMesh.instanceColor)this.busMesh.instanceColor.needsUpdate=true;this.busNose.instanceMatrix.needsUpdate=true;this.busJoint.instanceMatrix.needsUpdate=true;this.updateMarker();
   }
