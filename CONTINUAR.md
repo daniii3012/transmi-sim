@@ -17,6 +17,36 @@ vista 3D, la geometría de todas las estaciones, el panel de parámetros y la do
 - Flota con tope (2.252 por omisión) y reutilización entre terminales. `dayVariation` por omisión
   apagada: los días del mismo tipo son iguales y reproducibles.
 
+### Pendientes, en este orden
+
+1. **Vista 3D.** Borrador completo sin probar en `work/map3d-wip.mjs` (ignorado por Git): cámara en
+   perspectiva con inclinación y rumbo, buses como volúmenes articulados, calzada con carriles
+   (`setGuideway`), estaciones en relieve, `setBuildings` por teselas. Falta: copiarlo a
+   `app/dist/map.mjs`, que el worker mande la geometría de tramos en `ready` (links: points, lanes,
+   station, street) y la página llame `map.setGuideway`, botón 2D/3D y brújula clicable, probar en
+   escritorio y móvil.
+2. **Edificios.** Catastro publica `Construcciones` con número de pisos (`CONNPISOS`) en un servicio
+   ArcGIS de UAECD; en 1 km² de Chapinero trae 7.298 construcciones frente a 725 de OSM, que casi no
+   tiene alturas. Plan: franja de ~200 m a lado y lado de las troncales, simplificar, teselas de 1 km
+   en binario, cargar solo en 3D y de cerca. Verificar licencia de la ficha antes de publicar.
+3. **Puentes y deprimidos exclusivos**: altura por etiquetas `bridge`/`tunnel`/`layer` de OSM sobre
+   la calzada de TransMilenio, para el 3D. En el motor ya no crean cruces falsos.
+4. **Geometría de las 151 estaciones** (hoy 40) desde OSM, automatizada.
+5. **Rendimiento web.** Un día laborable tarda ~25 s en escritorio. Plan: puntos de control del
+   escenario base precalculados en el workflow de Pages (no versionados), caché en IndexedDB y
+   aplanar arreglos del motor (~2×).
+6. **Interfaz.** Un solo sistema visual (márgenes, radios, sombras), panel «Operación» renombrado y
+   explicado con los parámetros nuevos (espacio físico, separación, ciclo, atención, variación
+   diaria, flota), color por ocupación, y la procedencia de las cifras (días medidos, flota
+   observada) movida a un apartado de información en vez de ocupar los paneles. Móvil primero.
+7. **Datos.** Revisar si hay catálogo de rutas más reciente (la vigencia terminó el 19 sep.);
+   analizar validaciones de más días y, si el archivo trae número de tarjeta, encadenar viajes para
+   estimar origen-destino y corregir descensos y el factor 2,25.
+8. **Patios y regulación visible.** Evaluado: ubicar patios reales y dibujar los buses que esperan
+   en terminal; no animar recorridos en vacío, que no tienen trazado publicado.
+9. README, badges, `docs/ARQUITECTURA.md` y `docs/COMO_SE_SIMULA.md` al día con el motor nuevo;
+   después empujar a `origin` (el commit `da1c904` está solo en local).
+
 Estado al cierre. Leer antes `README.md`, `docs/OPERACION_Y_DATOS.md` y
 `docs/VALIDACION_FASE2_20260911.md`. No reiniciar la arquitectura: lo que hay está validado y cada
 pieza entró con una medición detrás.
