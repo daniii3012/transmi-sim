@@ -722,7 +722,9 @@ export class Traffic{
    if(fj<=own-len-.5){follow=j;break;}          // del todo por detrás: se revisa abajo
    if(rj>=target+1)continue;                     // del todo por delante del puesto
    // Ocupa el puesto o está entre el bus y su puesto: puede ponerse detrás si queda sitio a su lado.
-   if(rj>=own+S0)continue;
+   // Basta con caber detrás: el que espera se detuvo a un metro del que atiende (berthHold), y pedirle
+   // la separación de parado lo dejaba en el carril de paso tapando a todos hasta que el otro saliera.
+   if(rj>=own+.8)continue;
    return false;
   }
   if(follow>=0&&own-len-this.off[follow]<S0+a.v[follow]*.8)return false;
