@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260928.8';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260928.8';
+import {MetricPath} from './simulation.mjs?v=20260928.9';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260928.9';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260928.8';
+import {pieceShape} from './wagons.mjs?v=20260928.9';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -411,11 +411,29 @@ export class NetworkMap {
     }
     // Vagones esquemáticos donde no hay geometría: un andén de 58 m por vagón a lo largo del eje.
     const wagons=[];
-    for(const s of this.data.stations){if(s.kind==='street'||s.status==='En obras'||this.layoutIds.has(s.id))continue;const sum=this.axes.get(s.id)||[1,0],angle=Math.atan2(sum[1],sum[0])/2,n=s.wagons||2;for(let w=1;w<=n;w++)wagons.push({xy:[s.xy[0]+Math.cos(angle)*(w-(n+1)/2)*64,s.xy[1]+Math.sin(angle)*(w-(n+1)/2)*64],angle});}
+    // Sin geometría de OSM, los vagones van donde el GTFS pone sus paradas: cada letra en su lugar, en
+    // una o dos filas según las puertas de cada lado. Si tampoco hay eso, módulos cada 64 m.
+    const gtfs=this.data.wagon_stops?.stations||{};
+    for(const s of this.data.stations){
+      if(s.kind==='street'||s.status==='En obras'||this.layoutIds.has(s.id))continue;
+      const sum=this.axes.get(s.id)||[1,0],angle=Math.atan2(sum[1],sum[0])/2,u=[Math.cos(angle),Math.sin(angle)],v=[-u[1],u[0]];
+      const stops=(gtfs[s.id]||[]).filter(w=>/^[A-Z]$/.test(w.letter||'')&&Math.hypot(w.xy[0]-s.xy[0],w.xy[1]-s.xy[1])<250);
+      if(stops.length){
+        const groups=new Map();
+        for(const w of stops){const dx=w.xy[0]-s.xy[0],dy=w.xy[1]-s.xy[1],a=dx*u[0]+dy*u[1],b=dx*v[0]+dy*v[1],key=w.letter+'/'+Math.round(b/9);const g=groups.get(key)||{a:0,b:0,n:0,letter:w.letter};g.a+=a;g.b+=b;g.n++;groups.set(key,g);}
+        const centers=[...groups.values()].map(g=>({a:g.a/g.n,b:g.b/g.n,letter:g.letter}));
+        const letters=[...new Set(centers.map(c=>c.letter))].sort(),along=letters.map(l=>{const cs=centers.filter(c=>c.letter===l);return cs.reduce((x,c)=>x+c.a,0)/cs.length;}).sort((x,y)=>x-y);
+        let gap=Infinity;for(let k=1;k<along.length;k++)gap=Math.min(gap,along[k]-along[k-1]);
+        const length=Math.max(25,Math.min(58,Number.isFinite(gap)?gap*.85:45));
+        for(const c of centers)wagons.push({xy:[s.xy[0]+u[0]*c.a+v[0]*c.b,s.xy[1]+u[1]*c.a+v[1]*c.b],angle,length});
+        continue;
+      }
+      const n=s.wagons||2;for(let w=1;w<=n;w++)wagons.push({xy:[s.xy[0]+u[0]*(w-(n+1)/2)*64,s.xy[1]+u[1]*(w-(n+1)/2)*64],angle});
+    }
     const box=new THREE.BoxGeometry(1,1,1);box.translate(0,0,.5);
     this.wagonMesh=new THREE.InstancedMesh(box,new THREE.MeshLambertMaterial({color:this.palette.platform}),Math.max(1,wagons.length));this.wagonMesh.userData.key='platform';
     this.wagonRoof=new THREE.InstancedMesh(box,new THREE.MeshLambertMaterial({color:this.palette.roof,transparent:true,opacity:.28,depthWrite:false}),Math.max(1,wagons.length));this.wagonRoof.userData.key='roof';
-    wagons.forEach((w,i)=>{this.object.position.set(w.xy[0],w.xy[1],0);this.object.rotation.set(0,0,w.angle);this.object.scale.set(58,5,.9);this.object.updateMatrix();this.wagonMesh.setMatrixAt(i,this.object.matrix);this.object.position.z=4.2;this.object.scale.set(62,7,.35);this.object.updateMatrix();this.wagonRoof.setMatrixAt(i,this.object.matrix);});
+    wagons.forEach((w,i)=>{this.object.position.set(w.xy[0],w.xy[1],0);this.object.rotation.set(0,0,w.angle);this.object.scale.set(w.length||58,5,.9);this.object.updateMatrix();this.wagonMesh.setMatrixAt(i,this.object.matrix);this.object.position.z=4.2;this.object.scale.set((w.length||58)+4,7,.35);this.object.updateMatrix();this.wagonRoof.setMatrixAt(i,this.object.matrix);});
     this.wagonMesh.count=this.wagonRoof.count=wagons.length;this.wagonMesh.renderOrder=4.6;this.wagonRoof.renderOrder=8;this.stationGroup.add(this.wagonMesh);this.stationRoofs.add(this.wagonRoof);
   }
   /** Volúmenes de la ciudad, por tesela, solo en la vista inclinada. */
