@@ -31,20 +31,23 @@ al horario publicado, pico de 1.666 buses y 2.118 vehículos. 86 pruebas Node y 
 - Biarticulados con tres cuerpos; ficha y hoja de móvil restauradas (reglas CSS cortadas).
 - Sentido de salida y descenso medidos por estación (`od_profiles.json`).
 
+### Hecho el 28 sep. (tercera parte)
+
+- Puentes y deprimidos de OSM (`busway_structures.json`): carril único en puentes, en el mismo punto
+  para los dos sentidos; altura en 3D con rampas; transiciones de carril de 30 m; tramos sueltos fuera.
+- Estación: el que espera su vagón ocupado entra al carril del andén detrás del que atiende (se
+  acabaron las filas de CAN, Virrey y Calle 85 a las 18:00).
+- Calzada que ningún recorrido usa (`busway_context.json`): la media glorieta de Banderas y otros 55 km.
+- Patios troncales (`depots.json`, IDECA) llenos con los buses fuera de servicio.
+- Estaciones sin geometría OSM: vagones donde el GTFS pone sus paradas.
+
 ### Pendientes, en este orden
 
-1. **Carriles en puentes y transiciones.** Ricaurte (NQS): el puente sobre la Calle 13 tiene un
-   carril y el motor pone dos. Revisar los cortes 2→1 de ambos sentidos en puentes (deben coincidir)
-   y dibujar las transiciones graduales, no en escalón. Conviene contrastar con imagen satelital.
-2. **Banderas:** falta la media glorieta alrededor del monumento, que no está en el trazado.
-3. **Patios**, según lo que señaló Daniel: cerca al aeropuerto sobre la Calle 26 (retirado), detrás
-   de Portal Américas, Portal 80, Portal Suba, Portal 20 de Julio, Portal Usme, Portal Sur, uno por
-   la AK 51 cerca a Portal Sur (Muzú) y Portal Tunal. Corroborar en OSM (landuse / amenity=bus_station
-   / nombre) y dibujar los buses guardados.
-4. **Las 42 estaciones sin geometría** y **puentes y deprimidos** en 3D.
-5. Otras causas de congestión: revisar semáforos dudosos y la fila residual en Country Sur a las 7:40.
-6. **Rediseño de la interfaz móvil** y revisión final de la interfaz (Daniel lo pidió para el final).
-7. Empujar a `origin` cuando Daniel lo confirme; publicar Pages solo si lo pide.
+1. **Rediseño de la interfaz móvil** y revisión final de la interfaz, con Daniel.
+2. Corredores de fondo (líneas de troncal) todavía a ras de suelo en los puentes en 3D.
+3. Semáforos dudosos: seguir revisando esperas largas; recoger en `field_corrections.json` lo que
+   Daniel observe.
+4. Empujar a `origin` cuando Daniel lo confirme; publicar Pages solo si lo pide.
 
 ## Qué es y qué no
 
