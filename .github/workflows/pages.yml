@@ -96,7 +96,7 @@ jobs:
       - name: Puntos de control del escenario inicial
         run: |
           set -euo pipefail
-          node tools/build_day_checkpoints.mjs --days 21
+          node tools/build_day_checkpoints.mjs --days 8
           test -s app/dist/checkpoints/index.json
 
       - name: Empaquetar solo app/dist

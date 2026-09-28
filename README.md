@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚍 Transmi · Bogotá en movimiento
+# 🚍 TransMiSim
 
 **Simulador de TransMilenio sobre la ciudad real, a escala geográfica 1:1, en 2D y 3D.**
 

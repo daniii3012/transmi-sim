@@ -116,10 +116,11 @@ test('Un punto de control exportado y restaurado en un motor nuevo sigue exactam
  assert.equal(frameKey(b.frame(b.t)),expected);
 });
 
-test('Dos martes normales comparten llave de escenario —y puntos de control—; con variación diaria, no',()=>{
- const key=(date,params={})=>build({params},date).traffic.scenarioKey();
+test('Sin variación diaria dos martes comparten llave de escenario; con ella —por omisión—, cada fecha la suya',()=>{
+ const key=(date,params={dayVariation:false})=>build({params},date).traffic.scenarioKey();
  assert.equal(key('2026-09-22'),key('2026-09-29'),'toda la red, incluidas las rutas sin horario publicado');
  assert.notEqual(key('2026-09-22'),key('2026-09-26'),'un sábado es otro día');
+ assert.notEqual(key('2026-09-22',{}),key('2026-09-29',{}),'por omisión cada fecha es su propio día');
  assert.notEqual(key('2026-09-22',{dayVariation:true}),key('2026-09-29',{dayVariation:true}));
 });
 

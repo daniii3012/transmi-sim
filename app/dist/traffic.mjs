@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260929.4';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260929.4';
-import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260929.4';
-import {hash,programmedSpeed} from './operation.mjs?v=20260929.4';
-import {vehicleSpec} from './vehicles.mjs?v=20260929.4';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260929.5';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260929.5';
+import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260929.5';
+import {hash,programmedSpeed} from './operation.mjs?v=20260929.5';
+import {vehicleSpec} from './vehicles.mjs?v=20260929.5';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -668,7 +668,7 @@ export class Traffic{
   for(const i of this.active){
    if(a.offnet[i]||a.state[i]===DWELL)continue;
    const info=this.info[a.route[i]],d=info.stopFront[a.stop[i]]-a.sR[i];
-   if(a.lane[i]===0){if(a.stop[i]<info.last&&d<a.len[i]+25&&d>-.5)this.dock(i);continue;}
+   if(a.lane[i]===0){if(a.stop[i]<info.last&&d<a.len[i]+40&&d>-.5)this.dock(i);continue;}
    // Por el carril del andén hacia su propio vagón: si le tapa uno que atiende en un vagón anterior,
    // sale al que sigue de largo para rebasarlo y vuelve a acomodarse más adelante.
    const link=g.links[this.linkOf(i)],inZone=link.station[Math.min(link.station.length-1,(off[i]/CELL)|0)];
@@ -906,7 +906,10 @@ export class Traffic{
  stats(){
   const a=this.a,counts=[0,0,0,0,0];let onboard=0;for(const i of this.active){counts[a.state[i]]++;onboard+=a.load[i];}
   const s=this.acc;
-  return {time_s:this.t,fleet:this.active.length,moving:counts[0],dwell:counts[1],queue:counts[2],signal:counts[3],traffic:counts[4],onboard,boarded:s.boarded,stops:s.stops,
+  // En regulación: buses que acaban de terminar un viaje y esperan en su terminal el siguiente
+  // (el de vuelta o el próximo despacho, hasta 30 min). La cuenta real de buses en servicio los incluye.
+  let layover=this.releases.a.length;for(const list of this.parked.values())for(const [,ready] of list)if(ready>this.t-1800)layover++;
+  return {time_s:this.t,fleet:this.active.length,layover,moving:counts[0],dwell:counts[1],queue:counts[2],signal:counts[3],traffic:counts[4],onboard,boarded:s.boarded,stops:s.stops,
    averageWait:s.stops?s.waitSum/s.stops:0,boardingDenials:s.denied,scheduled:this.trips.length,dispatched:s.dispatched,completed:s.completed,routes:this.routes.length,peakActive:s.peak,
    waitingVehicle:this.waitingVehicle.length,deadheads:s.deadheads,fleetWait:s.fleetWait,fleetCap:this.p.fleet,waitingToEnter:this.active.reduce((m,i)=>m+(a.offnet[i]===1&&a.state[i]===QUEUE?1:0),0),forced:s.forced,entryWait:s.entries?s.entryWait/s.entries:0,vehicles:this.vehicles.length,demandFactor:this.demandFactor};
  }

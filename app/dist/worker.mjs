@@ -1,8 +1,8 @@
-import {Operation} from './operation.mjs?v=20260929.4';
-import {JourneyPlanner} from './planner.mjs?v=20260929.4';
-import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260929.4';
-import {DAY,addDays} from './calendar.mjs?v=20260929.4';
-import * as stored from './checkpoints.mjs?v=20260929.4';
+import {Operation} from './operation.mjs?v=20260929.5';
+import {JourneyPlanner} from './planner.mjs?v=20260929.5';
+import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260929.5';
+import {DAY,addDays} from './calendar.mjs?v=20260929.5';
+import * as stored from './checkpoints.mjs?v=20260929.5';
 // El motor de espacio físico corre aquí. La página pide un instante —fecha y segundos desde la
 // medianoche anterior más un día, como hasta ahora— y el worker lo traduce a su día de servicio,
 // que va de las 03:00 a las 03:00: pasar la medianoche no reinicia nada, y cambiar de fecha solo
@@ -38,6 +38,15 @@ function packFrame(request){
  if(detail){detail.busId=selected;detail.tripStart=toPage(detail.tripStart,request);detail.scheduled=toPage(detail.scheduled,request);}
  return {msg:{type:'state',generation,requestId:request.requestId,time:request.time,serviceDate:traffic.date,frame:f,stats:traffic.stats(),detail},
   transfer:[f.trip.buffer,f.route.buffer,f.s.buffer,f.lat.buffer,f.len.buffer,f.state.buffer,f.speed.buffer,f.load.buffer,f.cap.buffer,f.offnet.buffer]};
+}
+function platformModules(op){
+ const out=[];
+ for(const r of op.routes.values())r.visits.forEach((v,i)=>{
+  if(v.kind==='street'||i===0||i===r.visits.length-1)return;
+  const p=r.path.sample(Math.max(0,Math.min(r.path.length,v.at_m))),lat=-(3.4*1.5+2.3);
+  out.push({station:v.station_id,letter:v.wagonLabel||String(v.wagon||''),xy:[p.xy[0]+Math.sin(p.angle)*lat,p.xy[1]-Math.cos(p.angle)*lat],angle:p.angle,length:v.wagon_length||0});
+ });
+ return out;
 }
 function pump(){
  timer=0;if(!target||!op||loading)return;
@@ -83,6 +92,10 @@ self.onmessage=({data:m})=>{
     // La calzada sobre la que ruedan los buses, para dibujarla con sus carriles.
     guideway:guide.links.map(l=>({points:l.points,lanes:l.lanes,station:l.station,street:l.street,level:l.level.some(v=>v)?l.level:null,z:l.z.some(v=>v)?l.z:null})),
     // Por servicio, qué tramos recorre y desde qué abscisa: con eso el mapa sabe a qué altura va cada bus.
+    // Vagones donde paran de verdad los buses: el punto de atención de cada visita, del lado del andén
+    // (izquierda en troncal), pegado al carril del andén. El mapa los dibuja ahí y la estación ya no
+    // pisa la calzada. Las terminales conservan la geometría de OSM.
+    platforms:platformModules(op),
     routeLinks:Object.fromEntries([...guide.routeMaps].map(([id,m])=>[id,{links:m.links,starts:m.starts}]))});
    traffic=probe;
    if(m.time!=null){target={date:m.date,time:m.time,requestId:0,service:serviceOf(m.date,m.time)};schedule();}

@@ -1,10 +1,10 @@
-import {mountShell} from './shell.mjs?v=20260929.4';
-import {NetworkMap} from './map.mjs?v=20260929.4';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260929.4';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260929.4';
-import {STATES} from './traffic.mjs?v=20260929.4';
-import {applyFieldCorrections} from './signals.mjs?v=20260929.4';
-import {registerSimulationTools} from './webmcp.mjs?v=20260929.4';
+import {mountShell} from './shell.mjs?v=20260929.5';
+import {NetworkMap} from './map.mjs?v=20260929.5';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260929.5';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260929.5';
+import {STATES} from './traffic.mjs?v=20260929.5';
+import {applyFieldCorrections} from './signals.mjs?v=20260929.5';
+import {registerSimulationTools} from './webmcp.mjs?v=20260929.5';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -46,11 +46,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260929.4',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260929.5',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260929.4',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260929.5',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -81,10 +81,10 @@ try{
  worker.onmessage=({data:m})=>{
   if(m.generation!==generation)return;
   if(m.type==='error'){ready=false;$('#loading').hidden=true;$('#error').hidden=false;$('#error').textContent='No se pudo preparar el escenario: '+m.message;return;}
-  if(m.type==='ready'){ready=true;routeIds=m.routeIds;map.signalOffsets=m.signalOffsets;if(m.guideway)map.setGuideway(m.guideway,m.routeLinks);if(!map.depotGroup&&data.depots)map.setDepots(data.depots.depots);if(!map.buildingIndex)map.loadBuildings('./buildings/').then(noteBuildings);pendingSample=true;$('#plan-journey').disabled=false;renderRoutes();}
+  if(m.type==='ready'){ready=true;routeIds=m.routeIds;map.signalOffsets=m.signalOffsets;if(m.guideway)map.setGuideway(m.guideway,m.routeLinks);if(m.platforms)map.setPlatforms(m.platforms);if(!map.depotGroup&&data.depots)map.setDepots(data.depots.depots);if(!map.buildingIndex)map.loadBuildings('./buildings/').then(noteBuildings);pendingSample=true;$('#plan-journey').disabled=false;renderRoutes();}
   if(m.type==='building'){$('#loading').hidden=false;$('#loading').textContent='Preparando el día de servicio…';}
   if(m.type==='progress'){showProgress(m);if(m.frame&&(!settled||m.target-m.at>1800))map.acceptSimulation(buildSnap(m),false);}
-  if(m.type==='state'){if(m.requestId!==sampleSequence)return;pendingSample=false;$('#loading').hidden=true;const next=buildSnap(m);const animate=settled&&!clock.paused&&!scrubbing&&next.serviceDate===snap.serviceDate&&m.time>=snap.time&&m.time-snap.time<clock.speed*.5;if(!settled){settled=true;if(activePanel==='depots')worker.postMessage({type:'depots',generation});requestOverview();}snap=next;map.acceptSimulation(snap,animate);if(snap.stats.fleetCap)map.updateDepotBuses(Math.max(0,snap.stats.fleetCap-(snap.stats.fleet||0)));updateUI();if(selection?.kind==='bus'&&!snap.buses.some(b=>b.id===selection.id))renderBus();}
+  if(m.type==='state'){if(m.requestId!==sampleSequence)return;pendingSample=false;$('#loading').hidden=true;const next=buildSnap(m);const animate=settled&&!clock.paused&&!scrubbing&&next.serviceDate===snap.serviceDate&&m.time>=snap.time&&m.time-snap.time<clock.speed*.5;if(!settled){settled=true;if(activePanel==='depots')worker.postMessage({type:'depots',generation});requestOverview();}snap=next;map.acceptSimulation(snap,animate);if(snap.stats.fleetCap)map.updateDepotBuses(Math.max(0,snap.stats.fleetCap-(snap.stats.fleet||0)-(snap.stats.layover||0)));updateUI();if(selection?.kind==='bus'&&!snap.buses.some(b=>b.id===selection.id))renderBus();}
   if(m.type==='station'&&selection?.kind==='station'&&selection.id===m.id)renderStation(m);
   if(m.type==='depots')renderDepots(m.depots);
   if(m.type==='overview')renderOverview(m);
@@ -314,8 +314,8 @@ try{
   $('#demand-note').textContent=curve.measured&&curve.days
    ? `Media de ${curve.days} ${curve.days===1?'día':'días'} de este tipo, del archivo oficial de validaciones. No es una predicción.`
    : 'Perfil horario del archivo oficial de validaciones.';
-  const s=snap.stats,total=Math.max(1,s.fleet||0);
-  const partes=[['moving','En recorrido','#2f7d68'],['dwell','Puertas abiertas','#3f6ea8'],['queue','Esperando atención','#b9822a'],['signal','En semáforo','#b0503f'],['traffic','Detenido en tráfico','#8a6a4f']];
+  const s=snap.stats,total=Math.max(1,(s.fleet||0)+(s.layover||0));
+  const partes=[['moving','En recorrido','#2f7d68'],['layover','En terminal','#7a8796'],['dwell','Puertas abiertas','#3f6ea8'],['queue','Esperando atención','#b9822a'],['signal','En semáforo','#b0503f'],['traffic','Detenido en tráfico','#8a6a4f']];
   const split=$('#fleet-split');split.replaceChildren();
   const legend=$('#fleet-legend');legend.replaceChildren();
   for(const [key,name,color] of partes){
@@ -325,7 +325,7 @@ try{
   if(ready&&performance.now()-overviewAt>4000)requestOverview();
  }
  function renderDepots(depots){const p=$('#depot-list');p.replaceChildren();if(!depots.length)p.append(el('p','No hay salidas para esta selección y fecha.','muted'));for(const d of depots){const r=el('div',undefined,'depot-row'),b=el('button',d.name);b.onclick=()=>{const station=data.stations.find(s=>s.id===d.id);if(station){onSelect({kind:'station',id:d.id});map.focusStation(station);}};r.append(b,el('small',`${fmt(d.departures)} salidas hoy · ${fmt(d.reserve)} buses disponibles`),el('small',Number.isFinite(d.next)?'Próxima salida '+timeText(d.next).slice(0,5):'Sin más salidas programadas'));p.append(r);}}
- function updateUI(){const s=snap.stats;$('#active-count').textContent=fmt(s.fleet||0);$('#onboard-count').textContent=fmt(s.onboard||0);$('#dwell-count').textContent=fmt(s.dwell||0);$('#queue-count').textContent=fmt((s.queue||0)+(s.signal||0));$('#queue-count').parentElement.title=`${fmt(s.queue||0)} esperando atención · ${fmt(s.signal||0)} en semáforo`;if(!scrubbing&&document.activeElement!==$('#time'))$('#time').value=timeText(clock.time);if(!scrubbing)$('#scrub').value=Math.floor(clock.time%DAY);$('#day-type').textContent=dayType(config.date)==='holiday'?'Domingo / festivo':new Date(config.date+'T12:00:00Z').toLocaleDateString('es-CO',{weekday:'long'});$('#period').textContent=demandPeriod(clock.time,config.date,config.params.mode)==='peak'?'Hora pico':'Hora valle';}
+ function updateUI(){const s=snap.stats;$('#active-count').textContent=fmt((s.fleet||0)+(s.layover||0));$('#active-count').parentElement.title=`${fmt(s.fleet||0)} en la vía y ${fmt(s.layover||0)} en regulación en su terminal`;$('#onboard-count').textContent=fmt(s.onboard||0);$('#dwell-count').textContent=fmt(s.dwell||0);$('#queue-count').textContent=fmt((s.queue||0)+(s.signal||0));$('#queue-count').parentElement.title=`${fmt(s.queue||0)} esperando atención · ${fmt(s.signal||0)} en semáforo`;if(!scrubbing&&document.activeElement!==$('#time'))$('#time').value=timeText(clock.time);if(!scrubbing)$('#scrub').value=Math.floor(clock.time%DAY);$('#day-type').textContent=dayType(config.date)==='holiday'?'Domingo / festivo':new Date(config.date+'T12:00:00Z').toLocaleDateString('es-CO',{weekday:'long'});$('#period').textContent=demandPeriod(clock.time,config.date,config.params.mode)==='peak'?'Hora pico':'Hora valle';}
  function switchPanel(name){if(name==='planner'||activePanel==='planner'&&selection?.kind==='journey')clearSelection();activePanel=name;shell.show(name);$$('button[data-panel]').forEach(b=>b.classList.toggle('nav-active',b.dataset.panel===name));$$('.panel').forEach(p=>p.hidden=p.id!==name+'-panel');$('#sidebar').scrollTop=0;if(name==='depots'&&ready)worker.postMessage({type:'depots',generation});}
  // Buses en tiempo real. Es la única parte que sale a la red y a un tercero: vive en su pestaña, se apaga
  // al salir de ella o al ocultar la ventana, y no toca el escenario, el reloj ni el planificador.
@@ -356,7 +356,7 @@ try{
   return card;
  }
  function renderJourneys(result){
-  const panel=$('#journey-results');panel.replaceChildren();const edit=el('button','Editar viaje','full');edit.onclick=()=>{$('#sidebar').scrollTop=0;$('#journey-origin').focus({preventScroll:true});};panel.append(edit);requestAnimationFrame(()=>{if(activePanel==='planner')$('#sidebar').scrollTop=panel.offsetTop-24;});
+  const panel=$('#journey-results');panel.replaceChildren();const edit=el('button','Editar viaje','full');edit.onclick=()=>{$('#sidebar').scrollTop=0;$('#journey-origin-search').focus({preventScroll:true});};panel.append(edit);requestAnimationFrame(()=>{if(activePanel==='planner')$('#sidebar').scrollTop=panel.offsetTop-24;});
   if(result.status==='same'){if(activePanel==='planner')clearSelection();panel.append(el('p','Ya estás en la estación de destino.'));const station=data.stations.find(s=>s.id===result.origin);if(station&&activePanel==='planner')map.focusStation(station);return;}
   if(result.status==='none'){if(activePanel==='planner')clearSelection();panel.append(el('p',`No se encontró un viaje en las próximas seis horas con hasta ${result.maxTransfers} transbordo${result.maxTransfers===1?'':'s'}. Prueba otra hora, otra fecha o permitir más transbordos.`,'muted'),el('p','La búsqueda excluye los servicios con datos pendientes.','muted'));return;}
   // Una sola opción a la vista —la que llega antes, y con menos transbordos si empatan— y todas
@@ -394,24 +394,28 @@ try{
  const journeySearch=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
  const pickerOptions={};
  function restoreOptions(kind){const select=$('#journey-'+kind),value=select.value;select.replaceChildren();for(const o of pickerOptions[kind]){const option=el('option',o.text);option.value=o.value;select.append(option);}select.value=value;}
+ // Un solo campo por estación: se escribe y se elige de la lista que aparece debajo. El <select>
+ // queda oculto y guarda el valor, así el resto del planificador no cambia.
  for(const kind of ['origin','destination']){
-  const select=$('#journey-'+kind);pickerOptions[kind]=[...select.options].map(o=>({value:o.value,text:o.text}));
-  const input=el('input');input.type='search';input.id='journey-'+kind+'-search';input.placeholder='Filtrar estaciones…';
-  input.setAttribute('aria-label','Buscar estación de '+(kind==='origin'?'origen':'destino'));select.before(input);
-  input.oninput=()=>{
-   const q=journeySearch(input.value),previous=select.value;select.replaceChildren();
-   for(const o of pickerOptions[kind].filter(o=>!o.value||journeySearch(o.text).includes(q))){const option=el('option',o.text);option.value=o.value;select.append(option);}
-   select.value=[...select.options].some(o=>o.value===previous)?previous:'';
-  };
-  select.addEventListener('change',()=>{input.value=select.selectedOptions[0]?.text||'';});
+  const select=$('#journey-'+kind);pickerOptions[kind]=[...select.options].map(o=>({value:o.value,text:o.text})).filter(o=>o.value);
+  select.hidden=true;select.required=false;
+  const box=el('div',undefined,'combo'),input=el('input'),list=el('ul',undefined,'combo-list');
+  input.type='search';input.id='journey-'+kind+'-search';input.placeholder='Escribe una estación…';input.autocomplete='off';input.required=true;
+  input.setAttribute('role','combobox');input.setAttribute('aria-expanded','false');input.setAttribute('aria-label','Estación de '+(kind==='origin'?'origen':'destino'));
+  list.hidden=true;list.setAttribute('role','listbox');box.append(input,list);select.before(box);$('label[for=journey-'+kind+']')?.setAttribute('for',input.id);
+  let active=-1,shown=[];
+  const choose=o=>{select.value=o.value;input.value=o.text;list.hidden=true;input.setAttribute('aria-expanded','false');input.setCustomValidity('');};
+  const show=()=>{const q=journeySearch(input.value);shown=pickerOptions[kind].filter(o=>!q||journeySearch(o.text).includes(q)).slice(0,40);active=shown.length?0:-1;list.replaceChildren(...shown.map((o,k)=>{const li=el('li',o.text);li.setAttribute('role','option');if(k===active)li.className='active';li.onmousedown=e=>{e.preventDefault();choose(o);};return li;}));if(!shown.length)list.append(el('li','Sin estaciones con ese nombre','muted'));list.hidden=false;input.setAttribute('aria-expanded','true');};
+  input.onfocus=show;input.oninput=()=>{select.value='';input.setCustomValidity('Elige una estación de la lista');show();};
+  input.onblur=()=>{list.hidden=true;input.setAttribute('aria-expanded','false');const exact=pickerOptions[kind].find(o=>o.text===input.value);if(exact)choose(exact);};
+  input.onkeydown=e=>{if(list.hidden)return;if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();active=Math.max(0,Math.min(shown.length-1,active+(e.key==='ArrowDown'?1:-1)));[...list.children].forEach((li,k)=>li.classList.toggle('active',k===active));list.children[active]?.scrollIntoView({block:'nearest'});}else if(e.key==='Enter'&&active>=0&&shown[active]){e.preventDefault();choose(shown[active]);}else if(e.key==='Escape'){list.hidden=true;}};
  }
  // Intercambiar con un filtro puesto dejaría fuera la estación que entra, así que las listas vuelven
  // a estar completas antes de cruzar los valores.
  $('#swap-journey').onclick=()=>{
   const a=$('#journey-origin').value,b=$('#journey-destination').value;
-  restoreOptions('origin');restoreOptions('destination');
   $('#journey-origin').value=b;$('#journey-destination').value=a;
-  for(const kind of ['origin','destination'])$('#journey-'+kind+'-search').value=$('#journey-'+kind).selectedOptions[0]?.text||'';
+  for(const kind of ['origin','destination']){$('#journey-'+kind+'-search').value=$('#journey-'+kind).selectedOptions[0]?.text||'';$('#journey-'+kind+'-search').setCustomValidity('');}
  };
  $('#planner-form').onsubmit=e=>{e.preventDefault();if(!ready)return;const time=$('#journey-time').value.split(':').map(Number),query={origin:$('#journey-origin').value,destination:$('#journey-destination').value,date:$('#journey-date').value,time:time[0]*3600+time[1]*60,maxTransfers:Number($('#journey-transfers').value)};$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Buscando conexiones…','muted'));worker.postMessage({type:'plan',generation,requestId:++planSequence,query});};
  $$('button[data-panel]').forEach(b=>b.onclick=()=>switchPanel(b.dataset.panel));

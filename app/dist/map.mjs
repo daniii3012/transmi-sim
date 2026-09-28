@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260929.4';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.4';
+import {MetricPath} from './simulation.mjs?v=20260929.5';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.5';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260929.4';
+import {pieceShape} from './wagons.mjs?v=20260929.5';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -175,6 +175,7 @@ export class NetworkMap {
     // 3D. El interruptor de la calzada manda en las dos vistas.
     if(this.guidewayGroup){this.guidewayGroup.visible=this.carriagewaysEnabled!==false&&near<5;if(this.laneMarks)this.laneMarks.visible=near<1.4;for(const {mesh} of this.paths)mesh.visible=!this.guidewayGroup.visible;}
     if(this.buildingGroup){this.buildingGroup.visible=this.buildingsEnabled!==false&&near<(this.is3D?14:6);this.updateBuildingTiles();}
+    if(this.crowdMesh&&this.crowdList&&Math.abs((this.crowdMpp||0)-near)>near*.15){this.crowdMpp=near;this.setCrowd(this.crowdList);}
     if(this.depotGroup){this.depotGroup.visible=near<10;if(this.depotBuses)this.depotBuses.visible=this.depotJoints.visible=near<4;}
     if(labels)this.updateLabels();this.positionLabels();this.updateMarker();this.updateScale();
     if(this.lastSimulation)this.updateBuses(this.lastSimulation,'all',true);
@@ -378,10 +379,11 @@ export class NetworkMap {
     for(const d of depots||[]){
       const pts=d.points;const contour=pts.slice(0,-1).map(p=>new THREE.Vector2(...p));if(contour.length<3)continue;
       for(const [i,j,k] of THREE.ShapeUtils.triangulateShape(contour,[]))fill.push(contour[i].x,contour[i].y,0,contour[j].x,contour[j].y,0,contour[k].x,contour[k].y,0);
-      // Filas a lo largo del eje del patio: 21 m por puesto y 3,8 m entre filas, con margen al borde.
-      const shape=pieceShape(pts),u=shape.u,v=[-u[1],u[0]],half=shape.length/2,w=Math.max(shape.length,shape.width)*.75,slots=[];
-      for(let b=-w;b<=w;b+=3.8)for(let a=-half;a<=half;a+=21){const x=shape.center[0]+u[0]*a+v[0]*b,y=shape.center[1]+u[1]*a+v[1]*b;
-        if([[-10,-1.6],[10,-1.6],[-10,1.6],[10,1.6]].every(([da,db])=>inside(pts,x+u[0]*da+v[0]*db,y+u[1]*da+v[1]*db)))slots.push([x,y,Math.atan2(u[1],u[0])]);}
+      // Como en los patios reales: los buses de lado, en bloques de dos de fondo (2 × 19,5 m) con un
+      // pasillo de 11 m entre bloques, 3,6 m entre buses. Se llenan bloque por bloque desde un extremo.
+      const shape=pieceShape(pts),u=shape.u,v=[-u[1],u[0]],half=shape.length/2,w=Math.max(shape.length,shape.width)*.75,slots=[],ang=Math.atan2(v[1],v[0]);
+      for(let b=-w;b<=w;b+=2*19.5+11)for(const depth of [9.75,29.25])for(let a=-half;a<=half;a+=3.6){const bb=b+depth,x=shape.center[0]+u[0]*a+v[0]*bb,y=shape.center[1]+u[1]*a+v[1]*bb;
+        if([[-1.6,-9.5],[1.6,-9.5],[-1.6,9.5],[1.6,9.5]].every(([da,db])=>inside(pts,x+u[0]*da+v[0]*db,y+u[1]*da+v[1]*db)))slots.push([x,y,ang]);}
       this.depotSlots.push({depot:d,slots});
     }
     if(fill.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(fill,3));const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette.depot,depthTest:true,depthWrite:false}));m.renderOrder=.15;m.userData.key='depot';this.depotGroup.add(m);}
@@ -393,8 +395,9 @@ export class NetworkMap {
   /** Pasajeros esperando: un disco en el suelo de cada estación, de área proporcional a la gente. */
   setCrowd(list){
     if(!this.crowdMesh){const g=new THREE.CircleGeometry(1,40);this.crowdMesh=new THREE.InstancedMesh(g,new THREE.MeshBasicMaterial({color:this.palette.crowd,transparent:true,opacity:.35,depthTest:true,depthWrite:false}),400);this.crowdMesh.frustumCulled=false;this.crowdMesh.renderOrder=.3;this.crowdMesh.userData.key='crowd';this.scene.add(this.crowdMesh);}
-    const byId=new Map(this.data.stations.map(s=>[s.id,s]));let i=0;
-    for(const [id,waiting] of list||[]){const s=byId.get(id);if(!s||waiting<5||i>=400)continue;const r=Math.sqrt(waiting)*Math.max(1.6,this.mpp*.6);this.object.position.set(s.xy[0],s.xy[1],.1);this.object.rotation.set(0,0,0);this.object.scale.set(r,r,1);this.object.updateMatrix();this.crowdMesh.setMatrixAt(i++,this.object.matrix);}
+    this.crowdList=list;const byId=new Map(this.data.stations.map(s=>[s.id,s]));let i=0;
+    for(const [id,waiting] of list||[]){const s=byId.get(id);if(!s||waiting<5||i>=400)continue;// Área proporcional a la gente, con un tamaño mínimo en pantalla para leerlo desde lejos.
+      const r=Math.max(Math.sqrt(waiting)*1.6,this.mpp*(3+Math.sqrt(waiting)*.32));this.object.position.set(s.xy[0],s.xy[1],.1);this.object.rotation.set(0,0,0);this.object.scale.set(r,r,1);this.object.updateMatrix();this.crowdMesh.setMatrixAt(i++,this.object.matrix);}
     this.crowdMesh.count=i;this.crowdMesh.instanceMatrix.needsUpdate=true;this.crowdMesh.visible=!!list;
   }
   /** Llena los patios con `idle` buses, repartidos según el área de cada uno. */
@@ -409,6 +412,16 @@ export class NetworkMap {
     }
     this.depotBuses.count=i;this.depotBuses.instanceMatrix.needsUpdate=true;this.depotJoints.count=i;this.depotJoints.instanceMatrix.needsUpdate=true;
   }
+  /** Vagones alineados con la calzada, desde el punto donde atiende cada servicio (worker). Los de
+   * un mismo vagón y lado se juntan; su largo es el de la pieza de OSM o 45 m. */
+  setPlatforms(mods){
+    if(!mods?.length)return;
+    const groups=[];
+    for(const m of mods){let g=groups.find(g=>g.station===m.station&&Math.hypot(g.x/g.n-m.xy[0],g.y/g.n-m.xy[1])<14);if(!g){g={station:m.station,x:0,y:0,n:0,c:0,s:0,length:0};groups.push(g);}g.x+=m.xy[0];g.y+=m.xy[1];g.n++;g.c+=Math.cos(2*m.angle);g.s+=Math.sin(2*m.angle);g.length=Math.max(g.length,m.length||0);}
+    this.alignedPlatforms=groups.map(g=>({station:g.station,xy:[g.x/g.n,g.y/g.n],angle:Math.atan2(g.s,g.c)/2,length:Math.max(28,Math.min(62,g.length||45))}));
+    for(const o of [this.stationGroup,this.stationRoofs]){if(!o)continue;this.scene.remove(o);o.traverse(x=>{x.geometry?.dispose();x.material?.dispose?.();});}
+    this.buildStationGeometry();
+  }
   buildStationGeometry(){
     // Plataformas y cubiertas de OSM en relieve bajo; de arriba se leen como antes, inclinado se ve
     // el andén. Las estaciones sin geometría publicada conservan sus vagones esquemáticos.
@@ -421,7 +434,10 @@ export class NetworkMap {
       mesh.renderOrder=opacity<1?8:4.6;mesh.userData.key=key;(opacity<1?this.stationRoofs:this.stationGroup).add(mesh);
     };
     const line=(points,key,order)=>{const g=new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(...p,.05)));const l=new THREE.Line(g,new THREE.LineBasicMaterial({color:this.palette[key],depthTest:true,depthWrite:false}));l.renderOrder=order;l.userData.key=key;this.stationGroup.add(l);};
+    const aligned=new Set((this.alignedPlatforms||[]).map(p=>p.station));
     for(const layout of this.data.station_layouts?.stations||[]){
+      // Con vagones alineados, la geometría de OSM solo queda en los portales, donde es la del patio.
+      if(aligned.has(layout.station_id)&&!/^portal/i.test(layout.name||''))continue;
       const areas=layout.areas.filter(a=>a.closed&&a.role==='station_area'),platforms=layout.platforms.filter(p=>p.points.length>1);
       if(!areas.length&&!platforms.length)continue;
       this.layoutIds.add(layout.station_id);
@@ -435,8 +451,9 @@ export class NetworkMap {
     // Sin geometría de OSM, los vagones van donde el GTFS pone sus paradas: cada letra en su lugar, en
     // una o dos filas según las puertas de cada lado. Si tampoco hay eso, módulos cada 64 m.
     const gtfs=this.data.wagon_stops?.stations||{};
+    for(const p of this.alignedPlatforms||[]){if(this.layoutIds.has(p.station))continue;wagons.push({xy:p.xy,angle:p.angle,length:p.length});}
     for(const s of this.data.stations){
-      if(s.kind==='street'||s.status==='En obras'||this.layoutIds.has(s.id))continue;
+      if(s.kind==='street'||s.status==='En obras'||this.layoutIds.has(s.id)||aligned.has(s.id))continue;
       const sum=this.axes.get(s.id)||[1,0],angle=Math.atan2(sum[1],sum[0])/2,u=[Math.cos(angle),Math.sin(angle)],v=[-u[1],u[0]];
       const stops=(gtfs[s.id]||[]).filter(w=>/^[A-Z]$/.test(w.letter||'')&&Math.hypot(w.xy[0]-s.xy[0],w.xy[1]-s.xy[1])<250);
       if(stops.length){
@@ -582,7 +599,11 @@ export class NetworkMap {
         for(let k=0;k<bodies.length;k++){
           const body=bodies[k];let R=prev?.[k];
           const d=R?Math.hypot(F[0]-R[0],F[1]-R[1],F[2]-R[2]):0;
-          if(!R||d>body*1.6||d<body*.5)R=at(front-back-body,b.lat);
+          const ideal=at(front-back-body,b.lat);
+          if(!R||d>body*1.6||d<body*.5)R=ideal;
+          // El remolque tiende a su sitio sobre el trazado: poco en marcha —así se dobla—, mucho
+          // detenido, para que un bus parado quede derecho en su carril y no cruzado sobre dos.
+          else{const k=(b.speed||0)<.5?.35:.12;R=[R[0]+(ideal[0]-R[0])*k,R[1]+(ideal[1]-R[1])*k,R[2]+(ideal[2]-R[2])*k];}
           let dx=F[0]-R[0],dy=F[1]-R[1],dz=F[2]-R[2];const l=Math.hypot(dx,dy,dz)||1;dx/=l;dy/=l;dz/=l;
           R=[F[0]-dx*body,F[1]-dy*body,F[2]-dz*body];rears.push(R);
           const yaw=Math.atan2(dy,dx),pitch=Math.asin(Math.max(-1,Math.min(1,dz))),cx=F[0]-dx*body/2,cy=F[1]-dy*body/2,cz=F[2]-dz*body/2;

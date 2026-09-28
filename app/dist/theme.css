@@ -99,11 +99,25 @@ details.why>p,details.why>a{margin:0 14px 12px;display:block;font-size:.76rem;li
 .map-bottom{justify-content:flex-end}
 .map-bottom #scale{order:2}
 /* Listas de próximas llegadas y servicios: bordes iguales y aire entre filas. */
-#inspector li,#inspector .route-row{border:1px solid var(--line);border-radius:var(--radius-card);margin:0 0 8px;background:var(--surface)}
-#inspector ul,#inspector ol{padding:0;list-style:none}
+/* Una sola fila de servicio en toda la interfaz —lista de rutas, próximas llegadas—: mismo ancho,
+   mismo borde, mismo aire, se vea plegada o desplegada la tarjeta. La línea de paradas de una ruta
+   conserva su propio dibujo. */
+.route-row{width:100%;margin:0 0 8px;border:1px solid var(--line);border-radius:var(--radius-card);padding:12px 14px;background:var(--surface);box-shadow:none}
+.route-row:hover{background:var(--surface-2);border-color:var(--line-strong)}
+.route-row.selected{background:var(--surface-2);border-color:var(--line-strong)}
+.route-row .route-text small{line-height:1.45}
 /* Cifras del instante en la cabeza del panel lateral (escritorio). */
 body.metrics-in-panel #metrics{position:sticky;top:0;left:auto;bottom:auto;z-index:4;display:grid;grid-template-columns:repeat(4,1fr);margin:0;border-radius:0;border:0;border-bottom:1px solid var(--line);box-shadow:none;padding:14px 8px;background:var(--surface);backdrop-filter:none}
 body.metrics-in-panel #metrics>div{min-width:0;padding:0 8px}
 body.metrics-in-panel #metrics strong{font-size:1.15rem}
 body.metrics-in-panel #metrics span{font-size:.66rem}
 body.metrics-in-panel #load-legend{grid-column:1/-1;flex-direction:row;align-items:center;border-left:0;padding:10px 8px 0}
+/* Buscador de estación del planificador: un campo y su lista de sugerencias. */
+.combo{position:relative}
+.combo input{width:100%}
+.combo-list{position:absolute;left:0;right:0;top:calc(100% + 4px);max-height:260px;overflow:auto;margin:0;padding:6px;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow-pop);z-index:10}
+.combo-list[hidden]{display:none}
+.combo-list li{padding:9px 10px;border-radius:var(--radius-chip);font-size:.85rem;cursor:pointer}
+.combo-list li.active,.combo-list li:hover{background:var(--surface-2)}
+/* Las secciones ya se nombran en la barra de arriba: sin antetítulo repetido. */
+.panel>.eyebrow,.panel-heading .eyebrow{display:none}
