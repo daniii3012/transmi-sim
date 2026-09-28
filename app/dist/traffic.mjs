@@ -702,7 +702,10 @@ export class Traffic{
   {const link=this.g.links[this.linkOf(i)];if(link.station[Math.min(link.station.length-1,(this.off[i]/CELL)|0)])return;}
   const z=this.mergeTarget(i);if(z>=0&&this.mt-sR<150)return;
   if(info.stopFront[a.stop[i]]-sR<150)return;
-  const j=this.leader(i,0),gap=this.lg;if(!(j>=0&&gap<60&&a.v[j]<.6*Math.max(a.v[i],6)))return;
+  // Adelanta si el de delante va claramente por debajo de lo que el tramo permite: compararlo con la
+  // velocidad propia no servía, porque quien lo sigue ya va igual de lento y nunca adelantaba.
+  const cells=info.cells[a.col[i]]||this.cellsFor(a.route[i],a.col[i]),v0=Math.max(1,cells[Math.min(cells.length-1,(sR/V0CELL)|0)]*a.vf[i]);
+  const j=this.leader(i,0),gap=this.lg;if(!(j>=0&&gap<70&&a.v[j]<.75*v0&&a.v[j]<v0-2))return;
   const L=this.linkOf(i),list=this.lists[L*2+1],own=this.off[i],v=a.v[i],S0=this.p.jamGap;
   let lead=-1,follow=-1;for(let x=0;x<list.length;x++){if(this.off[list[x]]>own)lead=list[x];else{follow=list[x];break;}}
   if(lead>=0&&this.off[lead]-a.len[lead]-own<S0+v*.5)return;

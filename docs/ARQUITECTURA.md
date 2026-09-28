@@ -76,5 +76,5 @@ anterior y sus respuestas se distinguen por generación.
 
 `.github/workflows/pages.yml` se dispara a mano. Corre las pruebas, comprueba que los datos estén
 completos y coherentes —copias curadas idénticas, una sola versión `?v=`, rutas relativas—, genera
-los puntos de control del escenario inicial para los tipos de día de las próximas tres semanas y
+los puntos de control del escenario inicial para los próximos ocho días y
 publica solo `app/dist`.

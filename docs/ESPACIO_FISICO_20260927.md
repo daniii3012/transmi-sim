@@ -168,8 +168,8 @@ con su desfase, tipo de día de la fecha y del siguiente, y una huella de calzad
 semáforos. Con ella:
 
 - **Al publicar en Pages**, `tools/build_day_checkpoints.mjs` simula el escenario inicial de cada
-  tipo de día de las próximas tres semanas —cinco: lunes a jueves, viernes, sábado, domingo y
-  domingo antes de festivo— y guarda su estado cada hora en `checkpoints/`, que no se versiona.
+  uno de los próximos ocho días —con la variación entre días encendida por omisión, cada fecha es un
+  escenario— y guarda su estado cada hora en `checkpoints/`, que no se versiona.
 - **En el navegador**, el worker guarda en IndexedDB el estado de cada hora que simula, para
   cualquier escenario: otros parámetros u otra selección se abren al instante la segunda vez. Se
   conservan los ocho escenarios más usados; lo de otra versión de la aplicación se borra.
@@ -179,9 +179,8 @@ ahorra al menos 20 minutos de simulación; también salta hacia adelante a un pu
 memoria. Nada de esto cambia el resultado: solo el tiempo de espera.
 
 Todos los días laborables usan el mismo horario publicado y el mismo perfil de demanda, así que sin
-más son idénticos —también las salidas de los servicios sin horario publicado, cuyo desfase dependía
-de la fecha y ahora depende del tipo de día—, igual que los sábados entre sí y los domingos y festivos. La opción **Variación
-entre días** da a cada fecha su propia semilla: desfase de despacho de ±1 min, atención ±15 % y un
+variación serían idénticos —también las salidas de los servicios sin horario publicado, cuyo desfase dependía
+de la fecha y ahora depende del tipo de día—, igual que los sábados entre sí y los domingos y festivos. La **variación entre días**, encendida por omisión desde el 29 de septiembre, da a cada fecha su propia semilla: desfase de despacho de ±1 min, atención ±15 % y un
 nivel de demanda ±5 %. La misma fecha se repite igual; dos martes ya no.
 
 ## Validación
