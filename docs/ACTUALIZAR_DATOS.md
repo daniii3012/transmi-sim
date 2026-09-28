@@ -230,7 +230,9 @@ sale cada bus.
 `data/curated/field_corrections.json` (y su copia en `app/dist`) guarda lo que se observó en sitio y
 los datos abiertos no recogen todavía: por ahora, semáforos que no existen para un sentido. Cada
 entrada lleva dónde, qué, por qué y la fecha. Se edita a mano; cuando OSM lo corrija, la entrada
-sobra y se borra.
+sobra y se borra. También lleva las paradas que un GTFS nuevo todavía no trae (`stops_added`, hoy
+Patio Bonito desde el 19 de septiembre de 2026): se insertan en el recorrido y el tiempo del tramo
+publicado se reparte según la distancia. Con un paquete GTFS nuevo que ya las incluya, se borran.
 
 ### Edificios de la vista 3D
 

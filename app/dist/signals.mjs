@@ -1,4 +1,4 @@
-import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20260929.7';
+import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20260929.8';
 
 // Existence is sourced from OSM. These phases are explicitly scenario estimates.
 export const SIGNAL_CYCLE=Object.freeze({cycle:90,green:52,amber:3});
@@ -97,7 +97,29 @@ export function turningOnly(data,path,signals){
  const only=new Set((data.field_corrections?.signals_removed||[]).filter(s=>s.applies_to==='turning').map(s=>s.id));if(!only.size)return signals;
  return signals.filter(s=>{if(!only.has(s.id))return true;const a=path.sample(Math.max(0,s.at_m-20)).angle,b=path.sample(Math.min(path.length,s.at_m+150)).angle;let d=Math.abs(b-a)%(2*Math.PI);if(d>Math.PI)d=2*Math.PI-d;return d>30*Math.PI/180;});
 }
+// Proyección de un punto sobre una polilínea: abscisa y distancia.
+function projectOn(points,p){let best=null,acc=0;for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i],dx=b[0]-a[0],dy=b[1]-a[1],l2=dx*dx+dy*dy,l=Math.sqrt(l2);if(!l2)continue;const u=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/l2)),d=Math.hypot(a[0]+dx*u-p[0],a[1]+dy*u-p[1]);if(!best||d<best.d)best={at:acc+u*l,d};acc+=l;}return best;}
+/** Paradas nuevas que el GTFS todavía no trae (`stops_added`): se insertan en el recorrido de cada
+ * servicio, en su orden, y el tiempo publicado del tramo se reparte según la distancia. Una vez por
+ * juego de datos. */
+function addStops(data){
+ if(data._stopsAdded||!data.field_corrections?.stops_added)return;data._stopsAdded=true;
+ for(const c of data.field_corrections.stops_added){
+  const st=data.stations?.find(s=>s.id===c.station_id);if(!st)continue;
+  for(const r of data.routes||[]){
+   const wagon=c.wagons?.[r.code];if(!wagon||!r.ready||r.stops.some(s=>s.station_id===c.station_id))continue;
+   const hit=projectOn(r.points,st.xy);if(!hit||hit.d>40)continue;
+   const k=r.stops.findIndex(s=>s.at_m>hit.at);if(k<=0)continue;
+   const prev=r.stops[k-1],next=r.stops[k],f=(hit.at-prev.at_m)/Math.max(1,next.at_m-prev.at_m);
+   r.stops.splice(k,0,{station_id:st.id,code:null,name:st.name,kind:'station',at_m:hit.at,published_position_m:hit.at,coordinate_source:'field_correction',snap_distance_m:Math.round(hit.d),wagons:2,wagons_source:'field_correction'});
+   const h=data.schedule?.routes?.[r.id];
+   for(const key of ['segments','observed'])if(h?.[key]?.[k-1]){const seg=h[key][k-1];h[key].splice(k-1,1,seg.map(v=>v==null?v:v*f),seg.map(v=>v==null?v:v*(1-f)));}
+   (data.station_wagons ||= {assignments:[]}).assignments.push({station_id:st.id,route_id:r.id,code:r.code,destination:r.name,kind:'station',label:String(wagon),wagon,doors:[]});
+  }
+ }
+}
 export function applyFieldCorrections(data){
+ addStops(data);
  const removed=new Set((data.field_corrections?.signals_removed||[]).filter(s=>!s.applies_to).map(s=>s.id));
  for(const c of data.field_corrections?.stations_status||[]){const st=data.stations?.find(s=>s.id===c.id);if(st){st.status=c.status;st.status_note=c.reason;}}
  // Paradas de calle que ningún servicio utilizable usa: restos de la C15 zonal en la Carrera 13 y 11.
