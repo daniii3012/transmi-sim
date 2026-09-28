@@ -214,6 +214,17 @@ Guarda los trozos de calzada de TransMilenio a más de 6 m de todo recorrido uti
 glorieta de Banderas, vías internas de portales, accesos a patios) en `busway_context.json`; el mapa
 los dibuja como calzada sin buses.
 
+### Patios troncales
+
+```sh
+# descarga fuera del repositorio: capa Patios SITP (20) del Mapa de Referencia
+../../work/venv/bin/python tools/build_depots.py
+```
+
+Guarda los 15 patios troncales con su polígono en `depots.json`. El mapa los dibuja y los llena con
+los buses que no están en servicio a esa hora, repartidos por área: el simulador no sabe de qué patio
+sale cada bus.
+
 ### Correcciones observadas en la calle
 
 `data/curated/field_corrections.json` (y su copia en `app/dist`) guarda lo que se observó en sitio y

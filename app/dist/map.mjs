@@ -1,6 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260928.7';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260928.7';
+import {MetricPath} from './simulation.mjs?v=20260928.8';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260928.8';
 import * as THREE from './vendor/three.module.js';
+import {pieceShape} from './wagons.mjs?v=20260928.8';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -12,8 +13,8 @@ const LANE=3.4,BUS_WIDTH=2.55,BUS_HEIGHT=3.25,CELL_M=5;
 const BODIES={12:[12],18.5:[10.9,7.3],27.2:[9.8,8.4,8.4]};
 const JOINT=.3;
 const PALETTE={
- light:{clear:'#edf1f4',park:'#d4e3d8',water:'#c5dce8',road:'#ffffff',waterLine:'#b6d5e4',bridge:'#c1cbd5',asphalt:'#c9d1d9',berth:'#bcc6cf',laneMark:'#ffffff',platform:'#f7f9fb',platformEdge:'#8a9dac',roof:'#9fb1c1',building:'#d9dfe5',stopInner:'#ffffff'},
- dark:{clear:'#131d28',park:'#1d3530',water:'#1d3547',road:'#2b3947',waterLine:'#35596c',bridge:'#607383',asphalt:'#26333f',berth:'#2f3e4c',laneMark:'#51647a',platform:'#51667a',platformEdge:'#8aa1b5',roof:'#6f879c',building:'#233140',stopInner:'#293746'},
+ light:{depot:'#dfe4e9',parked:'#c7343f',clear:'#edf1f4',park:'#d4e3d8',water:'#c5dce8',road:'#ffffff',waterLine:'#b6d5e4',bridge:'#c1cbd5',asphalt:'#c9d1d9',berth:'#bcc6cf',laneMark:'#ffffff',platform:'#f7f9fb',platformEdge:'#8a9dac',roof:'#9fb1c1',building:'#d9dfe5',stopInner:'#ffffff'},
+ dark:{depot:'#1c2835',parked:'#a8323c',clear:'#131d28',park:'#1d3530',water:'#1d3547',road:'#2b3947',waterLine:'#35596c',bridge:'#607383',asphalt:'#26333f',berth:'#2f3e4c',laneMark:'#51647a',platform:'#51667a',platformEdge:'#8aa1b5',roof:'#6f879c',building:'#233140',stopInner:'#293746'},
 };
 
 // Una tesela de edificios: paredes y techo de cada huella extruida a sus pisos, en un solo
@@ -171,6 +172,7 @@ export class NetworkMap {
     if(this.carriagewayGroup)this.carriagewayGroup.visible=this.carriagewaysEnabled!==false&&near<6&&!this.guidewayGroup;
     if(this.guidewayGroup){this.guidewayGroup.visible=this.carriagewaysEnabled!==false&&near<5;if(this.laneMarks)this.laneMarks.visible=near<1.4;}
     if(this.buildingGroup){this.buildingGroup.visible=this.is3D&&near<14;this.updateBuildingTiles();}
+    if(this.depotGroup){this.depotGroup.visible=near<10;if(this.depotBuses)this.depotBuses.visible=near<4;}
     if(labels)this.updateLabels();this.positionLabels();this.updateMarker();this.updateScale();
     if(this.lastSimulation)this.updateBuses(this.lastSimulation,'all',true);
     this.updateCompass();
@@ -355,6 +357,37 @@ export class NetworkMap {
     const x=Math.max(0,(s-starts[lo])/CELL_M-.5),c=Math.min(link.z.length-1,Math.floor(x)),f=Math.min(1,x-c);
     return link.z[c]+(link.z[Math.min(link.z.length-1,c+1)]-link.z[c])*f;
   }
+  // Patios troncales (depots.json, capa Patios SITP de IDECA): el terreno y, adentro, en filas, los
+  // buses que no están en servicio a esa hora. Se reparten por área, como aproximación: el simulador no
+  // sabe de qué patio sale cada bus.
+  setDepots(depots){
+    if(this.depotGroup){this.scene.remove(this.depotGroup);this.depotGroup.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
+    this.depotGroup=new THREE.Group();this.scene.add(this.depotGroup);this.depotSlots=[];this.depotParked=-1;
+    const fill=[];const inside=(pts,x,y)=>{let c=false;for(let i=0,j=pts.length-1;i<pts.length;j=i++){const [xi,yi]=pts[i],[xj,yj]=pts[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c;}return c;};
+    for(const d of depots||[]){
+      const pts=d.points;const contour=pts.slice(0,-1).map(p=>new THREE.Vector2(...p));if(contour.length<3)continue;
+      for(const [i,j,k] of THREE.ShapeUtils.triangulateShape(contour,[]))fill.push(contour[i].x,contour[i].y,0,contour[j].x,contour[j].y,0,contour[k].x,contour[k].y,0);
+      // Filas a lo largo del eje del patio: 21 m por puesto y 3,8 m entre filas, con margen al borde.
+      const shape=pieceShape(pts),u=shape.u,v=[-u[1],u[0]],half=shape.length/2,w=Math.max(shape.length,shape.width)*.75,slots=[];
+      for(let b=-w;b<=w;b+=3.8)for(let a=-half;a<=half;a+=21){const x=shape.center[0]+u[0]*a+v[0]*b,y=shape.center[1]+u[1]*a+v[1]*b;
+        if([[-10,-1.6],[10,-1.6],[-10,1.6],[10,1.6]].every(([da,db])=>inside(pts,x+u[0]*da+v[0]*db,y+u[1]*da+v[1]*db)))slots.push([x,y,Math.atan2(u[1],u[0])]);}
+      this.depotSlots.push({depot:d,slots});
+    }
+    if(fill.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(fill,3));const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette.depot,depthTest:true,depthWrite:false}));m.renderOrder=.15;m.userData.key='depot';this.depotGroup.add(m);}
+    const capacity=this.depotSlots.reduce((s,d)=>s+d.slots.length,0),box=new THREE.BoxGeometry(1,1,1);box.translate(0,0,.5);
+    this.depotBuses=new THREE.InstancedMesh(box,new THREE.MeshLambertMaterial({color:this.palette.parked}),Math.max(1,capacity));this.depotBuses.count=0;this.depotBuses.frustumCulled=false;this.depotBuses.userData.key='parked';this.depotBuses.renderOrder=5;this.depotGroup.add(this.depotBuses);
+    this.depotCapacity=capacity;
+  }
+  /** Llena los patios con `idle` buses, repartidos según el área de cada uno. */
+  updateDepotBuses(idle){
+    if(!this.depotBuses||idle===this.depotParked)return;this.depotParked=idle;
+    const total=this.depotSlots.reduce((s,d)=>s+d.depot.area_m2,0)||1;let i=0;
+    for(const {depot,slots} of this.depotSlots){
+      const n=Math.min(slots.length,Math.round(idle*depot.area_m2/total));
+      for(let k=0;k<n;k++){const [x,y,ang]=slots[k];this.object.position.set(x,y,0);this.object.rotation.set(0,0,ang);this.object.scale.set(18,2.55,3.1);this.object.updateMatrix();this.depotBuses.setMatrixAt(i++,this.object.matrix);}
+    }
+    this.depotBuses.count=i;this.depotBuses.instanceMatrix.needsUpdate=true;
+  }
   buildStationGeometry(){
     // Plataformas y cubiertas de OSM en relieve bajo; de arriba se leen como antes, inclinado se ve
     // el andén. Las estaciones sin geometría publicada conservan sus vagones esquemáticos.
@@ -516,7 +549,7 @@ export class NetworkMap {
     const recolor=o=>{const key=o.userData?.key;if(key&&o.material&&this.palette[key])o.material.color.set(this.palette[key]);};
     for(const mesh of this.contextMeshes||[])recolor(mesh);
     this.stopInner.material.color.set(this.palette.stopInner);
-    this.stationGroup.traverse(recolor);this.stationRoofs.traverse(recolor);this.guidewayGroup?.traverse(recolor);this.buildingGroup?.traverse(recolor);
+    this.stationGroup.traverse(recolor);this.stationRoofs.traverse(recolor);this.guidewayGroup?.traverse(recolor);this.buildingGroup?.traverse(recolor);this.depotGroup?.traverse(recolor);
     for(const mesh of (this.carriagewayGroup?.children||[]))mesh.material.color.set(mesh.userData.palette[this.dark?1:0]);
   }
   render(){this.renderer.render(this.scene,this.camera);}
