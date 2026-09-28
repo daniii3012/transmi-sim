@@ -43,11 +43,14 @@ al horario publicado, pico de 1.666 buses y 2.118 vehículos. 86 pruebas Node y 
 
 ### Pendientes, en este orden
 
-1. **Rediseño de la interfaz móvil** y revisión final de la interfaz, con Daniel.
-2. Corredores de fondo (líneas de troncal) todavía a ras de suelo en los puentes en 3D.
-3. Semáforos dudosos: seguir revisando esperas largas; recoger en `field_corrections.json` lo que
-   Daniel observe.
-4. Empujar a `origin` cuando Daniel lo confirme; publicar Pages solo si lo pide.
+1. **Edificios a 350 m** de las troncales: la descarga corre fuera del repositorio
+   (`work/lanes/fetch_construcciones_350.py`, registro en `fetch_bld350.log`, ~5 h). Al terminar:
+   `../../work/venv/bin/python tools/build_buildings.py`, revisar tamaño de teselas y guardar.
+2. **Rediseño de la interfaz móvil** con la nueva agrupación de capas.
+3. Paradas que quedan fuera del vagón o estaciones que pisan una calzada: revisión caso a caso contra
+   imagen satelital; solo con datos, no a ojo.
+4. Posición real de los buses en los patios (hoy en filas por área): no hay dato abierto de puestos.
+5. Empujar a `origin` cuando Daniel lo confirme; publicar Pages solo si lo pide.
 
 ## Qué es y qué no
 
