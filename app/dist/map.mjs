@@ -339,7 +339,11 @@ export class NetworkMap {
       }
     }
     const add=(vertices,key,order,line=false)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));const m=line?new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:this.palette[key],depthTest:true,depthWrite:false})):new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette[key],depthTest:true,depthWrite:false,side:THREE.DoubleSide}));m.renderOrder=order;m.userData.key=key;this.guidewayGroup.add(m);return m;};
-    add(main,'asphalt',.25);add(berth,'berth',.26);this.laneMarks=add(marks,'laneMark',.27,true);
+    // Calzada de TransMilenio que ningún recorrido usa (busway_context.json): la media glorieta de
+    // Banderas, vías internas de portales, accesos a patios. Un carril, sin buses.
+    const extra=[];
+    for(const piece of this.data.busway_context?.pieces||[]){const P=piece.points,N=P.map((p,j)=>{const a=P[Math.max(0,j-1)],b=P[Math.min(P.length-1,j+1)],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return [dy/l,-dx/l];});for(let j=1;j<P.length;j++)quad(extra,P[j-1],P[j],N[j-1],N[j],-LANE/2,LANE/2,-LANE/2,LANE/2,0,0);}
+    add(main,'asphalt',.25);add(berth,'berth',.26);this.laneMarks=add(marks,'laneMark',.27,true);if(extra.length)add(extra,'asphalt',.24);
     if(walls.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(walls,3));g.computeVertexNormals();const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:this.palette.bridge,side:THREE.DoubleSide}));m.renderOrder=4.5;m.userData.key='bridge';this.guidewayGroup.add(m);}
     this.updateCamera();
   }

@@ -203,6 +203,17 @@ secuencia de paradas de vagón en `wagon_stops.json`. Se rehace con cada GTFS nu
 Toma la instantánea más reciente de `data/raw/busway_structures/` y guarda cada puente o deprimido
 con su nivel y sus carriles, proyectado, en `busway_structures.json`.
 
+### Calzada que ningún recorrido usa
+
+```sh
+# descarga de OSM fuera del repositorio: todas las vías de TransMilenio
+../../work/venv/bin/python tools/build_busway_context.py
+```
+
+Guarda los trozos de calzada de TransMilenio a más de 6 m de todo recorrido utilizable (la media
+glorieta de Banderas, vías internas de portales, accesos a patios) en `busway_context.json`; el mapa
+los dibuja como calzada sin buses.
+
 ### Correcciones observadas en la calle
 
 `data/curated/field_corrections.json` (y su copia en `app/dist`) guarda lo que se observó en sitio y
