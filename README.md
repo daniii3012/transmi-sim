@@ -2,16 +2,16 @@
 
 # 🚍 Transmi · Bogotá en movimiento
 
-**Simulador 2D de TransMilenio sobre la ciudad real, a escala geográfica 1:1.**
+**Simulador de TransMilenio sobre la ciudad real, a escala geográfica 1:1, en 2D y 3D.**
 
 Recorridos, horarios, flota y pasajeros salen de datos abiertos oficiales.
 Cada cifra del modelo dice de dónde viene y si está medida o estimada.
 
 [![escala](https://img.shields.io/badge/escala-1%3A1%20geogr%C3%A1fica-0a7d3f)](docs/OPERACION_Y_DATOS.md)
 [![servicios](https://img.shields.io/badge/servicios-117%20utilizables%20%C2%B7%2020%20pendientes-1f6feb)](docs/PENDIENTES_20260911.md)
-[![datos](https://img.shields.io/badge/datos-12%20sep%202026-8957e5)](docs/ACTUALIZAR_DATOS.md)
+[![datos](https://img.shields.io/badge/datos-28%20sep%202026-8957e5)](docs/ACTUALIZAR_DATOS.md)
 [![sin npm](https://img.shields.io/badge/sin%20npm-JS%20est%C3%A1ndar%20%2B%20Python-6e7681)](docs/ARQUITECTURA.md)
-[![pruebas](https://img.shields.io/badge/pruebas-72%20Node%20%C2%B7%2047%20Python-2da44e)](#desarrollo)
+[![pruebas](https://img.shields.io/badge/pruebas-86%20Node%20%C2%B7%2047%20Python-2da44e)](#desarrollo)
 
 [**Abrir el simulador publicado**](https://daniii3012.github.io/transmi-sim/) ·
 [Cómo se simula](docs/COMO_SE_SIMULA.md) ·
@@ -27,6 +27,12 @@ oferta y demanda. La interfaz busca la claridad de Mini Metro y los paneles flot
 Builder. No se construyen líneas: la red es la que existe. La simulación **no** usa posiciones GPS
 en vivo: cada bus es una posición que calcula el modelo a partir del horario publicado y de la
 velocidad medida en ese trecho de corredor.
+
+Cada bus ocupa su largo en su carril —uno o dos según el ancho medido de la calzada— y se acomoda
+en el carril del andén justo antes de su vagón, así que las filas en estaciones, semáforos y empalmes
+salen solas; un día laborable completo queda en 1,02 del tiempo de viaje observado. Inclinada, la
+vista muestra los buses articulados, los andenes y los edificios de Catastro junto a las troncales.
+[Cómo funciona el espacio físico](docs/ESPACIO_FISICO_20260927.md).
 
 ## Empezar
 
@@ -53,15 +59,17 @@ navegador corre y guarda su propio escenario.
    1×, 8×, 32× o 120×. La velocidad del reloj no cambia los km/h de los buses.
 5. **Paradas y buses.** Una parada muestra vagones, pasajeros esperando y próximas llegadas. Un bus,
    su velocidad, tipo, capacidad y próxima parada. **Terminales** muestra regulación y flota
-   disponible; **Operación** ajusta frecuencias, velocidades y pasajeros.
+   disponible; **Parámetros** ajusta flota, circulación, semáforos, atención y pasajeros, cada uno
+   con su explicación. El botón **3D** inclina la vista; arrastrar con el botón derecho la gira.
 6. **Planear viaje.** Servicios directos o con hasta tres transbordos para un origen, destino, fecha
    y hora, sin tocar la simulación. Por cada número de transbordos, la mejor opción y hasta dos
    alternativas plegadas, incluidas las que no llegan antes.
 7. **Datos y fuentes.** Cobertura del escenario, de dónde sale cada cifra y qué queda pendiente,
    con enlace al detalle de cada análisis.
 
-El botón **Ahora** usa la hora de Bogotá y el de luna/sol recuerda el tema. No se guardan
-escenarios: cada visita empieza en el momento actual.
+El botón **Ahora** usa la hora de Bogotá y el de luna/sol recuerda el tema. Cada visita empieza en
+el momento actual. El día del escenario inicial viene simulado con la página y el navegador guarda
+lo que ya simuló de cualquier otro, así que volver a una hora abre al instante.
 
 </details>
 
@@ -99,6 +107,7 @@ Cada pieza del simulador tuvo que demostrarse antes de entrar. Lo que se midió 
 | [Geometría de estaciones](docs/ESTACIONES_OSM_20260911.md) · [portales](docs/TODOS_LOS_PORTALES_20260911.md) | 109 de 151 estaciones con plataformas o contorno, cubiertas y vías internas; las demás, vagones esquemáticos |
 | [Verificación del catálogo](docs/RUTAS_VERIFICACION_20260912.md) | Los tableros de salida separan un servicio sin geometría de uno que dejó de existir |
 | [Registros pendientes](docs/PENDIENTES_20260911.md) | Por qué 20 registros siguen fuera y no se rellenan con líneas rectas |
+| [Espacio físico](docs/ESPACIO_FISICO_20260927.md) | Cada bus ocupa su carril: filas en andenes, semáforos y empalmes, carril de andén por vagón y onda verde. Mediana 1,02 frente a la operación observada, 0,88 frente al horario publicado |
 | [Colas y espacio](docs/COLAS_Y_ESPACIO_20260911.md) | Qué se puede medir de las lecturas de posición y qué no: su reloj está congelado y sus velocidades son ruido |
 
 ## Medido y estimado
@@ -126,7 +135,9 @@ El simulador nunca presenta una estimación como un dato. En la interfaz, cada f
 - Descenso de pasajeros, abandono de espera (media 30 min) y orientación al centro de empleo: no hay
   matriz origen-destino real.
 - Ciclo semafórico de 90 s y asignación de servicios a puestos físicos de estación.
-- Dos carriles por sentido —atención y paso— como abstracción declarada.
+- En estación, carril de andén y carril de paso; entre estaciones, uno o dos según el ancho medido.
+  Donde no hay polígono de calzada (cruces), el menor de los vecinos.
+- La onda verde de los semáforos, estimada a 8 m/s: no hay planes semafóricos publicados.
 - Patios y regulación en terminal, en forma abstracta.
 
 **Conclusiones aún sin corroborar**
@@ -154,15 +165,16 @@ Portal Américas, y la variante duplicada de Banderas queda excluida con su moti
 `data/curated/services.json`. C15 Chapinero Ciclovía es zonal y también se excluye; C15 y H15
 troncales tienen 19 paradas por sentido.
 
-No hay matriz origen-destino real ni tráfico mixto microscópico. Three.js dibuja el mapa 2D con
-cámara ortográfica para mover muchos buses en pocos envíos a la GPU; la simulación es de módulos
-propios y no depende de un motor 3D. El proyecto de conducción anterior queda pausado en
+No hay matriz origen-destino real. Los buses se simulan uno a uno en su carril; el tráfico mixto de
+la ciudad, no. Three.js dibuja el mapa con una cámara en perspectiva: desde arriba es el mapa 2D e
+inclinada la vista 3D, con muchos buses en pocos envíos a la GPU. La simulación es de módulos propios
+y corre en un worker. El proyecto de conducción anterior queda pausado en
 `archive/transmi3d`.
 
 ## Desarrollo
 
 ```bash
-node --test app/tests/*.test.mjs                 # 72 pruebas
+node --test app/tests/*.test.mjs                 # 86 pruebas
 python3 -m unittest discover -s tests            # 47 pruebas
 ```
 

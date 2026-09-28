@@ -1,51 +1,80 @@
-# Arquitectura de Transmi 2D
+# Arquitectura
 
-Actualizada: 11 de septiembre de 2026. La aplicación es estática y local. Los archivos de `app/dist` son sus fuentes editables; no existe un paso obligatorio de npm/bundler. Three.js 0.186.0 está vendorizado con licencia.
+Actualizada: 28 de septiembre de 2026. La aplicación es estática: los archivos de `app/dist` son sus
+fuentes editables y no hay paso obligatorio de npm ni empaquetador. Three.js r186 está vendorizado
+con su licencia. Cómo se simula, en palabras, está en [Cómo se simula](COMO_SE_SIMULA.md); el motor
+con sus decisiones y mediciones, en [Espacio físico](ESPACIO_FISICO_20260927.md).
 
-## Separación de responsabilidades
+## Módulos
 
 | Archivo | Responsabilidad |
 |---|---|
-| `app.mjs` | Controles, selección, reloj, guardado y ciclo de vida del trabajador |
-| `worker.mjs` | Construcción y muestreo de escenarios fuera del hilo de interfaz |
-| `calendar.mjs` | Fechas civiles de Bogotá, festivos, vigencia y ventanas publicadas |
-| `operation.mjs` | Despachos, viajes, atención, pasajeros, vehículos y terminales |
-| `travel.mjs` | Perfil distancia/velocidad con curvas, aceleración y frenado |
-| `passengers.mjs` | Entradas históricas o sintéticas y orientación estimada |
-| `vehicles.mjs` | Capacidad y tipo fijos por ruta y vehículo |
-| `station-layouts.mjs` | Proyección local de puestos OSM sobre recorridos, conservando orden y geometría |
-| `map.mjs` | Mapa ortográfico, contexto, vagones, buses, selección y agrupación |
+| `app.mjs` | Interfaz: reloj, paneles, fichas de bus y estación, Parámetros, selección y ciclo de vida del worker |
+| `worker.mjs` | Corre el motor fuera del hilo de interfaz: traduce la hora pedida a su día de servicio, simula por tandas de 45 ms, avisa del avance y manda arreglos compactos |
+| `traffic.mjs` | El motor: red de tramos con carriles (`Guideway`) y microsimulación por carril (`Traffic`), puntos de control y llave del escenario |
+| `checkpoints.mjs` | Puntos de control guardados: los publicados con la página y los que el navegador ya simuló (IndexedDB) |
+| `operation.mjs` | El plan: servicios seleccionados, vagón y sentido de cada visita, salidas del día, semáforos por recorrido, parámetros |
+| `signals.mjs` | Intersecciones (nodos a menos de 60 m), desfases de onda verde y fase de cada semáforo |
+| `calendar.mjs` | Fechas civiles de Bogotá, festivos, tipos de día, vigencias y calendarios del GTFS |
+| `passengers.mjs` | Llegadas por estación, sentido y hora desde las validaciones; descenso estimado |
+| `vehicles.mjs` | Tipo, largo y capacidad por servicio |
+| `station-layouts.mjs` | Proyección de los puestos de OSM sobre los recorridos |
+| `travel.mjs` | Perfil distancia/velocidad (lo usan el planificador y las pruebas del plan) |
+| `planner.mjs` | Planificador de viajes, independiente de la simulación |
+| `map.mjs` | Render Three.js: cámara en perspectiva (2D desde arriba, 3D inclinada), calzada con carriles, andenes, buses articulados instanciados, semáforos, edificios por teselas |
+| `theme.css` | Sistema visual único: radios, sombras, superficies y márgenes para todo lo que flota sobre el mapa |
 | `webmcp.mjs` | Lectura opcional del estado y control del reloj; funciona sin esa API |
-| `simulation.mjs` | MetricPath compartido y laboratorio sintético anterior, conservado para regresión |
+| `simulation.mjs` | `MetricPath` compartido y el laboratorio sintético anterior, conservado para regresión |
 
-## Geometría y movimiento
+## Datos que carga la página
 
-Proyección AEQD WGS84 con origen `(-74.136, 4.63027)`, X este, Y norte, unidades en metros. Cada servicio conserva la polilínea oficial recortada entre primera y última parada. La referencia lineal desambigua recorridos que incluyen ambos sentidos; una parada publicada cercana permite corregir su distancia sobre el trazado. La auditoría distingue coordenadas oficiales, ubicación aproximada y geometría insuficiente.
+`services.json` (catálogo y red), `schedule.json` (horario GTFS por servicio), `speed_profiles.json`
+(velocidad medida por trecho), `busway_geometry.json` (carriles medidos cada 5 m), `busway_lanes.json`
+(carriles de OSM), `busway_signals.json`, `station_layouts.json`, `station_wagons.json`,
+`demand.json` y `context.json`. Los edificios (`buildings/`) se piden por teselas solo en la vista 3D;
+los puntos de control (`checkpoints/`) los genera el flujo de Pages y no se versionan.
 
-Los perfiles se calculan en el dominio de distancia, con muestreo de 18 m, curvatura local, aceleración y frenado acotados. Se cachean por ruta, tramo, período y variación de crucero. El reloj consulta posición y velocidad analíticamente; 120× no significa buses 120 veces más rápidos en km/h. Un cruce 2D no conecta rutas ni genera colisiones: no hay un grafo vial inferido del dibujo.
+## El motor
 
-En las seis estaciones detalladas se dibujan huellas OSM reales y se estiman puestos compatibles sobre cada ruta con reservas independientes por puesto físico. Las cubiertas de Ricaurte/Jiménez no se reinterpretan como andenes publicados. En el respaldo esquemático, los puntos de vagón se desplazan a lo largo del trazado únicamente en visitas intermedias, con límite según distancia entre paradas. Separación de 64 m y andén de 58 m son medidas de representación estimadas; no se modifican las coordenadas originales guardadas. Los tamaños mínimos de iconos al alejarse y el desplazamiento lateral de carriles son convenciones visuales.
+Proyección AEQD WGS84 con origen `(-74.136, 4.63027)`, X este, Y norte, en metros. La red de tramos
+sale de los vértices que comparten los recorridos: 525 tramos dirigidos y 141 empalmes con la red
+entera. Cada tramo guarda sus carriles cada 5 m, si es estación, calle o puente.
 
-## Eventos y capacidad
+`Traffic` guarda el estado en arreglos tipados por viaje —tramo, carril, posición, velocidad, estado,
+carga, vehículo— y una lista ordenada de buses por tramo y carril, de la que cada bus lee al de
+adelante. Un paso de 1 s decide primero empalmes y cambios de carril, en orden fijo por número de
+viaje, y después mueve a todos con el IDM y sus topes duros. Cada 15 minutos simulados guarda un
+punto de control: retroceder restaura el anterior y vuelve a simular. Un punto de control se exporta
+en binario compacto (0,43 MB con la red entera) y se restaura en otro motor del mismo escenario con
+el mismo resultado; la llave del escenario resume todo lo que el motor usa del día.
 
-Una cola de prioridad prepara salidas, atención y liberación de vehículos en orden temporal. Se construye el día elegido más el anterior para incluir viajes que cruzan medianoche. Después se descartan viajes anteriores que no pueden verse y se conservan índices ordenados para el muestreo. Retroceder consulta los mismos eventos; no integra con tiempo negativo.
+Para la página, `frame()` devuelve arreglos compactos —viaje, servicio, abscisa, desplazamiento
+lateral, largo, estado, velocidad, carga— que viajan transferidos, sin copiar. La ficha del bus
+seleccionado pide su detalle aparte: carril, qué lo detiene, de dónde salió su vehículo.
 
-La clave estación/sentido/puesto físico (o vagón de respaldo) reserva dos posiciones de atención, o una en calle. La asignación servicio→vagón es determinista y estimada. No bloquea expresos que pasan. Buses que completan un servicio quedan disponibles tras 240 s de regulación en la terminal de destino y pueden reutilizarse en salidas compatibles. No se dibujan accesos de patio inventados, no hay inventario oficial de flota ni desplazamientos en vacío modelados.
+## Tiempos de espera
 
-La velocidad entre dos paradas sale del campo medido por trecho de corredor (`app/dist/speed_profiles.json`): el techo cambia con la posición, y un trecho congestionado se representa como bus lento y no como bus detenido. Un bus solo se queda quieto por cola de entrada al andén o por un rojo, y esas esperas se resuelven junto con las fases de los semáforos. Un único factor por tramo ajusta esa forma al tiempo publicado, que sigue fijando la llegada. Sin cobertura —calle, dual— se conserva el crucero continuo anterior. Método y límites en [la velocidad la pone el lugar](VELOCIDAD_POR_LUGAR_20260912.md).
+Llegar a una hora exige simular desde las 03:00. El worker lo hace por tandas cortas para seguir
+atendiendo a la página, manda cada medio segundo cómo va el día para que el mapa lo muestre ponerse
+al día, y antes de simular busca el punto de control guardado más cercano: el publicado con la página
+para el escenario inicial, o el que este navegador guardó de una visita anterior. Las 18:05 de un
+lunes abren en medio segundo en vez de unos 25.
 
-El tipo de cada vehículo permanece fijo; los depósitos separan tipos. F63/Z63 tienen perfil publicado propio. Las demás rutas llevan el tipo que se lee de la flota que las atiende en las lecturas de posición —`data/curated/fleet_types.json`, adjunto como `vehicle_profile`— y las que no tienen lecturas usan el articulado de referencia, declarado estimación; no se mezcla tipo dentro de una ruta. Los cruceros varían hasta ±5 km/h por vehículo, sin variar capacidad.
+## Render
 
-## Pasajeros
+Una sola cámara en perspectiva: desde arriba es el mapa 2D; inclinada, la vista 3D. La calzada, los
+andenes y las cubiertas son mallas fijas; los buses, cuerpos instanciados —uno, dos o tres según
+sean padrón, articulado o biarticulado— con fuelles entre cuerpos, así que miles de buses son pocas
+llamadas a la GPU. El suelo se dibuja sin escribir profundidad para que nada lo tape. Los edificios
+llegan por teselas de 1 km cerca de la cámara y se sueltan las lejanas.
 
-Se agregan cantidades por estación y sentido, no millones de objetos individuales. Los perfiles históricos aportan entradas por hora. El reparto hacia/desde un centro de empleo aproximado, descensos, fines de semana y demanda sin observaciones son hipótesis. Al simular una parte de la red se asigna una fracción de la demanda por proporción de servicios seleccionados; esto no sustituye asignación OD por destinos.
+La interfaz pide un estado hasta 20 veces por segundo y dibuja al ritmo de `requestAnimationFrame`;
+entre respuestas interpola a los buses sobre su trazado. Un cambio de parámetros cancela el worker
+anterior y sus respuestas se distinguen por generación.
 
-La capacidad se conserva en cada visita: carga anterior − descensos + abordajes. El exceso queda esperando. Se aplica abandono agregado con tiempo medio estimado de 30 minutos. `boardingDenials` cuenta oportunidades de abordaje no satisfechas, pudiendo contar de nuevo a una persona que espera; no es número de personas únicas. El último punto del viaje solo admite descensos.
+## Publicación
 
-## Renderizado y memoria
-
-Buses, estaciones y vagones usan geometrías instanciadas. Se descartan símbolos fuera de cámara y se agrupan los cercanos cuando el mapa está alejado, sin suprimir vehículos del motor. Un movimiento de cámara vuelve a muestrear el dibujo incluso en pausa. Los colores identifican las rutas; la ocupación y el estado se muestran en el inspector.
-
-La interfaz solicita estados hasta 20 veces/s y dibuja a ritmo de `requestAnimationFrame`. Un cambio de parámetros o fecha cancela el trabajador anterior; sus respuestas se distinguen por generación. El mapa interpola la distancia sobre la polilínea durante 60 ms entre respuestas, y la cámara sigue esa posición cada frame mediante suavizado exponencial. Se descartan respuestas obsoletas por número de muestreo además de generación. El arrastre del reloj suspende actualizaciones concurrentes. Las pestañas de exploración son independientes de la selección operativa. Al ocultar la pestaña se congela el reloj visible. El guardado conserva configuración y hora, no enormes estados de buses. La reconstrucción al cambiar de día conserva identificadores de viaje, pero los números de inventario de bus no son matrículas reales ni una flota persistente entre días.
-
-Los límites de los controles acotan densidad; aún así, los ajustes más exigentes consumen más memoria y tardan varios segundos en preparar el día. Las cifras del benchmark son del motor Node, no FPS ni garantía para cualquier dispositivo. Ver el informe de validación.
+`.github/workflows/pages.yml` se dispara a mano. Corre las pruebas, comprueba que los datos estén
+completos y coherentes —copias curadas idénticas, una sola versión `?v=`, rutas relativas—, genera
+los puntos de control del escenario inicial para los tipos de día de las próximas tres semanas y
+publica solo `app/dist`.

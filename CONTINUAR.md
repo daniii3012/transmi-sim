@@ -1,59 +1,45 @@
-# Continuidad — Transmi 2D
+# Continuidad — Transmi
 
-## 27 sep. 2026 — motor de espacio físico (en curso)
+## 28 sep. 2026 — estado
 
-Una sesión trabaja en: `app/dist/traffic.mjs` (nuevo), `worker.mjs`, `app.mjs`, `map.mjs`,
-`operation.mjs` (`plan:true` y `departures()`), `signals.mjs` (intersecciones y onda verde),
-`calendar.mjs` (memoización), la cadena `?v=20260927.1` y `app/tests/traffic.test.mjs`. Siguen la
-vista 3D, la geometría de todas las estaciones, el panel de parámetros y la documentación general.
+Todo esto está en `main` **solo en local** (desde `da1c904`; no se ha empujado a `origin`).
 
-- Cada bus ocupa su largo en un carril de una red de tramos compartidos; filas en semáforos,
-  andenes y empalmes; carril del andén por vagón y onda verde estimada. Detalle y validación en
-  `docs/ESPACIO_FISICO_20260927.md`.
-- El worker ya no precalcula viajes: simula el día de servicio (03:00–03:00) con paso de 1 s y
-  puntos de control cada 15 min. La página recibe arreglos compactos y reconstruye cada bus.
-- `Operation` sigue existiendo para el plan (vagones, señales, salidas) y para sus pruebas; su
-  `build()` ya no lo usa la aplicación.
-- Flota con tope (2.252 por omisión) y reutilización entre terminales. `dayVariation` por omisión
-  apagada: los días del mismo tipo son iguales y reproducibles.
+- **Motor de espacio físico** (`app/dist/traffic.mjs`): cada bus ocupa su carril en una red de
+  tramos compartidos, paso de 1 s, IDM, empalmes con turnos, carril de andén por vagón, onda verde
+  estimada, flota con tope real (2.252) y llegadas en vacío. Detalle, decisiones y validación en
+  `docs/ESPACIO_FISICO_20260927.md`; resumen en `docs/COMO_SE_SIMULA.md`.
+- **Carriles medidos** de la calzada exclusiva (`tools/build_busway_geometry.py`, capa Calzada del
+  Mapa de Referencia): 237 km con dos carriles y 72 con uno.
+- **Vista 3D** en `map.mjs`: cámara en perspectiva, buses con cuerpos y fuelles, andenes con
+  cubierta, edificios de Catastro por teselas (`tools/build_buildings.py`, 81.950 construcciones).
+- **Estaciones**: 109 de 151 con andén o contorno de OSM (`build_station_layouts.py --keep`).
+- **Puntos de control guardados**: binario compacto e idéntico a simular (`exportCheckpoint`),
+  llave de escenario, IndexedDB en el navegador y precalculados del escenario inicial al publicar
+  (`tools/build_day_checkpoints.mjs`, no versionados).
+- **Interfaz**: un solo sistema visual (`theme.css`), panel Parámetros con explicaciones, color por
+  ocupación, procedencia de cifras en «Datos», móvil revisado.
+
+Validación del día laborable: mediana 1,02 frente a lo observado (p10 0,91, p90 1,15), 0,88 frente
+al horario publicado, pico de 1.666 buses y 2.118 vehículos. 86 pruebas Node y 47 Python.
 
 ### Pendientes, en este orden
 
-1. **Vista 3D.** Borrador completo sin probar en `work/map3d-wip.mjs` (ignorado por Git): cámara en
-   perspectiva con inclinación y rumbo, buses como volúmenes articulados, calzada con carriles
-   (`setGuideway`), estaciones en relieve, `setBuildings` por teselas. Falta: copiarlo a
-   `app/dist/map.mjs`, que el worker mande la geometría de tramos en `ready` (links: points, lanes,
-   station, street) y la página llame `map.setGuideway`, botón 2D/3D y brújula clicable, probar en
-   escritorio y móvil.
-2. **Edificios.** Catastro publica `Construcciones` con número de pisos (`CONNPISOS`) en un servicio
-   ArcGIS de UAECD; en 1 km² de Chapinero trae 7.298 construcciones frente a 725 de OSM, que casi no
-   tiene alturas. Plan: franja de ~200 m a lado y lado de las troncales, simplificar, teselas de 1 km
-   en binario, cargar solo en 3D y de cerca. Verificar licencia de la ficha antes de publicar.
-3. **Puentes y deprimidos exclusivos**: altura por etiquetas `bridge`/`tunnel`/`layer` de OSM sobre
-   la calzada de TransMilenio, para el 3D. En el motor ya no crean cruces falsos.
-4. **Geometría de las 151 estaciones** (hoy 40) desde OSM, automatizada.
-5. **Rendimiento web.** Un día laborable tarda ~25 s en escritorio. Plan: puntos de control del
-   escenario base precalculados en el workflow de Pages (no versionados), caché en IndexedDB y
-   aplanar arreglos del motor (~2×).
-6. **Interfaz.** Un solo sistema visual (márgenes, radios, sombras), panel «Operación» renombrado y
-   explicado con los parámetros nuevos (espacio físico, separación, ciclo, atención, variación
-   diaria, flota), color por ocupación, y la procedencia de las cifras (días medidos, flota
-   observada) movida a un apartado de información en vez de ocupar los paneles. Móvil primero.
-7. **Datos.** Revisar si hay catálogo de rutas más reciente (la vigencia terminó el 19 sep.);
-   analizar validaciones de más días y, si el archivo trae número de tarjeta, encadenar viajes para
-   estimar origen-destino y corregir descensos y el factor 2,25.
-8. **Patios y regulación visible.** Evaluado: ubicar patios reales y dibujar los buses que esperan
-   en terminal; no animar recorridos en vacío, que no tienen trazado publicado.
-9. README, badges, `docs/ARQUITECTURA.md` y `docs/COMO_SE_SIMULA.md` al día con el motor nuevo;
-   después empujar a `origin` (el commit `da1c904` está solo en local).
-
-Estado al cierre. Leer antes `README.md`, `docs/OPERACION_Y_DATOS.md` y
-`docs/VALIDACION_FASE2_20260911.md`. No reiniciar la arquitectura: lo que hay está validado y cada
-pieza entró con una medición detrás.
+1. **Empujar a `origin`** cuando Daniel lo confirme, y publicar Pages a mano si lo pide.
+2. **Puentes y deprimidos exclusivos en 3D**: altura por etiquetas `bridge`/`tunnel`/`layer` de OSM
+   sobre la calzada de TransMilenio. En el motor ya no crean cruces falsos.
+3. **Patios y regulación visible**: ubicar patios reales (capa Patios SITP de IDECA) y dibujar los
+   buses que esperan en terminal; no animar recorridos en vacío, que no tienen trazado publicado.
+4. **Estaciones sin geometría** (42): probar la capa de estaciones del IDU o dibujarlas a mano en OSM.
+5. **Datos**: revisar si hay catálogo de rutas más reciente (la vigencia terminó el 19 sep.); más
+   días de validaciones y, si el archivo trae número de tarjeta, encadenar viajes para estimar
+   origen-destino y corregir descensos.
+6. **Rendimiento**: aplanar arreglos del motor (~2×) para móviles lentos.
+7. Clashes residuales de un mismo vagón en estaciones dobles (Ricaurte, Jiménez, Mazurén): 34
+   muestras en la mañana.
 
 ## Qué es y qué no
 
-Simulador 2D geográfico 1:1 de los servicios troncales y duales de TransMilenio. Zonales y cable
+Simulador geográfico 1:1, en 2D y 3D, de los servicios troncales y duales de TransMilenio. Zonales y cable
 quedan fuera; el proyecto de conducción 3D está pausado en `archive/transmi3d`. Diseño inspirado en
 Subway Builder y Mini Metro, sin construcción de líneas: la red es la que existe.
 
@@ -63,14 +49,13 @@ posición de la flota entraron una sola vez, antes de simular, para medir lo que
 no separa; de ellas quedan `data/curated/speed_field.json`, `data/curated/fleet_types.json` y
 `data/curated/observed_times.json`, fechados y con su método escrito.
 
-Las estimaciones son ajustables y siempre se rotulan como estimación. Dos carriles por sentido
-—atención y paso— son una abstracción declarada, igual que el paso expreso independiente de la
-atención.
+Las estimaciones son ajustables y siempre se rotulan como estimación. Los carriles salen del ancho
+medido de la calzada; en estación hay siempre carril de andén y de paso.
 
 ## Ejecutar y desarrollar
 
-- Fuentes estáticas editables en `app/dist`, Three.js 0.186.0 local y cámara ortográfica. Sin npm ni
-  bundler.
+- Fuentes estáticas editables en `app/dist`, Three.js r186 local y cámara en perspectiva. Sin npm ni
+  bundler. `?depurar` expone `window.transmi.map` y sigue dibujando con la pestaña oculta.
 - `ABRIR_SIMULACION_2D.command`: loopback `http://127.0.0.1:8766/`.
 - `ABRIR_EN_RED_LOCAL.command`: escucha LAN en el puerto 8767 e imprime la IP de este computador.
   Ambos sirven solo `app/dist`, sin caché y sin listar directorios. Cada navegador corre su propia
@@ -187,16 +172,16 @@ los parámetros de cada paso, está en `docs/ACTUALIZAR_DATOS.md`.
 documentación del método; para volver a correr necesitan las lecturas de posición en crudo.
 
 ```bash
-node --test app/tests/*.test.mjs                 # 72 pruebas
+node --test app/tests/*.test.mjs                 # 86 pruebas
 python3 -m unittest discover -s tests            # 47 pruebas
 ```
 
 `test_build_speed_field.py` importa la proyección geográfica: necesita el intérprete con shapely y
 pyproj. Las demás corren con el Python del sistema.
 
-Referencia de banco: 1.113 buses máximos muestreados, preparación 12,01 s, muestreo 1,30 ms, heap
-560 MB. Estrés a 2/3 min y demanda 3×: 3.303 buses, 21,00 s, 4,56 ms, 1.138 MB. Es CPU de Node, no
-FPS; el estrés puede congestionarse sin borrar vehículos.
+Referencia del motor de espacio físico: la red entera de 03:00 a 07:30 en ~4 s y el día completo en
+~25 s en un computador de escritorio, unos 60 MB; con un punto de control guardado, cualquier hora en
+menos de un segundo. Un punto de control pesa 0,43 MB (0,10 MB comprimido).
 
 ## Pendientes consentidos
 
@@ -212,7 +197,8 @@ FPS; el estrés puede congestionarse sin borrar vehículos.
   foto hasta que se vuelva a medir.
 - El término de densidad de tráfico: controlando por lugar vale solo un 5–8 %, así que no se
   implementa.
-- Colas de buses en semáforos: analizado y **no implementado**. `docs/COLAS_Y_ESPACIO_20260911.md`.
+- Colas de buses en semáforos: **implementadas** con el motor de espacio físico
+  (`docs/ESPACIO_FISICO_20260927.md`); el análisis previo sigue en `docs/COLAS_Y_ESPACIO_20260911.md`.
 - Asignaciones oficiales de ruta, tipo y vagón; planos, patios e inventarios; calibración con una
   matriz origen-destino; fases y coordinación semafóricas reales.
 

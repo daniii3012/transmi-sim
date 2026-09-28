@@ -1,134 +1,129 @@
 # Cómo se simula
 
-12 de septiembre de 2026. Qué hace el simulador cuando se pulsa reconstruir, de dónde sale cada
-número y qué sigue siendo un supuesto. Para el detalle por archivo ver [Arquitectura](ARQUITECTURA.md);
-para los parámetros vigentes, [Operación y datos](OPERACION_Y_DATOS.md).
+28 de septiembre de 2026. Qué hace el simulador desde que se abre la página hasta que un bus se
+detiene en su vagón, de dónde sale cada número y qué sigue siendo un supuesto. Para el detalle por
+archivo ver [Arquitectura](ARQUITECTURA.md); para el motor de espacio físico con sus mediciones,
+[Espacio físico](ESPACIO_FISICO_20260927.md).
 
 ## En una frase
 
-Es una simulación **de eventos discretos y determinista**: no se integra el tiempo paso a paso, se
-calcula por adelantado cuándo ocurre cada salida, cada atención en estación y cada liberación de
-vehículo, y el reloj solo consulta ese calendario. Por eso se puede adelantar a 120×, retroceder, y
-volver al mismo instante encontrando exactamente el mismo estado.
+Es una **microsimulación determinista con paso fijo de un segundo**: cada bus ocupa su largo en un
+carril de una red de tramos compartidos, sigue al de adelante con un modelo de conducción y se
+detiene donde algo lo obliga —su vagón, un rojo, el bus de adelante, un empalme—. Los mismos datos y
+parámetros dan siempre el mismo día, así que se puede adelantar a 120×, retroceder o volver a una
+hora y encontrar exactamente el mismo estado.
 
 ## Los datos de los que parte
 
-Todos son datos abiertos. Cada uno entra por una herramienta `fetch_*` que guarda la instantánea
-fechada con su SHA-256, y una `build_*` que la convierte en lo que lee la aplicación; el
-procedimiento está en [Actualizar datos](ACTUALIZAR_DATOS.md).
+Todos son datos abiertos. Cada uno entra por una descarga que guarda la instantánea fechada con su
+SHA-256 y una herramienta `build_*` que la convierte en lo que lee la aplicación; el procedimiento
+está en [Actualizar datos](ACTUALIZAR_DATOS.md).
 
 | Qué aporta | Fuente abierta |
 |---|---|
 | Servicios troncales y duales: código, destino, trazado, paradas, color, vigencia | Catálogo público de rutas de TRANSMILENIO |
 | Salidas programadas y duración de cada tramo | GTFS abierto de TRANSMILENIO S.A. |
+| Ancho de la calzada exclusiva: uno o dos carriles | Mapa de Referencia, IDECA / UAECD (datos del IDU) |
 | Geometría física de estaciones y portales | OpenStreetMap |
 | Semáforos sobre calzada de buses | OpenStreetMap |
-| Calzada, carriles y contexto urbano | OpenStreetMap |
+| Edificios de la vista 3D | Mapa de Referencia, IDECA / UAECD (Catastro) |
 | Demanda de pasajeros | Validaciones diarias del SITP, Datos Abiertos Bogotá |
 | Tipo de bus por servicio y velocidad de cada trecho | Lecturas de posición de la flota, desde el 12 sep 2026 |
 
 Ningún bus que se ve en pantalla es una posición GPS: todos salen del modelo. Las lecturas de
-posición de la flota entraron una sola vez, antes de simular, para medir dos cosas que el paquete
-publicado no separa —cuánto tarda un bus rodando y cuánto se queda parado en un andén— y para leer
-la etiqueta que identifica el tipo de vehículo. Lo que quedó de ellas son dos archivos curados,
-`data/curated/speed_field.json` y `data/curated/fleet_types.json`, fechados y con el método escrito
-en [la velocidad la pone el lugar](VELOCIDAD_POR_LUGAR_20260912.md) y en
-[tipo de bus por servicio](TIPOS_DE_BUS_20260912.md).
+posición de la flota entraron antes de simular, para medir cuánto tarda un bus rodando por cada
+trecho, cuánto se queda parado y qué tipo de vehículo atiende cada servicio. Lo que quedó de ellas
+son archivos curados y fechados —`speed_field.json`, `fleet_types.json`, `observed_times.json`— y
+sirven también para validar el resultado.
 
-## Qué ocurre al construir un escenario
+## El plan del día
 
-**1. Se recorta el catálogo.** De los 137 servicios se toman los utilizables y los que la selección
-pida —toda la red, un corredor o un servicio—. Cada uno conserva su polilínea oficial recortada
-entre primera y última parada, medida en metros sobre una proyección acimutal equidistante centrada
-en Bogotá.
+**1. Se recorta el catálogo.** De los 137 servicios se toman los utilizables que pida la selección
+—toda la red, unas troncales o un servicio—, con su polilínea oficial en metros sobre una proyección
+acimutal equidistante centrada en Bogotá.
 
-**2. Se decide el sentido y el punto de atención de cada visita.** El sentido sale del eje dominante
-de la estación, calculado sobre todas las rutas que la tocan. El vagón es el publicado donde el
-tablero de la estación lo dice, y un reparto determinista donde no; la ficha siempre rotula cuál de
-los dos es.
+**2. Se arma la red de tramos.** Los recorridos comparten vértices donde van por la misma calzada;
+de ahí sale una red dirigida de tramos con sus empalmes, y cada recorrido es una sucesión de tramos.
+Cada 5 m el tramo sabe cuántos carriles tiene: los que da el ancho medido de la calzada, dos en cada
+estación —el del andén y el de paso— y lo que diga OpenStreetMap donde no hay medida.
 
-**3. Se generan las salidas.** Donde el GTFS publica horario —115 de los 117 servicios utilizables—
-se despacha a las horas publicadas, resolviendo sobre la fecha real qué calendarios del paquete están
-activos, festivos incluidos. Los demás conservan una regla de intervalo fijo, declarada como tal.
-Se construyen el día elegido **y el anterior**, para que los viajes que cruzan medianoche existan.
+**3. Se ubica cada parada en su vagón.** El vagón es el que publica el tablero de la estación donde
+existe, y un reparto determinista donde no. Su posición sale del andén de OpenStreetMap, del
+contorno de la estación repartido en módulos, o de un módulo de 64 m cuando no hay geometría.
 
-**4. Se asigna un vehículo.** Cada terminal mantiene una reserva por tipo de bus. Una salida toma un
-vehículo compatible si lo hay y si no crea uno nuevo, así que la flota no es un parámetro: es el
-resultado de cuántas salidas hay y cuánto dura cada viaje. Al terminar, el bus queda disponible en la
-terminal de destino tras 240 s de regulación.
+**4. Se generan las salidas.** Donde el GTFS publica horario se despacha a las horas publicadas,
+resolviendo sobre la fecha real qué calendarios están activos, festivos incluidos. Cada salida sale
+con un desfase de ±1 min. Los servicios sin horario publicado conservan un intervalo por franja,
+declarado como tal.
 
-**5. Se recorre el servicio parada a parada.** En cada una se resuelve cuánta gente sube y baja, se
-ocupa un puesto de atención, y se calcula el movimiento hasta la siguiente. Todo ello se encola por
-tiempo en un montículo binario; el bucle vacía la cola y deja construidos los viajes completos.
+## El día, segundo a segundo
 
-## Cómo se mueve un bus
+El día de servicio va de las 03:00 a las 03:00 siguientes, cuando la red está vacía, y se simula
+desde ahí con paso de 1 s. Cada 15 minutos simulados se guarda un punto de control.
 
-El movimiento se calcula **en el dominio de la distancia**, no del tiempo: cada tramo se muestrea
-cada 18 m y en cada punto se fija un techo de velocidad que es el menor entre el crucero del
-escenario y lo que permite el radio de la curva. Después se pasa dos veces sobre esa envolvente
-—hacia adelante limitando por la aceleración, hacia atrás por el frenado— y se integra. El resultado
-es una curva posición/velocidad que se consulta analíticamente, así que ir a 120× no hace que los
-buses vayan a 120 veces los km/h.
+**Salida.** Cada salida pide un bus: el que espera en esa terminal, uno que puede llegar en vacío
+desde otra cercana (hasta 18 km, a 7 m/s con un recargo de 1,35 y 3 min de preparación) o uno nuevo
+mientras la flota no se agote. El tope por omisión es la flota real: 2.202 troncales más 50 duales
+eléctricos de 2026. Si se agota, la salida espera un bus libre.
 
-El tiempo que el horario publicado le da a un tramo se cumple, pero **se reparte según por dónde va
-el bus**. En calzada segregada el bus rueda a su crucero —los 60 km/h del escenario, ±5 por vehículo—
-y lo que el horario da de más se gasta **detenido**, en la aproximación a la estación siguiente y en
-trozos de 45 s como mucho. En calzada mixta —Séptima, Av. 68, los tramos de calle— sí se rebaja el
-crucero de forma continua, porque ahí el bus va dentro del tráfico y no delante de él; esa velocidad
-se despeja del tiempo publicado descontando antes la atención en estación y el coste esperado de los
-semáforos, para no contarlos dos veces. La ecuación está en
-[Horario publicado](HORARIO_GTFS_20260912.md), y por qué el reparto cambió, en
-[Velocidad y detenciones](VELOCIDAD_Y_DETENCIONES_20260912.md).
+**Circulación.** Cada bus lleva la velocidad deseada del trecho —la de rodar que se midió ahí, en su
+percentil 75, con topes por curva— y sigue al de adelante con el modelo de conducción inteligente
+(IDM): 1,2 s de distancia de seguridad, 2,5 m parado, aceleración de 0,8 m/s² y frenada cómoda de
+1,1. Un tope duro impide que dos buses se monten.
 
-La hora de llegada a cada parada no se mueve por esto: sigue siendo la publicada. Lo que cambia es
-que la demora queda donde se puede ver y medir —un bus parado— en vez de disuelta en un velocímetro
-que marcaba 23 km/h en un viaducto.
+**Empalmes y carriles.** Donde dos tramos se juntan o un carril se acaba, los buses se turnan con
+reglas fijas —quién llega primero reclama el paso, cremallera al final de un segundo carril—
+evaluadas por número de viaje para que el resultado dependa solo del estado. Los cambios de carril
+ocurren en puntos fijos, no en cualquier parte: las maniobras libres producían interbloqueos.
 
-**Semáforos.** Solo los que tienen evidencia directa en OpenStreetMap sobre calzada de buses, con la
-vía y el sentido correctos. Su ciclo es un supuesto explícito de 90 s —52 verde, 3 amarillo, 35
-rojo— con un desfase determinista derivado del identificador. No hay coordinación entre semáforos ni
-colas que se propaguen hacia atrás.
+**Estaciones.** Un bus que para va por el carril de paso y se acomoda en el del andén justo antes
+de su vagón; al salir sigue por el andén o vuelve al de paso si alguien atiende más adelante. Un
+vagón atiende a un bus a la vez: el siguiente espera detrás, en el carril del andén. Quien no para
+sigue de largo por el carril de paso.
 
-**Atención en estación.** Base de 13 s en troncal y 9 s en calle, más 4 s en hora pico, más lo que
-tarden en subir y bajar a 2,5 y 3 personas por segundo. Cada vagón tiene dos puestos de atención, la
-calle uno; si están ocupados el bus espera, y esa espera se ve en el mapa. Un bus expreso que no
-para no queda bloqueado por los que sí.
+**Semáforos.** Solo los que tienen evidencia directa en OpenStreetMap sobre la calzada de buses. Los
+nodos a menos de 60 m forman una intersección con una sola fase —unas 300 en la red—, y los
+desfases entre intersecciones siguen una onda verde estimada a 8 m/s. El ciclo por omisión es de
+90 s con 52 de verde para la troncal. No hay planes semafóricos publicados: todo esto se rotula
+como supuesto.
+
+**Atención.** 13 s de abrir y cerrar (9 en calle) más lo que tarden en subir y bajar a 0,9 personas
+por segundo y puerta —5 puertas el biarticulado, 4 el articulado, 2 el padrón dual—, más 4 s en
+hora pico.
 
 ## Cómo se mueven los pasajeros
 
 Es un modelo **agregado y determinista**, no una encuesta origen-destino ni personas individuales.
 
 Las llegadas a cada estación y sentido salen de las validaciones diarias del SITP: 28.014.777
-registros de 17 días observados —13 de semana, 2 sábados y 2 domingos—, agregados en perfiles por
-estación y hora. Sábado y domingo se miden, no se estiman reduciendo un día de semana.
+registros de 17 días observados, en perfiles por estación, hora y tipo de día. Sobre ese perfil
+actúan supuestos marcados como tales: un factor direccional hacia el centro de empleo en la mañana y
+al revés en la tarde, una fracción de descenso por hora y centralidad, y una línea base de demanda.
 
-Sobre ese perfil actúan tres supuestos que sí son estimaciones y se marcan como tales: un factor
-direccional que en la mañana carga hacia el centro de empleo y en la tarde al revés; una fracción de
-descenso que depende de la hora y de lo céntrica que sea la estación; y una línea base de demanda de
-2,25, que es una decisión de escenario y no una medición.
+Cada bus que atiende sube su parte de la espera: la gente de un andén reparte su elección entre tres
+servicios útiles, no se sube toda al primero. Quien no alcanza a subir se queda esperando, y esa
+cola se erosiona con una impaciencia exponencial de media hora.
 
-Quien no alcanza a subir se queda esperando, y esa cola se erosiona con una impaciencia exponencial
-de media hora. Nadie desaparece sin contarse: los rechazos de embarque se informan aparte.
+## Cómo se comprueba
+
+Contra los tiempos entre paradas medidos en las lecturas de la flota, un día laborable completo da
+mediana 1,02, percentil 10 de 0,91 y 90 de 1,15, sin ninguna hora fuera de 0,96–1,06. Contra el
+horario publicado, 0,88: los buses reales van más rápido de lo que publica el horario, que acolcha
+los tramos largos. Pico de 1.666 buses en servicio y 2.118 vehículos en el día, dentro de la flota
+real.
+
+86 pruebas Node y 47 Python cubren la red de tramos, que ningún bus se monte sobre otro, que se
+atienda desde el carril del andén, el tope de flota, la reproducibilidad (avanzar, retroceder,
+empezar de cero o restaurar un punto de control guardado dan el mismo estado), los carriles medidos,
+los semáforos, el calendario y el planificador.
 
 ## Qué no es
 
 - **No es una predicción.** Reproduce un día tipo con datos publicados, no lo que pasará mañana.
-- **No modela el tráfico mixto** ni colas que se propagan; el tiempo que hoy cuesta la congestión
-  entra por el tiempo que el horario le da a cada tramo, no por vehículos que estorban.
-- **No tiene inventario real de flota.** Los tipos de bus por servicio son una asignación estimada
-  salvo donde hay publicación expresa; los números de bus no son matrículas.
-- **No hay patios físicos ni circulación en vacío**: la regulación en terminal es abstracta.
+- **No simula el tráfico mixto** de la ciudad: en los tramos de calle el bus lleva la velocidad
+  medida ahí, que ya incluye ese tráfico.
+- **No tiene inventario real de flota.** Los números de bus no son matrículas y el tipo por servicio
+  sale de lo observado.
+- **No dibuja recorridos en vacío** ni patios físicos: la llegada en vacío se cuenta en tiempo, sin
+  trazado inventado.
 - **El horario es programación, no operación.** Dice a qué hora debía salir un bus, no si salió.
-- **Las pruebas comprueban funcionamiento, no fidelidad.** Lo que compara el modelo con la realidad
-  es la validación por ruta descrita en el documento del horario.
-
-## Cómo se comprueba
-
-74 pruebas Node y 30 Python cubren geometría, calendario, despacho, atención, conservación de
-pasajeros, reutilización de vehículos y reversibilidad del reloj. Dos bancos de carga miden
-preparación, muestreo y memoria; el de estrés apaga el horario publicado a propósito para seguir
-midiendo el mismo techo que las referencias anteriores.
-
-La comprobación que importa no es que el simulador corra, sino que el recorrido de cada servicio
-dure lo que dura en el horario publicado. Ese criterio, ruta por ruta y con sus resultados, está en
-[Horario publicado](HORARIO_GTFS_20260912.md).
