@@ -32,15 +32,40 @@ se ven si publican el mismo vértice, así que un puente o un deprimido exclusiv
 
 ### Carriles
 
-Celdas de 5 m por tramo. Un carril donde la calzada de OSM no publica `lanes` —no se deduce—, lo que
-publique donde sí (113 km con dos carriles), y dos en cada estación: el que sigue de largo y el del
-andén, desde 70 m antes del primer punto de atención hasta 30 m después del último, uniendo los de
-todos los servicios que paran ahí. En total 169 km con dos carriles. El carril del andén queda a la
-izquierda en la troncal —el andén está en el separador— y a la derecha en calle mixta.
+Celdas de 5 m por tramo. La fuente principal es la capa **Calzada** del Mapa de Referencia de Bogotá
+(IDECA / UAECD, levantamiento del IDU): cada calzada de la ciudad es un polígono con su ancho medido.
+La calzada exclusiva no tiene un atributo que la distinga, pero los recorridos van por ella: el
+polígono más pequeño que contiene cada punto del recorrido es el de la calzada del bus, y su ancho da
+los carriles —menos de 5,3 m, uno; más, dos—. Si un polígono contiene los dos sentidos, cada uno se
+queda con la mitad. Donde no hay polígono, casi siempre el área de un cruce, se toma el menor de los
+vecinos. `tools/build_busway_geometry.py` lo deja en `busway_geometry.json`, con la misma clave de
+vértices que usa el motor: 237 km de dos carriles, 72 de uno y 16 sin polígono, donde rige la etiqueta
+`lanes` de OSM y, si tampoco la hay, un carril.
+
+En la troncal Américas da dos carriles de De La Sabana a Distrito Grafiti y de Marsella a Banderas,
+con tramos de uno en tres cruces y puentes: lo que se ve en la calle, y lo que el motor antes suponía
+de un carril porque OSM no lo etiqueta. Donde OSM sí publica carriles, coincide en el 86 % de las
+celdas de dos; donde OSM dice uno, el ancho medido dice dos en más de la mitad. Se prefiere la medida.
+El atributo de carriles de la malla vial no sirve: un mismo código de vía cubre segmentos con valores
+distintos.
+
+Además, dos carriles en cada estación: el que sigue de largo y el del andén, desde 70 m antes del
+primer punto de atención hasta 60 m después del último, uniendo los de todos los servicios que paran
+ahí. El carril del andén queda a la izquierda en la troncal —el andén está en el separador— y a la
+derecha en calle mixta.
 
 La regla de uso en estación sale de la operación observada en la calle: el bus no hace fila detrás
 de los que atienden en vagones anteriores al suyo; va por el carril que sigue de largo y se mete en
-el del andén justo antes de su vagón. Las lecturas de posición de la flota no sirven para
+el del andén justo antes de su vagón. **Un vagón atiende a un bus a la vez**: si está ocupado, el que
+llega entra al carril del andén detrás del que atiende —así deja libre el de paso— y abre puertas solo
+al llegar a su puesto. Quien viene por el segundo carril de un tramo abierto y para en la estación
+sigue derecho a su vagón; si le tapa uno que atiende antes, lo rebasa por el de paso. Quien ya atendió
+deja el carril del andén en cuanto hay hueco.
+
+Los vagones son módulos físicos en puntos fijos del eje de la estación: el vagón A es el mismo lugar
+para todas las rutas, cada sentido de su lado del andén. Cada ruta proyecta ese punto sobre su
+trazado. Antes cada una estimaba el vagón desde su propio punto de la estación —que varía decenas de
+metros de un trazado a otro— y dos servicios del mismo vagón paraban uno al lado del otro. Las lecturas de posición de la flota no sirven para
 corroborarlo —refrescan cada 15–30 s con unos 10 m de error, y un carril mide 3,4—, así que queda como
 regla declarada, coherente con la geometría de las estaciones.
 
@@ -52,7 +77,7 @@ conductor ve su punto de atención, el semáforo si está en rojo —o en amaril
 el cierre del carril por el que va y el empalme si lo tiene otro. Topes duros impiden solaparse
 aunque el modelo pidiera más de lo posible.
 
-La **velocidad deseada** de cada tramo entre estaciones es la de rodar en su trecho más rápido,
+La **velocidad deseada** de cada tramo entre estaciones es el percentil 75 de la velocidad de rodar de sus trechos,
 medida en las lecturas de la flota (`speed_profiles.json`): velocidad de travesía dividida por la
 parte del tiempo que no se pasa detenido. El campo ya dice que lo detenido es cola de andén o de
 semáforo, y esas colas ahora ocurren en la simulación; tomar la velocidad media del trecho las
@@ -117,7 +142,14 @@ nivel de demanda ±5 %. La misma fecha se repite igual; dos martes ya no.
 
 ## Validación
 
-Día laborable completo (24 sep. 2026), todos los servicios utilizables, flota real:
+**Contra la operación observada** —los tiempos entre paradas medidos en las lecturas de la flota,
+`observed_times.json`—, un día laborable completo con carriles medidos: mediana 1,02, percentil 10
+0,91 y 90 1,15; ninguna hora fuera de 0,96–1,06. **Contra el horario publicado**, 0,88: los buses
+reales van más rápido de lo que publica el horario, que acolcha los tramos largos. Pico de 1.657 buses
+en servicio y 2.113 vehículos en el día, dentro de la flota real.
+
+Antes de medir los carriles, con un solo carril donde OSM no decía otra cosa —la tabla que sigue—, la
+punta se alargaba entre 20 y 35 % sobre lo publicado por colas que en la calle no existen:
 
 | Hora | 05 | 06 | 07 | 08 | 09 | 10–14 | 15–16 | 17 | 18 | 19 | 20 | 22 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|

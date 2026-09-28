@@ -78,6 +78,7 @@ los `build_*` escriben ambas.
 | Tiempo real entre parada y parada | Las mismas lecturas | ídem | `build_observed_times.py` | `data/curated/observed_times.json` |
 | Semáforos en calzada de buses | OpenStreetMap API 0.6 | `fetch_busway_signals.py` | `build_busway_signals.py` | `app/dist/busway_signals.json` |
 | Calzada y carriles de TransMilenio | OpenStreetMap / Overpass | `fetch_busway_lanes.py` | `build_busway_lanes.py` | `app/dist/busway_lanes.json` |
+| Carriles medidos y puentes sobre la calzada | Mapa de Referencia (IDECA / UAECD): Calzada, Puente y Malla Vial | `fetch_idu_calzada.py` (consulta a 15 m de cada tramo de la red) | `build_busway_geometry.py` | `app/dist/busway_geometry.json` |
 | Punto de atención de cada servicio: vagón y puertas | Tablero de salidas publicado por estación | `fetch_station_departures.py` | `build_station_wagons.py` | `app/dist/station_wagons.json` |
 | Demanda de pasajeros | Validaciones diarias SITP, Datos Abiertos Bogotá | descarga manual del ZIP | `aggregate_validations.py` y luego `import_passenger_profiles.py` | `app/dist/demand.json` |
 | Three.js | npm oficial, versión fijada | `vendor_three.py` | — | `app/dist/vendor/` |

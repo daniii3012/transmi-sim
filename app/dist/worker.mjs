@@ -1,7 +1,7 @@
-import {Operation} from './operation.mjs?v=20260928.1';
-import {JourneyPlanner} from './planner.mjs?v=20260928.1';
-import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260928.1';
-import {DAY,addDays} from './calendar.mjs?v=20260928.1';
+import {Operation} from './operation.mjs?v=20260928.2';
+import {JourneyPlanner} from './planner.mjs?v=20260928.2';
+import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260928.2';
+import {DAY,addDays} from './calendar.mjs?v=20260928.2';
 // El motor de espacio físico corre aquí. La página pide un instante —fecha y segundos desde la
 // medianoche anterior más un día, como hasta ahora— y el worker lo traduce a su día de servicio,
 // que va de las 03:00 a las 03:00: pasar la medianoche no reinicia nada, y cambiar de fecha solo
@@ -47,7 +47,7 @@ self.onmessage=({data:m})=>{
  try{
   if(m.type==='init'){
    generation=m.generation;traffic=null;planner=null;target=null;
-   const start=performance.now();op=new Operation(m.data,{...m.config,plan:true});guide=new Guideway([...op.routes.values()],{lanes:m.data.busway_lanes});
+   const start=performance.now();op=new Operation(m.data,{...m.config,plan:true});guide=new Guideway([...op.routes.values()],{lanes:m.data.busway_lanes,geometry:m.data.busway_geometry});
    // Los desfases semafóricos coordinados se calculan una vez y viajan a la página, que dibuja las
    // luces con los mismos.
    const probe=new Traffic(op,guide,m.date);

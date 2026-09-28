@@ -19,17 +19,18 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260928.1';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260928.1';
-import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260928.1';
-import {hash,programmedSpeed} from './operation.mjs?v=20260928.1';
-import {vehicleSpec} from './vehicles.mjs?v=20260928.1';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260928.2';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260928.2';
+import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260928.2';
+import {hash,programmedSpeed} from './operation.mjs?v=20260928.2';
+import {vehicleSpec} from './vehicles.mjs?v=20260928.2';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
 export const CHECKPOINT=900;           // un punto de control cada 15 min simulados
 const CELL=5;                          // resolución del mapa de carriles, m
 const V0CELL=10;                       // resolución de la velocidad deseada, m
+export const CRUISE_QUANTILE=.75;       // qué percentil de la velocidad de rodar del tramo se toma como crucero
 const LOOK=240;                        // hasta dónde mira un conductor, m
 const EMERGENCY=6;                     // frenada máxima, m/s²
 export const STATES=['moving','dwell','queue','signal','traffic'];
@@ -63,7 +64,7 @@ function curveCap(path,pos){
  * un vértice que los dos recorridos publican.
  */
 export class Guideway{
- constructor(routes,{lanes=null}={}){
+ constructor(routes,{lanes=null,geometry=null}={}){
   this.links=[];this.routeMaps=new Map();
   const nodeOf=new Map(),xy=[],seq=[];
   for(const r of routes){
@@ -89,7 +90,7 @@ export class Guideway{
    this.routeMaps.set(r.id,{links:Int32Array.from(links),starts:Float64Array.from(starts)});
   }
   for(const map of this.routeMaps.values())for(let k=1;k<map.links.length;k++){this.links[map.links[k-1]].next.add(map.links[k]);this.links[map.links[k]].prev.add(map.links[k-1]);}
-  this.assignLanes(routes,lanes);
+  this.assignLanes(routes,lanes,geometry);
  }
  makeLink(nodes,xy){
   const points=nodes.map(i=>xy[i]),cum=new Float64Array(points.length);
@@ -113,8 +114,22 @@ export class Guideway{
  // uno donde no —no se deduce—, y dos en cada estación: el de atención junto al andén y el de paso,
  // que es la abstracción autorizada del proyecto y lo que se ve en cualquier estación troncal. En
  // calle mixta el bus tiene siempre un carril para adelantar a otro detenido en un paradero.
- assignLanes(routes,lanes){
+ assignLanes(routes,lanes,geometry=null){
   for(const link of this.links){link.lanes=new Uint8Array(Math.ceil(link.length/CELL)+1).fill(1);link.station=new Uint8Array(link.lanes.length);link.osm=new Uint8Array(link.lanes.length);}
+  // Carriles medidos: el ancho de la calzada del IDU, cada 5 m de cada arista, en la misma clave de
+  // vértices que la red (tools/build_busway_geometry.py). Mandan sobre la etiqueta de OSM, que
+  // queda para donde la calzada no tiene polígono; y si no hay ninguna de las dos, un carril.
+  if(geometry?.edges)for(const link of this.links){
+   const m=new Uint8Array(link.lanes.length),b=new Uint8Array(link.lanes.length);let any=false;
+   for(let e=1;e<link.points.length;e++){
+    const pa=link.points[e-1],pb=link.points[e],g=geometry.edges[pa[0]+','+pa[1]+'>'+pb[0]+','+pb[1]];if(!g)continue;
+    const start=link.cum[e-1],len=link.cum[e]-start;
+    for(let s=0;s<g.lanes.length;s++){const at=start+Math.min(len,(s+.5)*CELL),c=Math.min(m.length-1,Math.floor(at/CELL)),v=g.lanes.charCodeAt(s)-48;if(v>0){m[c]=Math.min(2,v);any=true;}if(g.bridge.charCodeAt(s)===49)b[c]=1;}
+   }
+   // Las celdas que caen entre dos muestras toman la de su vecina.
+   for(let c=1;c<m.length;c++)if(!m[c]&&m[c-1])m[c]=m[c-1];
+   if(any){link.measured=m;link.bridge=b;}
+  }
   // Calle o corredor exclusivo se vota con los servicios que usan el tramo.
   const votes=new Map();
   for(const r of routes){
@@ -141,6 +156,7 @@ export class Guideway{
      best={w,oneway};bestD=d;
     }
     if(best?.w.lanes){const per=best.oneway?best.w.lanes:Math.max(1,Math.floor(best.w.lanes/2));link.osm[c]=Math.min(2,per);link.lanes[c]=Math.min(2,per);}
+    if(link.measured&&link.measured[c])link.lanes[c]=link.measured[c];
     if(link.street)link.lanes[c]=2;
    }
   }
@@ -177,8 +193,8 @@ export class Guideway{
   // carril de atención quien venía por el de paso y para en esa estación.
   for(const link of this.links){const n=link.lanes.length;link.zoneId=new Int32Array(n).fill(-1);for(let c=1;c<n;c++)if(link.station[c]&&!link.station[c-1]&&link.lanes[c-1]===2&&link.lanes[c]===2)link.zoneId[c]=this.pointBase+points++;}
   this.pointCount=this.nodeCount+points;
-  let km=0,two=0,osm=0;for(const l of this.links){km+=l.length;for(let c=0;c<l.lanes.length;c++){if(l.lanes[c]===2)two+=CELL;if(l.osm[c])osm+=CELL;}}
-  this.summary={links:this.links.length,km:km/1000,twoLaneKm:two/1000,osmLaneKm:osm/1000,merges:this.mergeNodes.reduce((a,b)=>a+b,0)};
+  let km=0,two=0,osm=0,measured=0;for(const l of this.links){km+=l.length;for(let c=0;c<l.lanes.length;c++){if(l.lanes[c]===2)two+=CELL;if(l.osm[c])osm+=CELL;if(l.measured?.[c])measured+=CELL;}}
+  this.summary={links:this.links.length,km:km/1000,twoLaneKm:two/1000,osmLaneKm:osm/1000,measuredKm:measured/1000,merges:this.mergeNodes.reduce((a,b)=>a+b,0)};
  }
  lanesAt(link,s){const l=this.links[link];return l.lanes[Math.max(0,Math.min(l.lanes.length-1,Math.floor(s/CELL)))];}
 }
@@ -247,7 +263,7 @@ export function speedCells(r,column,params,schedule){
    // Crucero del tramo: la velocidad a la que se rueda en su trecho más rápido. Arrancar, frenar,
    // las curvas, los semáforos y las colas los pone la simulación; tomar la media del trecho los
    // contaría dos veces y dejaba a los buses rodando a 21 km/h donde la calle mide 28.
-   if(!params.calibrateField){let top=0;for(let c=c0;c<c1;c++)top=Math.max(top,limit(c*V0CELL));speedAt=c=>Math.max(2,Math.min(cap,curve[c],top));}
+   if(!params.calibrateField){const vs=[];for(let c=c0;c<c1;c++)vs.push(limit(c*V0CELL));vs.sort((x,y)=>x-y);const q=params.cruiseQuantile??CRUISE_QUANTILE,top=vs.length?vs[Math.min(vs.length-1,Math.floor(q*(vs.length-1)))]:cap;speedAt=c=>Math.max(2,Math.min(cap,curve[c],top));}
    else if(target>0&&budget>0){let lo=.35,hi=3;if(time(hi)>=budget)f=hi;else if(time(lo)<=budget)f=lo;else{for(let it=0;it<22;it++){const m=(lo+hi)/2;if(time(m)>budget)lo=m;else hi=m;}f=(lo+hi)/2;}}
    else if(target>0)f=3;
    if(params.calibrateField)speedAt=c=>Math.max(2,Math.min(cap,curve[c],base(c)*f));

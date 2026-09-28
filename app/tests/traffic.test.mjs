@@ -8,10 +8,10 @@ import {signalClusters,signalPhase} from '../dist/signals.mjs';
 const read=f=>JSON.parse(fs.readFileSync(new URL('../dist/'+f,import.meta.url)));
 const data=read('services.json');
 const demand=read('demand.json');const profiles=new Map(demand.profiles.map(p=>[p.station_id,p]));for(const s of data.stations)s.demand_profile=profiles.get(s.id);
-for(const [k,f] of [['busway_signals','busway_signals.json'],['station_layouts','station_layouts.json'],['station_wagons','station_wagons.json'],['schedule','schedule.json'],['speed_profiles','speed_profiles.json'],['busway_lanes','busway_lanes.json']])data[k]=read(f);
+for(const [k,f] of [['busway_signals','busway_signals.json'],['station_layouts','station_layouts.json'],['station_wagons','station_wagons.json'],['schedule','schedule.json'],['speed_profiles','speed_profiles.json'],['busway_lanes','busway_lanes.json'],['busway_geometry','busway_geometry.json']])data[k]=read(f);
 
 const WEEKDAY='2026-09-24';
-function build(config={},date=WEEKDAY){const op=new Operation(data,{date,plan:true,...config});const guide=new Guideway([...op.routes.values()],{lanes:data.busway_lanes});return {op,guide,traffic:new Traffic(op,guide,date)};}
+function build(config={},date=WEEKDAY){const op=new Operation(data,{date,plan:true,...config});const guide=new Guideway([...op.routes.values()],{lanes:data.busway_lanes,geometry:data.busway_geometry});return {op,guide,traffic:new Traffic(op,guide,date)};}
 // Troncal Caracas sur y sus alimentaciones: bastante tráfico para que haya colas, pocos servicios
 // para que las pruebas no tarden lo que tarda la red entera.
 const SMALL={selection:{mode:'zones',zones:['H']}};
@@ -96,4 +96,13 @@ test('La red entera atraviesa la punta de la mañana sin atascos permanentes',()
  assert.ok(s.waitingToEnter<40,`${s.waitingToEnter} buses esperando entrar a la vía`);
  assert.ok(s.fleet>1200&&s.fleet<2600,`${s.fleet} buses en servicio a las 9`);
  assert.ok(traffic.t===9*3600&&SERVICE_START===3*3600);
+});
+
+test('Los carriles salen del ancho medido de la calzada: Américas tiene dos entre De La Sabana y Distrito Grafiti',()=>{
+ const {op,guide}=build();
+ assert.ok(guide.summary.measuredKm>250,`${guide.summary.measuredKm} km medidos`);
+ const r=[...op.routes.values()].find(r=>r.code==='F19'),at=name=>r.visits.find(v=>v.name.startsWith(name)).at_m;
+ const from=at('De La Sabana'),to=at('Distrito Grafiti');let two=0,n=0;
+ for(let s=from+100;s<to-100;s+=25){const loc=guide.locate(r.id,s);n++;if(guide.lanesAt(loc.link,loc.offset)===2)two++;}
+ assert.ok(two/n>.85,`${two} de ${n} puntos con dos carriles`);
 });

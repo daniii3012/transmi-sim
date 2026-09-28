@@ -1,16 +1,30 @@
-import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260928.1';
-import {vehicleSpec} from './vehicles.mjs?v=20260928.1';
-import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED} from './signals.mjs?v=20260928.1';
-import {travelTimeAtDistance} from './travel.mjs?v=20260928.1';
-import {generatedPassengers,alightFraction,DEMAND_BASELINE} from './passengers.mjs?v=20260928.1';
-import {placeVisit} from './station-layouts.mjs?v=20260928.1';
-import {MetricPath} from './simulation.mjs?v=20260928.1';
+import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260928.2';
+import {vehicleSpec} from './vehicles.mjs?v=20260928.2';
+import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED} from './signals.mjs?v=20260928.2';
+import {travelTimeAtDistance} from './travel.mjs?v=20260928.2';
+import {generatedPassengers,alightFraction,DEMAND_BASELINE} from './passengers.mjs?v=20260928.2';
+import {placeVisit} from './station-layouts.mjs?v=20260928.2';
+import {MetricPath} from './simulation.mjs?v=20260928.2';
 export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1,mode:'auto',cruiseKmh:60,streetKmh:50,acceleration:.8,braking:1.1,turnaround:240,variableDispatch:true,reinforcements:true,signals:true,beyondValidity:true,programmedDispatch:true,programmedRunning:true,observedRunning:true,
  // Espacio físico (traffic.mjs). Separación en marcha y parado, ciclo semafórico y atención son
  // decisiones de modelo, rotuladas como estimación; la variación diaria cambia de una fecha a otra
  // sin perder la reproducibilidad: la misma fecha y la misma versión dan siempre lo mismo.
  physical:true,headwayTime:1.2,jamGap:2.5,signalCycle:90,signalGreen:52,dwellBase:13,boardingRate:.9,dayVariation:false,dispatchJitter:60,variant:0,fleet:2252});
 export function parameters(input={}){const p={...DEFAULTS,...input};for(const [k,min,max] of [['peakHeadway',120,1200],['offpeakHeadway',180,1800],['demand',.25,3],['cruiseKmh',25,75],['streetKmh',20,60],['acceleration',.4,1.4],['braking',.5,1.8],['turnaround',60,900],['headwayTime',.6,3],['jamGap',1,8],['signalCycle',50,180],['signalGreen',15,150],['dwellBase',5,40],['boardingRate',.3,2],['dispatchJitter',0,300],['variant',0,999],['fleet',200,8000]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw new Error('Parámetro fuera de rango: '+k);if(typeof p.variableDispatch!=='boolean'||typeof p.reinforcements!=='boolean'||typeof p.signals!=='boolean'||typeof p.beyondValidity!=='boolean'||typeof p.programmedDispatch!=='boolean'||typeof p.programmedRunning!=='boolean'||typeof p.observedRunning!=='boolean'||typeof p.physical!=='boolean'||typeof p.dayVariation!=='boolean')throw new Error('Opciones de despacho inválidas');if(p.signalGreen>=p.signalCycle-3)throw new Error('Parámetro fuera de rango: signalGreen');if(!Number.isInteger(p.variant))throw new Error('Parámetro fuera de rango: variant');if(!['auto','peak','offpeak'].includes(p.mode))throw new Error('Demanda inválida');return p;}
+// Distancia entre centros de vagón donde OSM no publica el andén: la que ya usaba el dibujo.
+export const MODULE_SPACING=64;
+/** Punto del trazado más cercano a `point` entre las abscisas `lo` y `hi`. */
+export function projectOnPath(path,point,lo,hi){
+ let best=null;
+ for(let i=1;i<path.points.length;i++){
+  const start=path.cumulative[i-1],end=path.cumulative[i];if(end<lo||start>hi||end===start)continue;
+  const a=path.points[i-1],b=path.points[i],dx=b[0]-a[0],dy=b[1]-a[1];
+  const f=Math.max(0,(lo-start)/(end-start),Math.min(1,(hi-start)/(end-start),((point[0]-a[0])*dx+(point[1]-a[1])*dy)/(dx*dx+dy*dy)));
+  const x=a[0]+dx*f,y=a[1]+dy*f,d=Math.hypot(x-point[0],y-point[1]);
+  if(!best||d<best.distance)best={at_m:start+(end-start)*f,distance:d};
+ }
+ return best;
+}
 export function hash(text){let h=2166136261;for(const c of String(text)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
 // Cómo se gasta el tiempo que el horario publicado le da a un tramo.
 //
@@ -158,7 +172,34 @@ export class Operation {
    const wagon=s.kind==='street'?1:official?official.wagon:1+hash(r.family)%s.wagons;
    return {...s,direction,wagon,wagonLabel:official?official.label:null,wagonDoors:official?official.doors:null,wagonSource:s.kind==='street'?'not_applicable':official?'published':'estimated'};});
   const layouts=new Map((this.data.station_layouts?.stations||[]).map(s=>[s.station_id,s]));
-  for(const r of this.routes.values())for(let i=0;i<r.visits.length;i++){const s=r.visits[i];if(s.kind==='street')continue;const layout=layouts.get(s.station_id),placed=placeVisit(r,i,layout,hash(r.family));if(placed){Object.assign(s,placed);continue;}if(layout||i===0||i===r.visits.length-1)continue;const shift=(s.wagon-(s.wagons+1)/2)*64*(s.direction===0?1:-1),bound=Math.min((r.stops[i].at_m-r.stops[i-1].at_m)/4,(r.stops[i+1].at_m-r.stops[i].at_m)/4);s.at_m+=Math.max(-bound,Math.min(bound,shift));}
+  // Los vagones son módulos físicos de la estación, en puntos fijos a lo largo de su eje: el vagón A
+  // es el mismo lugar para todas las rutas, en los dos sentidos, cada uno de su lado del andén. Antes
+  // cada ruta estimaba la posición desde su propio punto de la estación, que varía decenas de metros
+  // de un trazado a otro, y dos servicios del mismo vagón paraban uno al lado del otro. Ahora cada
+  // ruta proyecta sobre su trazado el punto del módulo, y los del mismo vagón hacen fila.
+  this.modules=new Map();
+  const moduleOf=(id,n)=>{
+   const key=id+'/'+n;let m=this.modules.get(key);if(m)return m;
+   const st=this.stations.get(id),sum=axes.get(id)||[1,0],angle=Math.atan2(sum[1],sum[0])/2,u=[Math.cos(angle),Math.sin(angle)];
+   let center=st.xy,spacing=MODULE_SPACING;
+   // Donde OSM publica los andenes troncales, el centro y el largo salen de ellos.
+   const plats=(layouts.get(id)?.platforms||[]).filter(p=>p.role==='platform_trunk'&&p.points.length>2);
+   if(plats.length){
+    const pts=plats.flatMap(p=>p.points),along=pts.map(p=>(p[0]-st.xy[0])*u[0]+(p[1]-st.xy[1])*u[1]),lo=Math.min(...along),hi=Math.max(...along);
+    if(hi-lo>20&&hi-lo<600){center=[st.xy[0]+u[0]*(lo+hi)/2,st.xy[1]+u[1]*(lo+hi)/2];spacing=Math.min(MODULE_SPACING,Math.max(30,(hi-lo)/n));}
+   }
+   m={center,u,n,spacing};this.modules.set(key,m);return m;
+  };
+  for(const r of this.routes.values())for(let i=0;i<r.visits.length;i++){
+   const s=r.visits[i];if(s.kind==='street')continue;const layout=layouts.get(s.station_id);
+   // En las terminales el embarque y el desembarque van en plataformas aparte: se conserva el andén
+   // que dé OSM, sin módulos.
+   if(i===0||i===r.visits.length-1){const placed=placeVisit(r,i,layout,hash(r.family));if(placed)Object.assign(s,placed);continue;}
+   const m=moduleOf(s.station_id,s.wagons||2),k=(s.wagon-(m.n+1)/2)*m.spacing,P=[m.center[0]+m.u[0]*k,m.center[1]+m.u[1]*k];
+   const lo=(r.stops[i-1].at_m+r.stops[i].at_m)/2,hi=(r.stops[i].at_m+r.stops[i+1].at_m)/2,hit=projectOnPath(r.path,P,lo,hi);
+   if(hit&&hit.distance<45){s.at_m=Math.max(r.visits[i-1].at_m+2,Math.min(hi-2,hit.at_m));s.placement_source='modulo_de_estacion';s.placement_estimated=s.wagonSource!=='published';s.module_xy=P;continue;}
+   const shift=(s.wagon-(s.wagons+1)/2)*64*(s.direction===0?1:-1),bound=Math.min((r.stops[i].at_m-r.stops[i-1].at_m)/4,(r.stops[i+1].at_m-r.stops[i].at_m)/4);s.at_m+=Math.max(-bound,Math.min(bound,shift));
+  }
  }
  build(){
   const queue=new Heap(),berths=new Map(),parked=new Map(),waiting=new Map();this.passengerEvents=new Map();this.trips=[];this.vehicles=[];this.depotEvents=[];this.routeWindows={};this.programmedRoutes=new Set();this.programmedIdle=new Set();this.programmedMoves=0;this.programmedCapped=0;this.trafficHolds=0;this.trafficSeconds=0;this.observedSegments=0;
