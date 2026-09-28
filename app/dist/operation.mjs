@@ -1,12 +1,16 @@
-import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260912.1';
-import {vehicleSpec} from './vehicles.mjs?v=20260912.1';
-import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED} from './signals.mjs?v=20260912.1';
-import {travelTimeAtDistance} from './travel.mjs?v=20260912.1';
-import {generatedPassengers,alightFraction,DEMAND_BASELINE} from './passengers.mjs?v=20260912.1';
-import {placeVisit} from './station-layouts.mjs?v=20260912.1';
-import {MetricPath} from './simulation.mjs?v=20260912.1';
-export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1,mode:'auto',cruiseKmh:60,streetKmh:50,acceleration:.8,braking:1.1,turnaround:240,variableDispatch:true,reinforcements:true,signals:true,beyondValidity:true,programmedDispatch:true,programmedRunning:true,observedRunning:true});
-export function parameters(input={}){const p={...DEFAULTS,...input};for(const [k,min,max] of [['peakHeadway',120,1200],['offpeakHeadway',180,1800],['demand',.25,3],['cruiseKmh',25,75],['streetKmh',20,60],['acceleration',.4,1.4],['braking',.5,1.8],['turnaround',60,900]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw new Error('Parámetro fuera de rango: '+k);if(typeof p.variableDispatch!=='boolean'||typeof p.reinforcements!=='boolean'||typeof p.signals!=='boolean'||typeof p.beyondValidity!=='boolean'||typeof p.programmedDispatch!=='boolean'||typeof p.programmedRunning!=='boolean'||typeof p.observedRunning!=='boolean')throw new Error('Opciones de despacho inválidas');if(!['auto','peak','offpeak'].includes(p.mode))throw new Error('Demanda inválida');return p;}
+import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260927.1';
+import {vehicleSpec} from './vehicles.mjs?v=20260927.1';
+import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED} from './signals.mjs?v=20260927.1';
+import {travelTimeAtDistance} from './travel.mjs?v=20260927.1';
+import {generatedPassengers,alightFraction,DEMAND_BASELINE} from './passengers.mjs?v=20260927.1';
+import {placeVisit} from './station-layouts.mjs?v=20260927.1';
+import {MetricPath} from './simulation.mjs?v=20260927.1';
+export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1,mode:'auto',cruiseKmh:60,streetKmh:50,acceleration:.8,braking:1.1,turnaround:240,variableDispatch:true,reinforcements:true,signals:true,beyondValidity:true,programmedDispatch:true,programmedRunning:true,observedRunning:true,
+ // Espacio físico (traffic.mjs). Separación en marcha y parado, ciclo semafórico y atención son
+ // decisiones de modelo, rotuladas como estimación; la variación diaria cambia de una fecha a otra
+ // sin perder la reproducibilidad: la misma fecha y la misma versión dan siempre lo mismo.
+ physical:true,headwayTime:1.2,jamGap:2.5,signalCycle:90,signalGreen:52,dwellBase:13,boardingRate:.9,dayVariation:false,dispatchJitter:60,variant:0,fleet:2252});
+export function parameters(input={}){const p={...DEFAULTS,...input};for(const [k,min,max] of [['peakHeadway',120,1200],['offpeakHeadway',180,1800],['demand',.25,3],['cruiseKmh',25,75],['streetKmh',20,60],['acceleration',.4,1.4],['braking',.5,1.8],['turnaround',60,900],['headwayTime',.6,3],['jamGap',1,8],['signalCycle',50,180],['signalGreen',15,150],['dwellBase',5,40],['boardingRate',.3,2],['dispatchJitter',0,300],['variant',0,999],['fleet',200,8000]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw new Error('Parámetro fuera de rango: '+k);if(typeof p.variableDispatch!=='boolean'||typeof p.reinforcements!=='boolean'||typeof p.signals!=='boolean'||typeof p.beyondValidity!=='boolean'||typeof p.programmedDispatch!=='boolean'||typeof p.programmedRunning!=='boolean'||typeof p.observedRunning!=='boolean'||typeof p.physical!=='boolean'||typeof p.dayVariation!=='boolean')throw new Error('Opciones de despacho inválidas');if(p.signalGreen>=p.signalCycle-3)throw new Error('Parámetro fuera de rango: signalGreen');if(!Number.isInteger(p.variant))throw new Error('Parámetro fuera de rango: variant');if(!['auto','peak','offpeak'].includes(p.mode))throw new Error('Demanda inválida');return p;}
 export function hash(text){let h=2166136261;for(const c of String(text)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
 // Cómo se gasta el tiempo que el horario publicado le da a un tramo.
 //
@@ -115,7 +119,33 @@ export class Operation {
   const picked=r=>this.selection.mode==='route'?r.id===this.selection.route:this.selection.mode==='zones'?(this.selection.zones||[]).some(z=>r.served_zones.includes(z)||r.zone===z):true;
   const fields=data.speed_profiles?.routes||{};
   for(const r of data.routes.filter(r=>r.ready&&picked(r)))this.routes.set(r.id,{...r,typeSource:vehicleSpec(r).typeSource,path:new MetricPath(r.points),field:routeField(fields[r.id])});
-  this.prepareDirections();for(const r of this.routes.values())r.signals=this.params.signals?matchSignals(r.path,data.busway_signals):[];this.motionCache=new Map();this.build();this.seek(this.time);
+  this.prepareDirections();for(const r of this.routes.values())r.signals=this.params.signals?matchSignals(r.path,data.busway_signals):[];this.motionCache=new Map();
+  // Con `plan:true` solo se prepara lo que el motor de espacio físico necesita —vagones, semáforos,
+  // reparto de la demanda y salidas—, sin precalcular cada viaje, que es lo caro.
+  if(config.plan)return;
+  this.build();this.seek(this.time);
+ }
+ // Las salidas de un día de servicio, en segundos desde su medianoche: las del horario publicado
+ // donde existe y la regla de minutos donde no. Mismo criterio que `build`, que la usa.
+ departures(date){
+  const out=[],active=this.params.programmedDispatch?gtfsServices(this.data.schedule,date):null;
+  for(const r of this.routes.values()){
+   const windows=serviceWindows(r,date,this.data.routes,{beyondValidity:this.params.beyondValidity});
+   const programmed=active&&windows.length?programmedDepartures(this.data.schedule,r.id,active):null;
+   if(programmed){for(const t of programmed)out.push({time:t,rid:r.id,date,departure:t,programmed:true});continue;}
+   for(const [start,end] of windows){
+    let t=start+hash(r.id)%23,sequence=0;
+    while(t<end){
+     const period=demandPeriod(t,date,this.params.mode),nominal=period==='peak'?this.params.peakHeadway:this.params.offpeakHeadway;
+     const seed=hash(r.id+'/'+date+'/'+sequence++),jitter=this.params.variableDispatch?(seed%25-12)/100:0;
+     out.push({time:t,rid:r.id,date,departure:t});
+     const hour=Math.floor((t%DAY)/3600),pressure=Math.max(...r.visits.slice(0,-1).map(s=>{const station=this.stations.get(s.station_id),share=this.demandShares.get(s.station_id+'/'+s.direction);return (station.demand_profile?.hourly[hour]||0)*.5*DEMAND_BASELINE*this.params.demand/Math.max(1,share?.all||1)/3600*nominal;}));
+     if(this.params.reinforcements&&period==='peak'&&nominal>=210&&seed%7===0&&pressure>vehicleSpec(r).capacity*.9&&t+120<end)out.push({time:t+120,rid:r.id,date,departure:t+120,reinforcement:true});
+     t+=nominal*(1+jitter);
+    }
+   }
+  }
+  return out.sort((a,b)=>a.time-b.time||(a.rid<b.rid?-1:a.rid>b.rid?1:0));
  }
  prepareDirections(){
   const allRoutes=this.data.routes.filter(r=>r.ready).map(r=>({...r,path:new MetricPath(r.points)}));const axes=new Map();for(const r of allRoutes)for(const s of r.stops){const angle=r.path.sample(Math.min(r.path.length-.1,Math.max(.1,s.at_m))).angle;const accum=axes.get(s.station_id)||[0,0];accum[0]+=Math.cos(2*angle);accum[1]+=Math.sin(2*angle);axes.set(s.station_id,accum);}

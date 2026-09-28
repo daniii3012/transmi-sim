@@ -1,0 +1,99 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {Operation} from '../dist/operation.mjs';
+import {Guideway,Traffic,STATES,SERVICE_START} from '../dist/traffic.mjs';
+import {signalClusters,signalPhase} from '../dist/signals.mjs';
+
+const read=f=>JSON.parse(fs.readFileSync(new URL('../dist/'+f,import.meta.url)));
+const data=read('services.json');
+const demand=read('demand.json');const profiles=new Map(demand.profiles.map(p=>[p.station_id,p]));for(const s of data.stations)s.demand_profile=profiles.get(s.id);
+for(const [k,f] of [['busway_signals','busway_signals.json'],['station_layouts','station_layouts.json'],['station_wagons','station_wagons.json'],['schedule','schedule.json'],['speed_profiles','speed_profiles.json'],['busway_lanes','busway_lanes.json']])data[k]=read(f);
+
+const WEEKDAY='2026-09-24';
+function build(config={},date=WEEKDAY){const op=new Operation(data,{date,plan:true,...config});const guide=new Guideway([...op.routes.values()],{lanes:data.busway_lanes});return {op,guide,traffic:new Traffic(op,guide,date)};}
+// Troncal Caracas sur y sus alimentaciones: bastante tráfico para que haya colas, pocos servicios
+// para que las pruebas no tarden lo que tarda la red entera.
+const SMALL={selection:{mode:'zones',zones:['H']}};
+const frameKey=f=>JSON.stringify([...f.trip,...f.s,...f.lat,...f.state].map(x=>typeof x==='number'?Math.round(x*1e6):x));
+
+test('La red de tramos cubre cada recorrido entero, en orden y sin huecos',()=>{
+ const {op,guide}=build();
+ for(const r of op.routes.values()){
+  const map=guide.routeMaps.get(r.id);
+  assert.ok(Math.abs(map.starts.at(-1)-r.path.length)<1e-6,r.id);
+  let total=0;for(let k=0;k<map.links.length;k++){total+=guide.links[map.links[k]].length;if(k)assert.ok(guide.links[map.links[k-1]].next.has(map.links[k]),`${r.id}: tramo ${k} desconectado`);}
+  assert.ok(Math.abs(total-r.path.length)<1e-3,`${r.id}: ${total} frente a ${r.path.length}`);
+ }
+ assert.ok(guide.summary.links>300&&guide.summary.merges>50,'la red compartida tiene empalmes');
+});
+
+test('Cada estación tiene carril de andén junto a cada punto de atención, y ningún cierre cae en el borde de un tramo',()=>{
+ const {op,guide}=build();
+ for(const r of op.routes.values())for(const v of r.visits){
+  if(v.kind==='street')continue;
+  const loc=guide.locate(r.id,Math.min(r.path.length-.1,v.at_m));
+  assert.equal(guide.lanesAt(loc.link,loc.offset),2,`${r.code} en ${v.name}`);
+ }
+ for(const link of guide.links){const n=link.lanes.length;if(link.lanes[n-1]===2)for(const L of link.next)assert.equal(guide.links[L].lanes[0],2,'un segundo carril solo sigue si todos los siguientes lo tienen');}
+});
+
+test('El mismo instante da el mismo estado se llegue avanzando, retrocediendo o desde cero',()=>{
+ const a=build(SMALL).traffic;a.seek(7*3600+40*60);const forward=frameKey(a.frame(a.t));
+ a.seek(8*3600+10*60);a.seek(7*3600+40*60);const back=frameKey(a.frame(a.t));
+ const b=build(SMALL).traffic;b.seek(7*3600+40*60);const fresh=frameKey(b.frame(b.t));
+ assert.equal(back,forward,'retroceder restaura y vuelve a simular exactamente');
+ assert.equal(fresh,forward,'una simulación nueva llega al mismo estado');
+});
+
+test('Ningún bus se monta sobre otro en su carril, ni en una fila de semáforo ni en un andén',()=>{
+ const {traffic,guide}=build(SMALL);let checked=0,queued=0;
+ for(let t=6*3600;t<=9*3600;t+=600){
+  traffic.seek(t);const a=traffic.a;
+  for(let L=0;L<guide.links.length;L++)for(const lane of [0,1]){
+   const list=traffic.lists[L*2+lane];
+   for(let x=1;x<list.length;x++){const lead=list[x-1],follow=list[x];assert.ok(traffic.off[follow]<=traffic.off[lead]-a.len[lead]+.05,`solape en el tramo ${L}, carril ${lane}`);checked++;if(a.v[follow]<.5)queued++;}
+  }
+ }
+ assert.ok(checked>500&&queued>20,'hubo filas de verdad que revisar');
+});
+
+test('Se atiende desde el carril del andén y el de paso queda para quien sigue de largo',()=>{
+ const {traffic,guide}=build(SMALL);const a=traffic.a;let dwelling=0,berth=0;
+ for(let t=7*3600;t<=8*3600;t+=300){
+  traffic.seek(t);
+  for(const i of traffic.active){if(a.offnet[i]||STATES[a.state[i]]!=='dwell')continue;dwelling++;if(a.lane[i]===1||guide.lanesAt(traffic.linkOf(i),traffic.off[i])<2)berth++;}
+ }
+ assert.ok(dwelling>30);assert.ok(berth/dwelling>.95,`${berth} de ${dwelling} desde el carril del andén`);
+});
+
+test('La flota tiene tope: sin vehículos, la salida espera; con la flota real, alcanza',()=>{
+ const scarce=build({...SMALL,params:{fleet:200}}).traffic;scarce.seek(8*3600);const s=scarce.stats();
+ assert.ok(s.vehicles<=200);assert.ok(s.fleetWait>0,'hubo salidas que esperaron vehículo');
+ const real=build(SMALL).traffic;real.seek(8*3600);const r=real.stats();
+ assert.ok(r.vehicles<=r.fleetCap);assert.equal(r.fleetWait,0);assert.ok(r.deadheads>0,'reutiliza buses de otras terminales');
+});
+
+test('Sin variación diaria dos martes son iguales; con ella, cada fecha tiene su día y se repite',()=>{
+ const key=(date,dayVariation)=>{const t=build({...SMALL,params:{dayVariation}},date).traffic;t.seek(7*3600);return frameKey(t.frame(t.t));};
+ assert.equal(key('2026-09-22',false),key('2026-09-29',false));
+ assert.notEqual(key('2026-09-22',true),key('2026-09-29',true));
+ assert.equal(key('2026-09-22',true),key('2026-09-22',true));
+});
+
+test('Los nodos de un mismo cruce comparten la fase semafórica',()=>{
+ const clusters=signalClusters(data.busway_signals),byId=new Map(data.busway_signals.signals.map(s=>[s.id,s]));
+ assert.ok(new Set(clusters.values()).size<clusters.size,'hay cruces con varios nodos');
+ for(const [id,rep] of clusters){const a=byId.get(id),b=byId.get(rep);assert.ok(Math.hypot(a.xy[0]-b.xy[0],a.xy[1]-b.xy[1])<200);}
+ for(const t of [0,17,55,89])for(const [id,rep] of clusters)assert.equal(signalPhase(rep,t).color,signalPhase(clusters.get(id),t).color);
+});
+
+test('La red entera atraviesa la punta de la mañana sin atascos permanentes',()=>{
+ const {traffic}=build();traffic.seek(9*3600);const s=traffic.stats();
+ assert.ok(s.dispatched>5000,`${s.dispatched} salidas`);
+ assert.ok(s.completed>3000,`${s.completed} viajes terminados`);
+ assert.ok(s.forced<20,`${s.forced} desatascos forzados`);
+ assert.ok(s.waitingToEnter<40,`${s.waitingToEnter} buses esperando entrar a la vía`);
+ assert.ok(s.fleet>1200&&s.fleet<2600,`${s.fleet} buses en servicio a las 9`);
+ assert.ok(traffic.t===9*3600&&SERVICE_START===3*3600);
+});

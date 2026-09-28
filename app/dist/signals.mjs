@@ -1,4 +1,4 @@
-import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20260912.1';
+import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20260927.1';
 
 // Existence is sourced from OSM. These phases are explicitly scenario estimates.
 export const SIGNAL_CYCLE=Object.freeze({cycle:90,green:52,amber:3});
@@ -9,9 +9,29 @@ export const SIGNAL_EXPECTED=Object.freeze({
  stopChance:(SIGNAL_CYCLE.cycle-SIGNAL_CYCLE.green)/SIGNAL_CYCLE.cycle,
  wait:(SIGNAL_CYCLE.cycle-SIGNAL_CYCLE.green)**2/(2*SIGNAL_CYCLE.cycle),
 });
-function phaseOffset(id){let h=2166136261;for(const c of String(id)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return (h>>>0)%SIGNAL_CYCLE.cycle;}
-export function signalPhase(id,time){
- const {cycle,green,amber}=SIGNAL_CYCLE,p=((time+phaseOffset(id))%cycle+cycle)%cycle;
+function phaseOffset(id){let h=2166136261;for(const c of String(id)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
+// Desfase fijo de un cruce sobre su ciclo, para quien consulta millones de veces la misma luz.
+export function signalOffset(id,cycle=SIGNAL_CYCLE.cycle){return phaseOffset(id)%cycle;}
+// Un cruce se publica en OSM como varios nodos —uno por calzada, a veces uno por carril— y cada uno
+// tenía su propio desfase: un bus debía encontrar en verde dos, tres o cuatro luces independientes a
+// pocos metros, y el verde efectivo se reducía a una fracción del ciclo. Los nodos a menos de 60 m se
+// agrupan y comparten la fase del primero: son el mismo cruce o cruces tan próximos que en la calle
+// los maneja un mismo controlador; con fases independientes, entre uno y otro cabe un solo bus.
+const clusterCache=new WeakMap();
+export function signalClusters(catalogue,radius=60){
+ if(!catalogue)return new Map();if(clusterCache.has(catalogue))return clusterCache.get(catalogue);
+ const list=[...(catalogue.signals||[])].sort((a,b)=>String(a.id).localeCompare(String(b.id))),grid=new Map(),parent=new Map(),out=new Map();
+ const find=id=>{let r=id;while(parent.get(r)!==r)r=parent.get(r);parent.set(id,r);return r;};
+ for(const s of list){parent.set(s.id,s.id);const gx=Math.floor(s.xy[0]/radius),gy=Math.floor(s.xy[1]/radius);
+  for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(const o of grid.get((gx+dx)+':'+(gy+dy))||[])if(Math.hypot(o.xy[0]-s.xy[0],o.xy[1]-s.xy[1])<=radius){const a=find(o.id),b=find(s.id);if(a!==b)parent.set(a<b?b:a,a<b?a:b);}
+  const key=gx+':'+gy;(grid.get(key)||grid.set(key,[]).get(key)).push(s);}
+ for(const s of list)out.set(s.id,find(s.id));
+ clusterCache.set(catalogue,out);return out;
+}
+// El ciclo se puede ajustar por escenario; sin argumento rige el estimado de 90 s. El desfase de
+// cada cruce sale de su identificador y se reparte sobre el ciclo vigente.
+export function signalPhase(id,time,timing=SIGNAL_CYCLE){
+ const {cycle,green,amber}=timing,p=((time+phaseOffset(id)%cycle)%cycle+cycle)%cycle;
  return {color:p<green?'green':p<green+amber?'amber':'red',wait:p<green?0:cycle-p};
 }
 function compatible(signal,angle){

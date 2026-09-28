@@ -1,5 +1,5 @@
-import {MetricPath} from './simulation.mjs?v=20260912.1';
-import {signalPhase} from './signals.mjs?v=20260912.1';
+import {MetricPath} from './simulation.mjs?v=20260927.1';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260927.1';
 import * as THREE from './vendor/three.module.js';
 
 export class NetworkMap {
@@ -258,11 +258,12 @@ export class NetworkMap {
   animateBuses(now){
     if(!this.targetSimulation||this.visualSettled)return;
     const blend=Math.min(1,(now-this.visualStart)/60);
-    this.visualBuses=this.targetSimulation.buses.map(b=>{const a=this.previousVisual.get(b.id);if(!a||blend>=1||a.state!==b.state||a.routeId!==b.routeId||b.s<a.s)return b;const s=a.s+(b.s-a.s)*blend,pose=this.metricPaths.get(b.routeId).sample(s);return {...b,s,xy:pose.xy,angle:pose.angle};});
+    // Entre dos muestras cada bus avanza por su recorrido y se desliza de carril; nunca retrocede.
+    this.visualBuses=this.targetSimulation.buses.map(b=>{const a=this.previousVisual.get(b.id);if(!a||blend>=1||a.routeId!==b.routeId||b.s<a.s||b.s-a.s>400)return b;const s=a.s+(b.s-a.s)*blend,lat=a.lat+(b.lat-a.lat)*blend,pose=this.metricPaths.get(b.routeId).sample(s);return {...b,s,lat,angle:pose.angle,xy:[pose.xy[0]+Math.sin(pose.angle)*lat,pose.xy[1]-Math.cos(pose.angle)*lat]};});
     this.updateBuses({...this.targetSimulation,buses:this.visualBuses});this.visualSettled=blend>=1;
   }
   updateBuses(simulation,filter='all',forceClusters=false){
-    this.lastSimulation=simulation;const buses=simulation.buses;this.updateSignals(simulation.time);
+    this.lastSimulation=simulation;const buses=simulation.buses;this.updateSignals(simulation.signalTime??simulation.time);
     if(!this.busMesh||this.busCapacity<buses.length){
       if(this.busMesh){for(const m of [this.busMesh,this.busNose]){this.scene.remove(m);m.dispose();m.geometry.dispose();m.material.dispose();}}
       this.busCapacity=Math.max(2048,buses.length*2);
@@ -273,13 +274,13 @@ export class NetworkMap {
     this.busSamples=[];let i=0;const color=new THREE.Color(),cells=new Map(),clusters=[];
     for(const b of buses){
       if(filter!=='all'&&filter!==b.routeId)continue;
-      const travelling=b.state==='moving'||b.state==='signal'||b.state==='traffic',side=Math.max(travelling?7:3,this.mpp*(travelling?2.5:1)),xy=[b.xy[0]+Math.sin(b.angle)*side,b.xy[1]-Math.cos(b.angle)*side];
-      if(b.state==='dwell'&&!b.street){const offset=b.slot?14.5:-14.5;xy[0]+=Math.cos(b.angle)*offset;xy[1]+=Math.sin(b.angle)*offset;}
-      if(b.state==='queue'){xy[0]-=Math.cos(b.angle)*24;xy[1]-=Math.sin(b.angle)*24;}
+      // De cerca, cada bus en su carril y con su largo: se ven las filas. De lejos se separan un poco
+      // los dos sentidos, que en el mapa quedan a menos de un píxel.
+      const far=Math.max(0,this.mpp*2.2-2.5),xy=[b.xy[0]+Math.sin(b.angle)*far,b.xy[1]-Math.cos(b.angle)*far];
       const screen=this.worldToScreen(xy);if(screen[0]<-20||screen[0]>this.w+20||screen[1]<-20||screen[1]>this.h+20)continue;
       if(this.mpp>10&&b.id!==this.selected?.id){const key=Math.floor(screen[0]/28)+':'+Math.floor(screen[1]/28),cell=cells.get(key);if(cell){cell.count++;continue;}const c={count:1,xy,screen};cells.set(key,c);clusters.push(c);}
       this.busSamples.push({id:b.id,xy});
-      const length=Math.max(b.length_m||this.data.vehicle.length_m,this.mpp*8),width=Math.max(this.data.vehicle.width_m,this.mpp*3.4);
+      const length=Math.max(b.length_m||this.data.vehicle.length_m,this.mpp*8),width=Math.max(2.55,this.mpp*3.4);
       this.object.position.set(...xy,3);this.object.rotation.z=b.angle;this.object.scale.set(length,width,1);this.object.updateMatrix();this.busMesh.setMatrixAt(i,this.object.matrix);color.set(b.color);this.busMesh.setColorAt(i,color);
       this.object.position.set(xy[0]+Math.cos(b.angle)*length*.25,xy[1]+Math.sin(b.angle)*length*.25,3.1);this.object.scale.set(length*.16,width*.7,1);this.object.updateMatrix();this.busNose.setMatrixAt(i,this.object.matrix);i++;
     }
@@ -292,7 +293,10 @@ export class NetworkMap {
   updateSignals(time){
     if(!this.signalMesh)return;this.signalMesh.visible=this.signalsEnabled&&this.mpp<4;if(!this.signalMesh.visible)return;
     const color=new THREE.Color();let i=0;
-    for(const s of this.data.busway_signals.signals){this.object.position.set(...s.xy,0);this.object.rotation.z=0;this.object.scale.setScalar(Math.max(2,this.mpp*3));this.object.updateMatrix();this.signalMesh.setMatrixAt(i,this.object.matrix);color.set({green:'#269765',amber:'#e8a41b',red:'#e8394b'}[signalPhase(s.id,time||0).color]);this.signalMesh.setColorAt(i++,color);}
+    // Una intersección, una fase: los nodos de un mismo cruce comparten la del primero, igual que en el motor.
+    const clusters=this.signalGroups||(this.signalGroups=signalClusters(this.data.busway_signals)),timing=this.signalTiming||SIGNAL_CYCLE,offsets=this.signalOffsets;
+    const phase=id=>{const rep=clusters.get(id)||id;if(!offsets||offsets[rep]===undefined)return signalPhase(rep,time||0,timing).color;const p=(((time||0)+offsets[rep])%timing.cycle+timing.cycle)%timing.cycle;return p<timing.green?'green':p<timing.green+timing.amber?'amber':'red';};
+    for(const s of this.data.busway_signals.signals){this.object.position.set(...s.xy,0);this.object.rotation.z=0;this.object.scale.setScalar(Math.max(2,this.mpp*3));this.object.updateMatrix();this.signalMesh.setMatrixAt(i,this.object.matrix);color.set({green:'#269765',amber:'#e8a41b',red:'#e8394b'}[phase(s.id)]);this.signalMesh.setColorAt(i++,color);}
     this.signalMesh.instanceMatrix.needsUpdate=true;this.signalMesh.instanceColor.needsUpdate=true;
   }
   setTheme(theme){this.dark=theme==='dark';this.renderer.setClearColor(this.dark?'#18212b':'#edf1f4');const colors=this.dark?['#233b35','#233d50','#2b3947','#35596c','#607383']:['#d4e3d8','#c5dce8','#ffffff','#b6d5e4','#c1cbd5'];for(const [i,mesh] of (this.contextMeshes||[]).entries())mesh.material.color.set(colors[i]);this.stopInner.material.color.set(this.dark?'#293746':'#ffffff');this.wagonMesh.material.color.set(this.dark?'#637383':'#f9fafb');for(const mesh of this.stationGroup.children)mesh.material.color.set(mesh.userData.palette[this.dark?1:0]);for(const mesh of (this.carriagewayGroup?.children||[]))mesh.material.color.set(mesh.userData.palette[this.dark?1:0]);}

@@ -1,7 +1,9 @@
 /** Civil Bogotá calendar. UTC is used only as arithmetic over local date labels. */
 export const DAY=86400;
 export function dateNumber(date){if(!/^\d{4}-\d{2}-\d{2}$/.test(date))throw new Error('Fecha inválida');const n=Date.parse(date+'T00:00:00Z')/1000;if(!Number.isFinite(n)||new Date(n*1000).toISOString().slice(0,10)!==date)throw new Error('Fecha inválida');return n;}
-export function addDays(date,n){return new Date((dateNumber(date)+n*DAY)*1000).toISOString().slice(0,10);}
+// Memorizadas: son puras y el modelo de pasajeros las pide millones de veces por día simulado.
+const addCache=new Map();
+export function addDays(date,n){const key=date+'|'+n;let out=addCache.get(key);if(out===undefined){out=new Date((dateNumber(date)+n*DAY)*1000).toISOString().slice(0,10);if(addCache.size>4096)addCache.clear();addCache.set(key,out);}return out;}
 export function easter(year){const a=year%19,b=Math.floor(year/100),c=year%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),month=Math.floor((h+l-7*m+114)/31),day=(h+l-7*m+114)%31+1;return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;}
 const holidaysCache=new Map();
 export function holidays(year){
@@ -12,7 +14,8 @@ export function holidays(year){
  const e=easter(year);for(const n of [-3,-2])set.add(addDays(e,n));for(const n of [39,60,68])set.add(monday(addDays(e,n)));
  holidaysCache.set(year,set);return set;
 }
-export function dayType(date){const weekday=new Date(date+'T12:00:00Z').getUTCDay();return weekday===0||holidays(Number(date.slice(0,4))).has(date)?'holiday':weekday===6?'saturday':'weekday';}
+const typeCache=new Map();
+export function dayType(date){let out=typeCache.get(date);if(out===undefined){const weekday=new Date(date+'T12:00:00Z').getUTCDay();out=weekday===0||holidays(Number(date.slice(0,4))).has(date)?'holiday':weekday===6?'saturday':'weekday';if(typeCache.size>4096)typeCache.clear();typeCache.set(date,out);}return out;}
 export function dayMatches(code,date){const kind=dayType(date);return code==='L-D'||(kind==='holiday'?code==='D-F':kind==='saturday'?['S','L-S'].includes(code):['L-V','L-S'].includes(code));}
 export function validityState(r,date){if(r.valid_from&&date<r.valid_from)return 'future';if(r.valid_until&&date>r.valid_until)return 'expired';return 'current';}
 export function dateEligible(r,date){return validityState(r,date)==='current';}

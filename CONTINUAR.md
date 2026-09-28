@@ -1,5 +1,22 @@
 # Continuidad — Transmi 2D
 
+## 27 sep. 2026 — motor de espacio físico (en curso)
+
+Una sesión trabaja en: `app/dist/traffic.mjs` (nuevo), `worker.mjs`, `app.mjs`, `map.mjs`,
+`operation.mjs` (`plan:true` y `departures()`), `signals.mjs` (intersecciones y onda verde),
+`calendar.mjs` (memoización), la cadena `?v=20260927.1` y `app/tests/traffic.test.mjs`. Siguen la
+vista 3D, la geometría de todas las estaciones, el panel de parámetros y la documentación general.
+
+- Cada bus ocupa su largo en un carril de una red de tramos compartidos; filas en semáforos,
+  andenes y empalmes; carril del andén por vagón y onda verde estimada. Detalle y validación en
+  `docs/ESPACIO_FISICO_20260927.md`.
+- El worker ya no precalcula viajes: simula el día de servicio (03:00–03:00) con paso de 1 s y
+  puntos de control cada 15 min. La página recibe arreglos compactos y reconstruye cada bus.
+- `Operation` sigue existiendo para el plan (vagones, señales, salidas) y para sus pruebas; su
+  `build()` ya no lo usa la aplicación.
+- Flota con tope (2.252 por omisión) y reutilización entre terminales. `dayVariation` por omisión
+  apagada: los días del mismo tipo son iguales y reproducibles.
+
 Estado al cierre. Leer antes `README.md`, `docs/OPERACION_Y_DATOS.md` y
 `docs/VALIDACION_FASE2_20260911.md`. No reiniciar la arquitectura: lo que hay está validado y cada
 pieza entró con una medición detrás.
