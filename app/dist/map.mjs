@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260929.8';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.8';
+import {MetricPath} from './simulation.mjs?v=20260929.9';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.9';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260929.8';
+import {pieceShape} from './wagons.mjs?v=20260929.9';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -13,8 +13,8 @@ const LANE=3.4,BUS_WIDTH=2.55,BUS_HEIGHT=3.25,CELL_M=5;
 const BODIES={12:[12],18.5:[10.9,7.3],27.2:[9.8,8.4,8.4]};
 const JOINT=.3;
 const PALETTE={
- light:{crowd:'#dc253b',depot:'#dfe4e9',parked:'#c7343f',clear:'#edf1f4',park:'#d4e3d8',water:'#c5dce8',road:'#ffffff',waterLine:'#b6d5e4',bridge:'#c1cbd5',asphalt:'#c9d1d9',berth:'#bcc6cf',laneMark:'#ffffff',platform:'#f7f9fb',platformEdge:'#8a9dac',roof:'#9fb1c1',building:'#d9dfe5',stopInner:'#ffffff'},
- dark:{crowd:'#ef3b52',depot:'#1c2835',parked:'#a8323c',clear:'#131d28',park:'#1d3530',water:'#1d3547',road:'#2b3947',waterLine:'#35596c',bridge:'#607383',asphalt:'#26333f',berth:'#2f3e4c',laneMark:'#51647a',platform:'#51667a',platformEdge:'#8aa1b5',roof:'#6f879c',building:'#233140',stopInner:'#293746'},
+ light:{crossing:'#a3afba',footbridge:'#b8c3cd',crowd:'#dc253b',depot:'#dfe4e9',parked:'#c7343f',clear:'#edf1f4',park:'#d4e3d8',water:'#c5dce8',road:'#ffffff',waterLine:'#b6d5e4',bridge:'#c1cbd5',asphalt:'#c9d1d9',berth:'#bcc6cf',laneMark:'#ffffff',platform:'#f7f9fb',platformEdge:'#8a9dac',roof:'#9fb1c1',building:'#d9dfe5',stopInner:'#ffffff'},
+ dark:{crossing:'#8397a9',footbridge:'#5d7182',crowd:'#ef3b52',depot:'#1c2835',parked:'#a8323c',clear:'#131d28',park:'#1d3530',water:'#1d3547',road:'#2b3947',waterLine:'#35596c',bridge:'#607383',asphalt:'#26333f',berth:'#2f3e4c',laneMark:'#51647a',platform:'#51667a',platformEdge:'#8aa1b5',roof:'#6f879c',building:'#233140',stopInner:'#293746'},
 };
 
 // Una tesela de edificios: paredes y techo de cada huella extruida a sus pisos, en un solo
@@ -170,6 +170,8 @@ export class NetworkMap {
     if(this.stationRoofs)this.stationRoofs.visible=near<3&&this.is3D;
     if(this.infrastructureGroup)this.infrastructureGroup.visible=near<8;
     if(this.roadBands)this.roadBands.visible=near<3;
+    if(this.crossingGroup)this.crossingGroup.visible=near<1.6;
+    if(this.footbridgeGroup)this.footbridgeGroup.visible=near<4;
     if(this.carriagewayGroup)this.carriagewayGroup.visible=this.carriagewaysEnabled!==false&&near<6&&!this.guidewayGroup;
     // Con la calzada a la vista, la línea de la troncal sobra: se muestra una u otra, igual en 2D y en
     // 3D. El interruptor de la calzada manda en las dos vistas.
@@ -476,8 +478,9 @@ export class NetworkMap {
     this.wagonMesh.count=this.wagonRoof.count=wagons.length;this.wagonMesh.renderOrder=4.6;this.wagonRoof.renderOrder=8;this.stationGroup.add(this.wagonMesh);this.stationRoofs.add(this.wagonRoof);
   }
   /** Volúmenes de la ciudad, por tesela, solo en la vista inclinada. */
-  // Edificios de Catastro junto a las troncales, por teselas de 1 km (tools/build_buildings.py). Solo
-  // se piden en 3D y de cerca, las más próximas primero y de a dos; las lejanas se sueltan.
+  // Edificios de Catastro por teselas de 1 km (tools/build_buildings.py): todos a 350 m de las
+  // troncales y una muestra del resto de la ciudad. Se piden de cerca, las más próximas primero y de
+  // a dos; las lejanas se sueltan.
   async loadBuildings(base){
     try{
       const r=await fetch(base+'index.json');if(!r.ok)return;const index=await r.json();
@@ -490,7 +493,7 @@ export class NetworkMap {
   }
   updateBuildingTiles(){
     const idx=this.buildingIndex;if(!idx||this.buildingsEnabled===false||this.mpp>=(this.is3D?14:6))return;
-    const size=idx.size,[cx,cy]=this.target,reach=Math.min(3500,Math.max(900,this.distance*1.4)),want=[];
+    const size=idx.size,[cx,cy]=this.target,reach=Math.min(5000,Math.max(900,this.distance*1.6)),want=[];
     for(const t of idx.tiles){const dx=Math.max(0,Math.abs(cx-(t.x+.5)*size)-size/2),dy=Math.max(0,Math.abs(cy-(t.y+.5)*size)-size/2),d=Math.hypot(dx,dy);if(d<reach)want.push([d,t]);}
     want.sort((a,b)=>a[0]-b[0]);
     for(const [,t] of want){
@@ -502,14 +505,14 @@ export class NetworkMap {
         mesh.renderOrder=4.7;mesh.userData={key:'building',tile:t};this.buildingGroup.add(mesh);this.buildingTiles.set(t.key,mesh);
       }).catch(()=>this.buildingTiles.delete(t.key)).finally(()=>{this.buildingLoading--;this.updateBuildingTiles();});
     }
-    // Más de 40 teselas en memoria: fuera las más lejanas.
+    // Más de 72 teselas en memoria: fuera las más lejanas.
     const loaded=[...this.buildingTiles.values()].filter(Boolean);
-    if(loaded.length>40){
+    if(loaded.length>72){
       loaded.sort((a,b)=>Math.hypot(cx-(b.userData.tile.x+.5)*size,cy-(b.userData.tile.y+.5)*size)-Math.hypot(cx-(a.userData.tile.x+.5)*size,cy-(a.userData.tile.y+.5)*size));
-      for(const mesh of loaded.slice(0,loaded.length-40)){this.buildingGroup.remove(mesh);mesh.geometry.dispose();this.buildingTiles.delete(mesh.userData.tile.key);}
+      for(const mesh of loaded.slice(0,loaded.length-72)){this.buildingGroup.remove(mesh);mesh.geometry.dispose();this.buildingTiles.delete(mesh.userData.tile.key);}
     }
   }
-  setContext(data){
+  setContext(data,streets=[]){
     const roads=[],waterLines=[],parks=[],water=[],bridges=[];
     const segments=(points,target)=>{for(let i=1;i<points.length;i++)target.push(...points[i-1],0,...points[i],0);};
     for(const f of data.features){
@@ -531,9 +534,11 @@ export class NetworkMap {
     add(parks,'park');add(water,'water');add(roads,'road',true,.75);add(waterLines,'waterLine',true,.85);add(bridges,'bridge',true,.75);
     // De cerca las calles son franjas de calzada, no líneas: dan contexto a los semáforos y a los
     // cruces. Un puente vial sube 5,5 m por nivel con rampas dentro de su propio tramo.
-    const bands=[],decks=[],W=3.6;
-    for(const f of data.features){
+    // Las calles de cross_streets.json solo van como franja: de lejos serían ruido.
+    const bands=[],decks=[];
+    for(const f of [...data.features,...streets]){
       if(f.kind!=='road'||f.closed||f.tunnel||f.points.length<2)continue;
+      const W=(f.width||7.2)/2;
       const P=f.points,cum=[0];for(let i=1;i<P.length;i++)cum.push(cum[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));
       const L=cum.at(-1),H=f.bridge?Math.max(1,Number(f.layer)||1)*5.5:0,ramp=Math.min(60,L/3),z=s=>H?H*Math.min(1,s/ramp,(L-s)/ramp):0;
       for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],len=cum[i]-cum[i-1];if(!len)continue;const nx=-(b[1]-a[1])/len*W,ny=(b[0]-a[0])/len*W,za=z(cum[i-1]),zb=z(cum[i]);
@@ -544,6 +549,40 @@ export class NetworkMap {
     const bandGeometry=new THREE.BufferGeometry();bandGeometry.setAttribute('position',new THREE.Float32BufferAttribute(bands,3));const bandMesh=new THREE.Mesh(bandGeometry,new THREE.MeshBasicMaterial({color:this.palette.road,depthTest:true,depthWrite:false,side:THREE.DoubleSide}));bandMesh.renderOrder=.12;bandMesh.userData.key='road';this.roadBands.add(bandMesh);
     if(decks.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(decks,3));g.computeVertexNormals();const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:this.palette.bridge,side:THREE.DoubleSide}));m.renderOrder=4.4;m.userData.key='bridge';this.roadBands.add(m);}
     this.contextMeshes=[...(this.contextMeshes||[]),...this.roadBands.children];
+  }
+  /** Cruces peatonales en cebra y puentes peatonales con sus rampas (tools/build_cross_streets.py). */
+  setCrossings(data){
+    const bars=[];
+    for(const c of data.crossings||[]){
+      const [a,b]=c.points.length>2?[c.points[0],c.points.at(-1)]:c.points,L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(L<2)continue;
+      const ux=(b[0]-a[0])/L,uy=(b[1]-a[1])/L,hw=(c.width||3)/2,nx=-uy*hw,ny=ux*hw,z=.06;
+      // Franjas de 50 cm cada metro, a lo ancho del paso.
+      for(let s=.5;s+.5<=L;s+=1){const x0=a[0]+ux*s,y0=a[1]+uy*s,x1=x0+ux*.5,y1=y0+uy*.5;
+        bars.push(x0+nx,y0+ny,z,x0-nx,y0-ny,z,x1+nx,y1+ny,z,x1+nx,y1+ny,z,x0-nx,y0-ny,z,x1-nx,y1-ny,z);}
+    }
+    const solid=[],rails=[];
+    for(const f of data.footbridges||[]){
+      const P=f.points,hw=f.kind==='deck'?1.5:1.1;let run=0;
+      for(let i=1;i<P.length;i++){
+        const a=P[i-1],b=P[i],len=Math.hypot(b[0]-a[0],b[1]-a[1]);if(!len)continue;
+        const nx=-(b[1]-a[1])/len*hw,ny=(b[0]-a[0])/len*hw,za=a[2],zb=b[2];
+        solid.push(a[0]+nx,a[1]+ny,za,a[0]-nx,a[1]-ny,za,b[0]+nx,b[1]+ny,zb,b[0]+nx,b[1]+ny,zb,a[0]-nx,a[1]-ny,za,b[0]-nx,b[1]-ny,zb);
+        // Canto del tablero, de 80 cm, y baranda a 1,1 m.
+        for(const sd of [1,-1]){const ax=a[0]+nx*sd,ay=a[1]+ny*sd,bx=b[0]+nx*sd,by=b[1]+ny*sd,da=Math.max(0,za-.8),db=Math.max(0,zb-.8);
+          solid.push(ax,ay,za,bx,by,zb,ax,ay,da,ax,ay,da,bx,by,zb,bx,by,db);rails.push(ax,ay,za+1.1,bx,by,zb+1.1);}
+        // Columnas cada 18 m donde el tablero va alto.
+        for(let s=(18-run%18)%18;s<=len;s+=18){const t=s/len,x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t,z=za+(zb-za)*t-.8;if(z<1)continue;
+          const px=nx*.25/hw,py=ny*.25/hw,qx=(b[0]-a[0])/len*.25,qy=(b[1]-a[1])/len*.25;
+          for(const [dx,dy] of [[px,py],[qx,qy]])solid.push(x-dx,y-dy,0,x+dx,y+dy,0,x+dx,y+dy,z,x-dx,y-dy,0,x+dx,y+dy,z,x-dx,y-dy,z);}
+        run+=len;
+      }
+    }
+    this.crossingGroup?.removeFromParent();this.crossingGroup=new THREE.Group();this.crossingGroup.visible=this.mpp<1.6;this.contextGroup.add(this.crossingGroup);
+    this.footbridgeGroup?.removeFromParent();this.footbridgeGroup=new THREE.Group();this.footbridgeGroup.visible=this.mpp<4;this.contextGroup.add(this.footbridgeGroup);
+    if(bars.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(bars,3));const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette.crossing,depthTest:true,depthWrite:false,side:THREE.DoubleSide}));m.renderOrder=.3;m.userData.key='crossing';this.crossingGroup.add(m);}
+    if(solid.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(solid,3));g.computeVertexNormals();const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:this.palette.footbridge,side:THREE.DoubleSide}));m.renderOrder=4.5;m.userData.key='footbridge';this.footbridgeGroup.add(m);
+      const r=new THREE.BufferGeometry();r.setAttribute('position',new THREE.Float32BufferAttribute(rails,3));const l=new THREE.LineSegments(r,new THREE.LineBasicMaterial({color:'#7d8d9b',transparent:true,opacity:.8}));l.renderOrder=4.6;this.footbridgeGroup.add(l);}
+    this.contextMeshes=[...(this.contextMeshes||[]),...this.crossingGroup.children,...this.footbridgeGroup.children];
   }
 
   // --- Buses ------------------------------------------------------------------------------------
