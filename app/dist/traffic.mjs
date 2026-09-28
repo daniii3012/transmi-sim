@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260928.3';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260928.3';
-import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260928.3';
-import {hash,programmedSpeed} from './operation.mjs?v=20260928.3';
-import {vehicleSpec} from './vehicles.mjs?v=20260928.3';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260928.4';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260928.4';
+import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260928.4';
+import {hash,programmedSpeed} from './operation.mjs?v=20260928.4';
+import {vehicleSpec} from './vehicles.mjs?v=20260928.4';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -362,12 +362,48 @@ export class Traffic{
    claimed:this.claimed.map(node=>[node,this.claims[node],this.claimLink[node],this.claimPos[node]]),lastLane:this.lastLane.slice(),tails:this.tails.slice(),tailEnd:this.tailEnd.slice(),tailLane:this.tailLane.slice(),vehicles:this.vehicles.length,
    parked:[...this.parked].map(([k,v])=>[k,v.map(e=>[...e])]),waitingVehicle:[...this.waitingVehicle],releases:this.releases.a.map(e=>[...e]),groups:[...this.groups].map(([k,g])=>[k,g.time,g.count]),acc:{...this.acc}});
  }
+ /** Lo que define este día simulado: dos motores con la misma llave llegan al mismo estado en cada
+  * instante. Entra todo lo que el motor usa del día —parámetros, servicios, salidas con su desfase,
+  * tipo de día de la fecha y del siguiente (la demanda de la madrugada es la del día siguiente)— y
+  * nada de la fecha misma: dos martes normales comparten puntos de control. */
+ scenarioKey(){
+  if(this.key)return this.key;
+  const p=this.p,params=Object.keys(p).sort().map(k=>k+'='+JSON.stringify(p[k])).join('&');
+  // Y una huella de los datos que no pasan por las salidas: calzada, andenes y semáforos.
+  const data=JSON.stringify(this.g.summary)+'/'+this.info.map(i=>i.stopFront.reduce((x,y)=>x+y,0).toFixed(1)+':'+i.sigOff.reduce((x,y)=>x+y,0).toFixed(1)).join(',');
+  const text=[this.kind,dayType(addDays(this.date,1)),this.seed,this.demandFactor,params,data,this.routes.map(r=>r.id).join(','),this.trips.map(t=>t.rid+'@'+t.time+'/'+t.departure+'/'+t.scheduled).join(',')].join('|');
+  return this.key=hash(text).toString(16).padStart(8,'0')+hash('#'+text).toString(16).padStart(8,'0');
+ }
+ /** Un punto de control en binario compacto, para guardarlo en el navegador o publicarlo ya
+  * calculado: cabecera JSON con lo pequeño y, detrás, los arreglos tal cual. Restaurarlo en un motor
+  * nuevo del mismo escenario da exactamente el mismo estado. */
+ exportCheckpoint(t){
+  const cp=this.checkpoints.get(Math.round(t));if(!cp)return null;
+  const arrays=[['ids',cp.ids],['status',cp.status],['lastLane',cp.lastLane],['tails',cp.tails],['tailEnd',cp.tailEnd],['tailLane',cp.tailLane],...SAVED.map(k=>['state.'+k,cp.state[k]])];
+  const {ids,status,lastLane,tails,tailEnd,tailLane,state,...small}=cp;small.vehicleMeta=this.vehicles.slice(0,cp.vehicles);
+  let offset=0;const index=arrays.map(([name,arr])=>{offset=Math.ceil(offset/8)*8;const e={name,type:arr.constructor.name,offset,length:arr.length};offset+=arr.byteLength;return e;});
+  const header=new TextEncoder().encode(JSON.stringify({version:1,key:this.scenarioKey(),trips:this.trips.length,date:this.date,small,index}));
+  const start=Math.ceil((8+header.length)/8)*8,buffer=new ArrayBuffer(start+offset),view=new DataView(buffer);
+  view.setUint32(0,0x5452464b);view.setUint32(4,header.length);new Uint8Array(buffer,8,header.length).set(header);
+  for(let x=0;x<arrays.length;x++){const arr=arrays[x][1];new Uint8Array(buffer,start+index[x].offset,arr.byteLength).set(new Uint8Array(arr.buffer,arr.byteOffset,arr.byteLength));}
+  return buffer;
+ }
+ importCheckpoint(buffer){
+  const view=new DataView(buffer);if(view.getUint32(0)!==0x5452464b)throw new Error('Punto de control no reconocido');
+  const length=view.getUint32(4),head=JSON.parse(new TextDecoder().decode(new Uint8Array(buffer,8,length)));
+  if(head.key!==this.scenarioKey()||head.trips!==this.trips.length)throw new Error('El punto de control es de otro escenario');
+  const start=Math.ceil((8+length)/8)*8,types={Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array};
+  const cp={...head.small,state:{}};
+  for(const e of head.index){const T=types[e.type],arr=new T(buffer.slice(start+e.offset,start+e.offset+e.length*T.BYTES_PER_ELEMENT));if(e.name.startsWith('state.'))cp.state[e.name.slice(6)]=arr;else cp[e.name]=arr;}
+  if(this.vehicles.length<cp.vehicles)this.vehicles=cp.vehicleMeta.map(v=>({...v}));
+  delete cp.vehicleMeta;this.checkpoints.set(Math.round(cp.t),cp);this.restore(cp);return cp.t;
+ }
  restore(cp){
   const a=this.a;a.status.set(cp.status);
   for(const k of SAVED){const src=cp.state[k],dst=a[k];for(let j=0;j<cp.ids.length;j++)dst[cp.ids[j]]=src[j];}
   this.t=cp.t;this.nextTrip=cp.nextTrip;this.active=[...cp.ids];
   this.lastLane.set(cp.lastLane);this.claims.fill(-1);this.claimed=cp.claimed.map(([node,owner,link,pos])=>{this.claims[node]=owner;this.claimLink[node]=link;this.claimPos[node]=pos;return node;});
-  this.tails.set(cp.tails);this.tailEnd.set(cp.tailEnd);this.tailLane.set(cp.tailLane);this.vehicles.length=cp.vehicles;
+  this.tails.set(cp.tails);this.tailEnd.set(cp.tailEnd);this.tailLane.set(cp.tailLane);if(this.vehicles.length>cp.vehicles)this.vehicles.length=cp.vehicles;
   this.parked=new Map(cp.parked.map(([k,v])=>[k,v.map(e=>[...e])]));this.waitingVehicle=[...cp.waitingVehicle];this.releases=new MinHeap(cp.releases.map(e=>[...e]));
   this.groups=new Map(cp.groups.map(([k,time,count])=>[k,{time,count}]));this.acc={...cp.acc};
   for(const l of this.lists)l.length=0;
@@ -378,10 +414,10 @@ export class Traffic{
   * presupuesto en milisegundos devuelve false si no alcanzó a llegar, para seguir después. */
  seek(time,budget=Infinity){
   const target=Math.max(SERVICE_START,Math.min(SERVICE_START+DAY-this.dt,time));
-  if(target<this.t-this.dt*.5){
-   let best=null;for(const cp of this.checkpoints.values())if(cp.t<=target+1e-9&&(!best||cp.t>best.t))best=cp;
-   this.restore(best);
-  }
+  // Hacia atrás se restaura el punto de control anterior; hacia adelante también, si ya hay uno
+  // guardado más cerca: volver a las 18:00 después de ir a las 7:00 no repite las once horas.
+  let best=null;for(const cp of this.checkpoints.values())if(cp.t<=target+1e-9&&(!best||cp.t>best.t))best=cp;
+  if(target<this.t-this.dt*.5||best&&best.t>this.t+this.dt*.5)this.restore(best);
   const start=performance.now();let steps=0;
   while(this.t<target-1e-9){this.step();if((++steps&63)===0&&performance.now()-start>budget)return false;}
   return true;

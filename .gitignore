@@ -16,3 +16,6 @@ __pycache__/
 # dato curado que sale de ellas, que sí viaja aquí con su procedencia y su SHA-256.
 /data/raw/
 
+
+# Puntos de control del escenario inicial: los genera tools/build_day_checkpoints.mjs al publicar.
+/app/dist/checkpoints/

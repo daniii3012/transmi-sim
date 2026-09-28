@@ -370,3 +370,12 @@ test('app.mjs no declara dos veces un mismo nombre de función en ámbitos que s
  }
  assert.ok(vistos.size>20,'el recorrido no encontró funciones: la prueba no estaría comprobando nada');
 });
+
+test('Cada valor inicial de Parámetros es válido para su campo: con uno inválido el navegador no deja aplicar',()=>{
+ const fuente=fs.readFileSync(new URL('../dist/app.mjs',import.meta.url),'utf8');let revisados=0;
+ for(const m of fuente.matchAll(/\{key:'(\w+)',type:'(?:number|range)'[^}]*?(?:scale:([\d.]+),)?min:([\d.]+),max:([\d.]+),step:([\d.]+)/g)){
+  const [,key,scale,min,max,step]=m,v=DEFAULTS[key]/(Number(scale)||1),k=(v-Number(min))/Number(step);
+  assert.ok(v>=Number(min)&&v<=Number(max)&&Math.abs(k-Math.round(k))<1e-6,`${key}=${v} no cabe en min ${min}, max ${max}, paso ${step}`);revisados++;
+ }
+ assert.ok(revisados>=15,`${revisados} campos revisados`);
+});

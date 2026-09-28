@@ -1,5 +1,5 @@
-import {MetricPath} from './simulation.mjs?v=20260928.3';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260928.3';
+import {MetricPath} from './simulation.mjs?v=20260928.4';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260928.4';
 import * as THREE from './vendor/three.module.js';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
@@ -16,6 +16,20 @@ const PALETTE={
  dark:{clear:'#131d28',park:'#1d3530',water:'#1d3547',road:'#2b3947',waterLine:'#35596c',bridge:'#607383',asphalt:'#26333f',berth:'#2f3e4c',laneMark:'#51647a',platform:'#51667a',platformEdge:'#8aa1b5',roof:'#6f879c',building:'#233140',stopInner:'#293746'},
 };
 
+// Una tesela de edificios: paredes y techo de cada huella extruida a sus pisos, en un solo
+// BufferGeometry. Formato en tools/build_buildings.py.
+function buildingGeometry(buffer,ox,oy,floorHeight){
+  const view=new DataView(buffer),count=view.getUint32(4,true),positions=[];let at=8;
+  for(let b=0;b<count;b++){
+    const floors=view.getUint8(at),n=view.getUint8(at+1);at+=2;
+    const h=floors*floorHeight,ring=[];
+    for(let k=0;k<n;k++){ring.push(new THREE.Vector2(ox+view.getInt16(at,true)/10,oy+view.getInt16(at+2,true)/10));at+=4;}
+    for(let k=0;k<n;k++){const a=ring[k],c=ring[(k+1)%n];positions.push(a.x,a.y,0,c.x,c.y,0,c.x,c.y,h,a.x,a.y,0,c.x,c.y,h,a.x,a.y,h);}
+    for(const [i,j,k] of THREE.ShapeUtils.triangulateShape(ring,[]))positions.push(ring[i].x,ring[i].y,h,ring[j].x,ring[j].y,h,ring[k].x,ring[k].y,h);
+  }
+  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.computeVertexNormals();geometry.computeBoundingSphere();
+  return geometry;
+}
 export class NetworkMap {
   constructor(host, labels, data, onSelect) {
     this.host=host;this.labels=labels;this.labelEntries=new Map();this.data=data;this.onSelect=onSelect;
@@ -156,7 +170,7 @@ export class NetworkMap {
     if(this.infrastructureGroup)this.infrastructureGroup.visible=near<8;
     if(this.carriagewayGroup)this.carriagewayGroup.visible=this.carriagewaysEnabled!==false&&near<6&&!this.guidewayGroup;
     if(this.guidewayGroup){this.guidewayGroup.visible=this.carriagewaysEnabled!==false&&near<5;if(this.laneMarks)this.laneMarks.visible=near<1.4;}
-    if(this.buildingGroup)this.buildingGroup.visible=this.is3D&&near<14;
+    if(this.buildingGroup){this.buildingGroup.visible=this.is3D&&near<14;this.updateBuildingTiles();}
     if(labels)this.updateLabels();this.positionLabels();this.updateMarker();this.updateScale();
     if(this.lastSimulation)this.updateBuses(this.lastSimulation,'all',true);
     this.updateCompass();
@@ -339,12 +353,38 @@ export class NetworkMap {
     this.wagonMesh.count=this.wagonRoof.count=wagons.length;this.wagonMesh.renderOrder=4.6;this.wagonRoof.renderOrder=8;this.stationGroup.add(this.wagonMesh);this.stationRoofs.add(this.wagonRoof);
   }
   /** Volúmenes de la ciudad, por tesela, solo en la vista inclinada. */
-  setBuildings(tiles){
-    if(this.buildingGroup){this.scene.remove(this.buildingGroup);this.buildingGroup.traverse(o=>{o.geometry?.dispose();});}
-    this.buildingGroup=new THREE.Group();this.buildingGroup.visible=false;this.scene.add(this.buildingGroup);
-    const material=new THREE.MeshLambertMaterial({color:this.palette.building});this.buildingMaterial=material;
-    for(const geometry of tiles){const mesh=new THREE.Mesh(geometry,material);mesh.renderOrder=4.7;mesh.userData.key='building';this.buildingGroup.add(mesh);}
-    this.updateCamera();
+  // Edificios de Catastro junto a las troncales, por teselas de 1 km (tools/build_buildings.py). Solo
+  // se piden en 3D y de cerca, las más próximas primero y de a dos; las lejanas se sueltan.
+  async loadBuildings(base){
+    try{
+      const r=await fetch(base+'index.json');if(!r.ok)return;const index=await r.json();
+      this.buildingIndex={base,size:index.method.tile_m,floor:index.method.floor_height_m||3,tiles:index.tiles.map(([x,y,count])=>({key:x+'_'+y,x,y,count}))};
+      this.buildingTiles=new Map();this.buildingLoading=0;
+      this.buildingGroup=new THREE.Group();this.buildingGroup.visible=false;this.scene.add(this.buildingGroup);
+      this.buildingMaterial=new THREE.MeshLambertMaterial({color:this.palette.building});
+      this.updateBuildingTiles();
+    }catch{}
+  }
+  updateBuildingTiles(){
+    const idx=this.buildingIndex;if(!idx||!this.is3D||this.mpp>=14)return;
+    const size=idx.size,[cx,cy]=this.target,reach=Math.min(3500,Math.max(900,this.distance*1.4)),want=[];
+    for(const t of idx.tiles){const dx=Math.max(0,Math.abs(cx-(t.x+.5)*size)-size/2),dy=Math.max(0,Math.abs(cy-(t.y+.5)*size)-size/2),d=Math.hypot(dx,dy);if(d<reach)want.push([d,t]);}
+    want.sort((a,b)=>a[0]-b[0]);
+    for(const [,t] of want){
+      if(this.buildingTiles.has(t.key))continue;if(this.buildingLoading>=2)break;
+      this.buildingLoading++;this.buildingTiles.set(t.key,null);
+      fetch(`${idx.base}${t.key}.bin`).then(r=>{if(!r.ok)throw new Error(r.status);return r.arrayBuffer();}).then(buffer=>{
+        if(this.buildingIndex!==idx)return;
+        const mesh=new THREE.Mesh(buildingGeometry(buffer,t.x*size,t.y*size,idx.floor),this.buildingMaterial);
+        mesh.renderOrder=4.7;mesh.userData={key:'building',tile:t};this.buildingGroup.add(mesh);this.buildingTiles.set(t.key,mesh);
+      }).catch(()=>this.buildingTiles.delete(t.key)).finally(()=>{this.buildingLoading--;this.updateBuildingTiles();});
+    }
+    // Más de 40 teselas en memoria: fuera las más lejanas.
+    const loaded=[...this.buildingTiles.values()].filter(Boolean);
+    if(loaded.length>40){
+      loaded.sort((a,b)=>Math.hypot(cx-(b.userData.tile.x+.5)*size,cy-(b.userData.tile.y+.5)*size)-Math.hypot(cx-(a.userData.tile.x+.5)*size,cy-(a.userData.tile.y+.5)*size));
+      for(const mesh of loaded.slice(0,loaded.length-40)){this.buildingGroup.remove(mesh);mesh.geometry.dispose();this.buildingTiles.delete(mesh.userData.tile.key);}
+    }
   }
   setContext(data){
     const roads=[],waterLines=[],parks=[],water=[],bridges=[];

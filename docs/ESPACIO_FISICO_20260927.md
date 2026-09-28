@@ -135,8 +135,27 @@ guarda un punto de control. Retroceder el reloj restaura el anterior y vuelve a 
 exactamente lo mismo que la primera vez. Pasar la medianoche no reinicia nada. Una prueba compara el
 estado al que se llega avanzando, retrocediendo y desde cero.
 
+Esa misma propiedad permite no simular dos veces. Un punto de control se exporta como binario
+compacto —0,43 MB con la red entera, 0,10 MB comprimido— y se restaura en un motor nuevo del mismo
+escenario con exactamente el mismo resultado (hay prueba). El escenario tiene una llave
+(`Traffic.scenarioKey`) que resume todo lo que el motor usa del día: parámetros, servicios, salidas
+con su desfase, tipo de día de la fecha y del siguiente, y una huella de calzada, andenes y
+semáforos. Con ella:
+
+- **Al publicar en Pages**, `tools/build_day_checkpoints.mjs` simula el escenario inicial de cada
+  tipo de día de las próximas tres semanas —cinco: lunes a jueves, viernes, sábado, domingo y
+  domingo antes de festivo— y guarda su estado cada hora en `checkpoints/`, que no se versiona.
+- **En el navegador**, el worker guarda en IndexedDB el estado de cada hora que simula, para
+  cualquier escenario: otros parámetros u otra selección se abren al instante la segunda vez. Se
+  conservan los ocho escenarios más usados; lo de otra versión de la aplicación se borra.
+
+Antes de simular, el worker carga el punto guardado más cercano que no pase de la hora pedida si
+ahorra al menos 20 minutos de simulación; también salta hacia adelante a un punto que ya tenga en
+memoria. Nada de esto cambia el resultado: solo el tiempo de espera.
+
 Todos los días laborables usan el mismo horario publicado y el mismo perfil de demanda, así que sin
-más son idénticos, igual que los sábados entre sí y los domingos y festivos. La opción **Variación
+más son idénticos —también las salidas de los servicios sin horario publicado, cuyo desfase dependía
+de la fecha y ahora depende del tipo de día—, igual que los sábados entre sí y los domingos y festivos. La opción **Variación
 entre días** da a cada fecha su propia semilla: desfase de despacho de ±1 min, atención ±15 % y un
 nivel de demanda ±5 %. La misma fecha se repite igual; dos martes ya no.
 
@@ -146,7 +165,7 @@ nivel de demanda ±5 %. La misma fecha se repite igual; dos martes ya no.
 `observed_times.json`—, un día laborable completo con carriles medidos: mediana 1,02, percentil 10
 0,91 y 90 1,15; ninguna hora fuera de 0,96–1,06. **Contra el horario publicado**, 0,88: los buses
 reales van más rápido de lo que publica el horario, que acolcha los tramos largos. Pico de 1.657 buses
-en servicio y 2.113 vehículos en el día, dentro de la flota real.
+en servicio y 2.145 vehículos en el día, dentro de la flota real.
 
 Antes de medir los carriles, con un solo carril donde OSM no decía otra cosa —la tabla que sigue—, la
 punta se alargaba entre 20 y 35 % sobre lo publicado por colas que en la calle no existen:

@@ -106,3 +106,17 @@ test('Los carriles salen del ancho medido de la calzada: Américas tiene dos ent
  for(let s=from+100;s<to-100;s+=25){const loc=guide.locate(r.id,s);n++;if(guide.lanesAt(loc.link,loc.offset)===2)two++;}
  assert.ok(two/n>.85,`${two} de ${n} puntos con dos carriles`);
 });
+
+test('Un punto de control exportado y restaurado en un motor nuevo sigue exactamente igual',()=>{
+ const a=build(SMALL).traffic;a.seek(7*3600);const buffer=a.exportCheckpoint(7*3600);assert.ok(buffer&&buffer.byteLength>1000);
+ a.seek(7*3600+20*60);const expected=frameKey(a.frame(a.t));
+ const b=build(SMALL).traffic;b.importCheckpoint(buffer);b.seek(7*3600+20*60);
+ assert.equal(frameKey(b.frame(b.t)),expected);
+});
+
+test('Dos martes normales comparten llave de escenario —y puntos de control—; con variación diaria, no',()=>{
+ const key=(date,params={})=>build({params},date).traffic.scenarioKey();
+ assert.equal(key('2026-09-22'),key('2026-09-29'),'toda la red, incluidas las rutas sin horario publicado');
+ assert.notEqual(key('2026-09-22'),key('2026-09-26'),'un sábado es otro día');
+ assert.notEqual(key('2026-09-22',{dayVariation:true}),key('2026-09-29',{dayVariation:true}));
+});

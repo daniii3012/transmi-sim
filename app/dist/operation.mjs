@@ -1,10 +1,10 @@
-import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260928.3';
-import {vehicleSpec} from './vehicles.mjs?v=20260928.3';
-import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED} from './signals.mjs?v=20260928.3';
-import {travelTimeAtDistance} from './travel.mjs?v=20260928.3';
-import {generatedPassengers,alightFraction,DEMAND_BASELINE} from './passengers.mjs?v=20260928.3';
-import {placeVisit} from './station-layouts.mjs?v=20260928.3';
-import {MetricPath} from './simulation.mjs?v=20260928.3';
+import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260928.4';
+import {vehicleSpec} from './vehicles.mjs?v=20260928.4';
+import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED} from './signals.mjs?v=20260928.4';
+import {travelTimeAtDistance} from './travel.mjs?v=20260928.4';
+import {generatedPassengers,alightFraction,DEMAND_BASELINE} from './passengers.mjs?v=20260928.4';
+import {placeVisit} from './station-layouts.mjs?v=20260928.4';
+import {MetricPath} from './simulation.mjs?v=20260928.4';
 export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1,mode:'auto',cruiseKmh:60,streetKmh:50,acceleration:.8,braking:1.1,turnaround:240,variableDispatch:true,reinforcements:true,signals:true,beyondValidity:true,programmedDispatch:true,programmedRunning:true,observedRunning:true,
  // Espacio físico (traffic.mjs). Separación en marcha y parado, ciclo semafórico y atención son
  // decisiones de modelo, rotuladas como estimación; la variación diaria cambia de una fecha a otra
@@ -141,6 +141,9 @@ export class Operation {
  }
  // Las salidas de un día de servicio, en segundos desde su medianoche: las del horario publicado
  // donde existe y la regla de minutos donde no. Mismo criterio que `build`, que la usa.
+ // Sin variación diaria, el desfase de las salidas sin horario publicado depende del tipo de día y
+ // no de la fecha: dos martes normales salen igual, como promete el parámetro.
+ dispatchTag(date){return (this.params.dayVariation?date:dayType(date))+(this.params.variant?'/'+this.params.variant:'');}
  departures(date){
   const out=[],active=this.params.programmedDispatch?gtfsServices(this.data.schedule,date):null;
   for(const r of this.routes.values()){
@@ -151,7 +154,7 @@ export class Operation {
     let t=start+hash(r.id)%23,sequence=0;
     while(t<end){
      const period=demandPeriod(t,date,this.params.mode),nominal=period==='peak'?this.params.peakHeadway:this.params.offpeakHeadway;
-     const seed=hash(r.id+'/'+date+'/'+sequence++),jitter=this.params.variableDispatch?(seed%25-12)/100:0;
+     const seed=hash(r.id+'/'+this.dispatchTag(date)+'/'+sequence++),jitter=this.params.variableDispatch?(seed%25-12)/100:0;
      out.push({time:t,rid:r.id,date,departure:t});
      const hour=Math.floor((t%DAY)/3600),pressure=Math.max(...r.visits.slice(0,-1).map(s=>{const station=this.stations.get(s.station_id),share=this.demandShares.get(s.station_id+'/'+s.direction);return (station.demand_profile?.hourly[hour]||0)*.5*DEMAND_BASELINE*this.params.demand/Math.max(1,share?.all||1)/3600*nominal;}));
      if(this.params.reinforcements&&period==='peak'&&nominal>=210&&seed%7===0&&pressure>vehicleSpec(r).capacity*.9&&t+120<end)out.push({time:t+120,rid:r.id,date,departure:t+120,reinforcement:true});
@@ -227,7 +230,7 @@ export class Operation {
      const [start,end]=windows[wi];let t=start+hash(r.id)%23;
      let sequence=0;while(t<end){
       const period=demandPeriod(t,date,this.params.mode),nominal=period==='peak'?this.params.peakHeadway:this.params.offpeakHeadway;
-      const seed=hash(r.id+'/'+date+'/'+sequence++),jitter=this.params.variableDispatch?(seed%25-12)/100:0;
+      const seed=hash(r.id+'/'+this.dispatchTag(date)+'/'+sequence++),jitter=this.params.variableDispatch?(seed%25-12)/100:0;
       queue.push({type:'dispatch',time:offset+t,rid:r.id,date,departure:t});
       // At most one interleaved reinforcement on a minority of peak departures.
       const hour=Math.floor((t%DAY)/3600),pressure=Math.max(...r.visits.slice(0,-1).map(s=>{const station=this.stations.get(s.station_id),share=this.demandShares.get(s.station_id+'/'+s.direction);return (station.demand_profile?.hourly[hour]||0)*.5*DEMAND_BASELINE*this.params.demand/Math.max(1,share?.all||1)/3600*nominal;}));

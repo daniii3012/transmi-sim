@@ -1,7 +1,8 @@
-import {Operation} from './operation.mjs?v=20260928.3';
-import {JourneyPlanner} from './planner.mjs?v=20260928.3';
-import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260928.3';
-import {DAY,addDays} from './calendar.mjs?v=20260928.3';
+import {Operation} from './operation.mjs?v=20260928.4';
+import {JourneyPlanner} from './planner.mjs?v=20260928.4';
+import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260928.4';
+import {DAY,addDays} from './calendar.mjs?v=20260928.4';
+import * as stored from './checkpoints.mjs?v=20260928.4';
 // El motor de espacio físico corre aquí. La página pide un instante —fecha y segundos desde la
 // medianoche anterior más un día, como hasta ahora— y el worker lo traduce a su día de servicio,
 // que va de las 03:00 a las 03:00: pasar la medianoche no reinicia nada, y cambiar de fecha solo
@@ -10,7 +11,22 @@ import {DAY,addDays} from './calendar.mjs?v=20260928.3';
 // Llegar a una hora exige simular desde las 03:00. Eso se hace por tandas cortas, avisando del
 // avance y mandando de vez en cuando cómo va el día, para que el mapa lo muestre ponerse al día en
 // vez de quedarse en blanco; una petición nueva reemplaza a la anterior sin esperar a que termine.
-let generation=0,op=null,guide=null,traffic=null,planner=null,target=null,timer=0,selected=null,lastPreview=0;
+//
+// Antes de simular se busca un punto de control guardado —publicado con la página o de una visita
+// anterior— que ahorre camino, y los de cada hora que se van simulando se guardan en el navegador.
+let generation=0,op=null,guide=null,traffic=null,planner=null,target=null,timer=0,selected=null,lastPreview=0,loading=false;
+const scenarios=new Map();// llave del escenario → promesa de saber qué hay guardado
+const SAVE_EVERY=3600,WORTH=1200;// guardar cada hora; cargar si ahorra al menos 20 min de simulación
+function lookup(){const key=traffic.scenarioKey();if(!scenarios.has(key))scenarios.set(key,stored.available(key).catch(()=>null).then(()=>true));return scenarios.get(key);}
+// Punto de control guardado que conviene cargar antes de simular hasta `goal`, o -1.
+function shortcut(goal){
+ let from=traffic.t<=goal+.5?traffic.t:-Infinity;for(const cp of traffic.checkpoints.values())if(cp.t<=goal+1e-9&&cp.t>from)from=cp.t;
+ return stored.best(traffic.scenarioKey(),goal,from+WORTH);
+}
+function persist(){
+ const key=traffic.scenarioKey();
+ for(const t of traffic.checkpoints.keys())if(t>SERVICE_START&&t%SAVE_EVERY===0&&!stored.has(key,t)){const buffer=traffic.exportCheckpoint(t);if(buffer)stored.save(key,t,buffer);}
+}
 const post=(m,transfer)=>self.postMessage(m,transfer||[]);
 function serviceOf(date,time){let d=date,t=time-DAY;if(t<SERVICE_START){d=addDays(date,-1);t+=DAY;}return {date:d,t};}
 // De la hora del día de servicio a la de la página, que se cuenta desde la fecha que tiene puesta.
@@ -24,10 +40,18 @@ function packFrame(request){
   transfer:[f.trip.buffer,f.route.buffer,f.s.buffer,f.lat.buffer,f.len.buffer,f.state.buffer,f.speed.buffer,f.load.buffer,f.cap.buffer,f.offnet.buffer]};
 }
 function pump(){
- timer=0;if(!target||!op)return;
+ timer=0;if(!target||!op||loading)return;
  const request=target;
  if(!traffic||traffic.date!==request.service.date){traffic=new Traffic(op,guide,request.service.date);post({type:'building',generation,serviceDate:traffic.date});}
- const from=traffic.t,done=traffic.seek(request.service.t,45);
+ const known=lookup();
+ if(!known.settled){loading=true;known.then(()=>{known.settled=true;loading=false;schedule();});return;}
+ const hit=shortcut(request.service.t);
+ if(hit>0){
+  const engine=traffic,mine=generation;loading=true;
+  stored.load(engine.scenarioKey(),hit).then(buffer=>{if(engine===traffic&&mine===generation)engine.importCheckpoint(buffer);}).catch(error=>console.warn('Punto de control guardado descartado:',error.message)).finally(()=>{loading=false;schedule();});
+  return;
+ }
+ const done=traffic.seek(request.service.t,45);persist();
  if(target!==request)return schedule();
  if(!done){
   // Un retraso corto —el reloj que avanzó un poco más que la última tanda— se recupera en silencio:
@@ -50,7 +74,7 @@ function schedule(){if(!timer){timer=1;channel.port2.postMessage(0);}}
 self.onmessage=({data:m})=>{
  try{
   if(m.type==='init'){
-   generation=m.generation;traffic=null;planner=null;target=null;
+   generation=m.generation;traffic=null;planner=null;target=null;loading=false;
    const start=performance.now();op=new Operation(m.data,{...m.config,plan:true});guide=new Guideway([...op.routes.values()],{lanes:m.data.busway_lanes,geometry:m.data.busway_geometry});
    // Los desfases semafóricos coordinados se calculan una vez y viajan a la página, que dibuja las
    // luces con los mismos.

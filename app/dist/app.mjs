@@ -1,9 +1,9 @@
-import {mountShell} from './shell.mjs?v=20260928.3';
-import {NetworkMap} from './map.mjs?v=20260928.3';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260928.3';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260928.3';
-import {STATES} from './traffic.mjs?v=20260928.3';
-import {registerSimulationTools} from './webmcp.mjs?v=20260928.3';
+import {mountShell} from './shell.mjs?v=20260928.4';
+import {NetworkMap} from './map.mjs?v=20260928.4';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260928.4';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260928.4';
+import {STATES} from './traffic.mjs?v=20260928.4';
+import {registerSimulationTools} from './webmcp.mjs?v=20260928.4';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -45,11 +45,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260928.3',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260928.4',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260928.3',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260928.4',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -78,7 +78,7 @@ try{
  worker.onmessage=({data:m})=>{
   if(m.generation!==generation)return;
   if(m.type==='error'){ready=false;$('#loading').hidden=true;$('#error').hidden=false;$('#error').textContent='No se pudo preparar el escenario: '+m.message;return;}
-  if(m.type==='ready'){ready=true;routeIds=m.routeIds;map.signalOffsets=m.signalOffsets;if(m.guideway)map.setGuideway(m.guideway);pendingSample=true;$('#plan-journey').disabled=false;renderRoutes();}
+  if(m.type==='ready'){ready=true;routeIds=m.routeIds;map.signalOffsets=m.signalOffsets;if(m.guideway)map.setGuideway(m.guideway);if(!map.buildingIndex)map.loadBuildings('./buildings/');pendingSample=true;$('#plan-journey').disabled=false;renderRoutes();}
   if(m.type==='building'){$('#loading').hidden=false;$('#loading').textContent='Preparando el día de servicio…';}
   if(m.type==='progress'){showProgress(m);if(m.frame&&(!settled||m.target-m.at>1800))map.acceptSimulation(buildSnap(m),false);}
   if(m.type==='state'){if(m.requestId!==sampleSequence)return;pendingSample=false;$('#loading').hidden=true;const next=buildSnap(m);const animate=settled&&!clock.paused&&!scrubbing&&next.serviceDate===snap.serviceDate&&m.time>=snap.time&&m.time-snap.time<clock.speed*.5;if(!settled){settled=true;if(activePanel==='depots')worker.postMessage({type:'depots',generation});requestOverview();}snap=next;map.acceptSimulation(snap,animate);updateUI();if(selection?.kind==='bus'&&!snap.buses.some(b=>b.id===selection.id))renderBus();}
@@ -100,7 +100,7 @@ try{
   {key:'variableDispatch',type:'check',label:'Variación entre salidas'},
   {key:'reinforcements',type:'check',label:'Refuerzos ocasionales en pico'},
   {key:'beyondValidity',type:'check',label:'Operar servicios con vigencia vencida',help:'Conservan su último horario publicado; la ficha del servicio dice hasta cuándo rigió.'},
-  {key:'fleet',type:'number',label:'Flota disponible',unit:'buses',min:200,max:8000,step:10,help:'2.202 troncales que publica TRANSMILENIO (feb. 2026) más 50 duales eléctricos de 2026. Si se agota, la salida espera un bus libre.'},
+  {key:'fleet',type:'number',label:'Flota disponible',unit:'buses',min:200,max:8000,step:1,help:'2.202 troncales que publica TRANSMILENIO (feb. 2026) más 50 duales eléctricos de 2026. Si se agota, la salida espera un bus libre.'},
   {group:'Circulación',intro:'Cómo ruedan los buses por su carril.'},
   {key:'cruiseKmh',type:'number',label:'Tope en la troncal',unit:'km/h',min:25,max:75,step:1,help:'La velocidad de cada trecho sale de las lecturas de la flota; esto es el techo.'},
   {key:'streetKmh',type:'number',label:'Tope en calle mixta',unit:'km/h',min:20,max:60,step:1},
@@ -428,6 +428,8 @@ try{
  $('#zoom-in').onclick=()=>map.zoom(1/1.4);$('#zoom-out').onclick=()=>map.zoom(1.4);$('#fit').onclick=()=>{following=false;fitSelection();};$('#context-toggle').onclick=()=>{map.contextGroup.visible=!map.contextGroup.visible;$('#context-toggle').setAttribute('aria-pressed',map.contextGroup.visible);};$('#lanes-toggle').onclick=()=>{map.carriagewaysEnabled=map.carriagewaysEnabled===false;$('#lanes-toggle').setAttribute('aria-pressed',map.carriagewaysEnabled);if(map.carriagewayGroup)map.carriagewayGroup.visible=map.carriagewaysEnabled&&map.mpp<6;};
  $('#signals-toggle').onclick=()=>{const oculto=map.signalsEnabled;map.setSignals(!oculto);$('#signals-toggle').setAttribute('aria-pressed',oculto);$('#signals-toggle').classList.toggle('active',oculto);};
  $('#corridors-toggle').onclick=()=>{const faded=!map.corridorsFaded;map.setCorridorsFaded(faded);$('#corridors-toggle').setAttribute('aria-pressed',faded);$('#corridors-toggle').classList.toggle('active',faded);};map.onPan=()=>following=false;
+ // Color por ocupación: pasajeros a bordo frente a la capacidad del bus, de verde a rojo.
+ $('#load-toggle').onclick=()=>{const on=map.busColor!=='load';map.setBusColorMode(on?'load':'route');$('#load-toggle').setAttribute('aria-pressed',on);$('#load-toggle').classList.toggle('active',on);$('#load-legend').hidden=!on;};
  $('#close-inspector').onclick=()=>{clearSelection();renderRoutes();};
  const coverage=el('div',undefined,'coverage-grid');for(const [value,label] of [[data.counts.map_records,'registros del mapa'],[data.counts.map_codes,'códigos distintos'],[data.counts.ready,'variantes utilizables'],[data.counts.pending,'registros pendientes']]){const box=el('div');box.append(el('strong',value),el('span',label));coverage.append(box);}$('#coverage').append(coverage);// Fechas y cifras derivadas del propio dato: una instantánea nueva las actualiza sola.
  const mes=iso=>new Date(iso+'T12:00:00Z').toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'});

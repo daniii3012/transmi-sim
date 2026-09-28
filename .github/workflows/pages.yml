@@ -80,6 +80,20 @@ jobs:
       - name: Preparar Pages
         uses: actions/configure-pages@v5
 
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # El día del escenario inicial simulado de antemano, con su estado cada hora: quien abre la
+      # página a media tarde no espera a que el motor recorra el día desde las 03:00. Se genera aquí
+      # y no se versiona; un punto de control de otra versión de la app nunca se usa.
+      - name: Puntos de control del escenario inicial
+        run: |
+          set -euo pipefail
+          node tools/build_day_checkpoints.mjs --days 21
+          test -s app/dist/checkpoints/index.json
+
       - name: Empaquetar solo app/dist
         uses: actions/upload-pages-artifact@v3
         with:
