@@ -260,11 +260,13 @@ la simplifica a 0,4 m, descarta las de menos de 12 m² y le da 3 m por piso
 propio script), con `index.json` de procedencia. La vista 3D pide solo las teselas cerca
 de la cámara.
 
-Más allá de esa franja, `data/raw/construcciones_ciudad/<instantánea>/construccion.jsonl` trae el 30 %
-de las construcciones de toda la ciudad, elegidas por `MOD(OBJECTID,10)<3` para que la muestra sea
-siempre la misma. El script toma de ella las que la franja no trae (por OBJECTID), con un mínimo de
-30 m²: cerca de la troncal la ciudad está entera y lejos, a menor densidad. Hoy son 544.022 edificios
-en 600 teselas (14,5 MB); la vista pide teselas hasta 5 km y guarda 72 (2,5 km y 40 en un teléfono).
+Más allá de esa franja la densidad baja por escalones para que no se note el corte.
+`data/raw/construcciones_1km/<instantánea>/construccion.json` trae, hasta 1 km de la calzada, las
+construcciones con `MOD(OBJECTID,10)` de 3 a 6, y `data/raw/construcciones_ciudad/<instantánea>/construccion.jsonl`
+el 30 % de toda la ciudad (`MOD(OBJECTID,10)<3`): juntas dan el 70 % hasta 1 km y el 30 % más lejos,
+siempre los mismos edificios. El script toma de ellas las que la franja no trae (por OBJECTID), con un
+mínimo de 20 y 30 m². Hoy son 707.165 edificios (272.598 de la franja, 163.143 hasta 1 km y 271.424 de
+fondo) en 600 teselas (18,8 MB); la vista pide teselas hasta 5 km y guarda 72 (2,5 km y 40 en un teléfono).
 
 ### Cambia la ubicación o la geometría física de una estación o un portal
 

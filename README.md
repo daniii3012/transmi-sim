@@ -85,7 +85,7 @@ lo que ya simuló de cualquier otro, así que volver a una hora abre al instante
 | Carriles de la calzada exclusiva | [Mapa de Referencia](https://datosabiertos.bogota.gov.co/dataset/mapa-de-referencia) · IDECA / UAECD | Ancho medido de cada calzada: 237 km con dos carriles y 72 con uno |
 | Andenes, separadores, construcciones | [Datos Abiertos Bogotá](https://datosabiertos.bogota.gov.co/) · IDECA | Contexto urbano fechado y con licencia por ficha |
 | Patios troncales | [Mapa de Referencia](https://datosabiertos.bogota.gov.co/dataset/mapa-de-referencia) · IDECA / UAECD, capa Patios SITP | 15 patios, 57,5 ha, con los buses que no están en servicio |
-| Edificios de la vista 3D | [Mapa de Referencia](https://datosabiertos.bogota.gov.co/dataset/mapa-de-referencia) · IDECA / UAECD, capa Construcción | 272.598 construcciones a 350 m de la calzada exclusiva y 271.424 más en el resto de la ciudad (muestra del 30 %), con su número de pisos |
+| Edificios de la vista 3D | [Mapa de Referencia](https://datosabiertos.bogota.gov.co/dataset/mapa-de-referencia) · IDECA / UAECD, capa Construcción | 707.165 construcciones con su número de pisos: todas a 350 m de la calzada exclusiva, el 70 % hasta 1 km y el 30 % en el resto de la ciudad |
 | Festivos | [Ley 51 de 1983](https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=4954) | Calendario colombiano con traslados al lunes y Pascua |
 
 Cada instantánea queda fechada y con su SHA-256. La aplicación no consulta nada mientras se juega. Detalle en [actualizar los datos](docs/ACTUALIZAR_DATOS.md).

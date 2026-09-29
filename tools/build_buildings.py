@@ -6,9 +6,9 @@ construcción de la ciudad con su huella y su número de pisos: en un kilómetro
 trae diez veces más edificios que OpenStreetMap, que además casi no tiene alturas. El simulador solo
 necesita el paisaje de las troncales: la instantánea cruda trae lo que hay a 350 m de la calzada
 exclusiva (la descarga una herramienta fuera del repositorio; ver docs/ACTUALIZAR_DATOS.md).
-Más allá de esa franja el paisaje es de fondo: una segunda instantánea trae el 30 % de las
-construcciones de toda la ciudad (muestra determinista por OBJECTID) y de ella se toman las que la
-franja no trae, así que cerca de la troncal la ciudad está entera y lejos, a menor densidad.
+Más allá de esa franja la densidad baja por escalones, para que no se note un corte: hasta 1 km, el
+70 % de las construcciones, y en el resto de la ciudad el 30 %, siempre las mismas porque la muestra
+es determinista por OBJECTID. De cada instantánea se toman las que la franja no trae.
 
 Cada huella se simplifica (0,4 m), pierde los patios interiores y guarda sus pisos; la altura es de
 3 m por piso. Se agrupan por el kilómetro que contiene su centroide y cada tesela es un binario
@@ -43,6 +43,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 TILE = 1000        # m
 SIMPLIFY = 0.4     # m
 MIN_AREA = 12.0    # m²: casetas y voladizos sueltos no se ven desde la cámara
+MIN_AREA_MID = 20.0  # m²: entre 350 m y 1 km
 MIN_AREA_FAR = 30.0  # m²: en el fondo, solo lo que se alcanza a ver de lejos
 MAX_VERTICES = 255
 MAX_FLOORS = 70
@@ -51,6 +52,7 @@ MAX_FLOORS = 70
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--snapshot", help="carpeta de data/raw/construcciones; por omisión la de latest.json")
+    parser.add_argument("--mid", help="carpeta de data/raw/construcciones_1km; por omisión la de latest.json si existe")
     parser.add_argument("--city", help="carpeta de data/raw/construcciones_ciudad; por omisión la de latest.json si existe")
     args = parser.parse_args()
     raw_root = ROOT / "data/raw/construcciones"
@@ -60,6 +62,9 @@ def main() -> None:
     city_root = ROOT / "data/raw/construcciones_ciudad"
     city = args.city or (json.loads((city_root / "latest.json").read_text())["snapshot"] if (city_root / "latest.json").exists() else None)
     city_manifest = json.loads((city_root / city / "manifest.json").read_text()) if city else None
+    mid_root = ROOT / "data/raw/construcciones_1km"
+    mid = args.mid or (json.loads((mid_root / "latest.json").read_text())["snapshot"] if (mid_root / "latest.json").exists() else None)
+    mid_manifest = json.loads((mid_root / mid / "manifest.json").read_text()) if mid else None
     projection = json.loads((ROOT / "app/dist/services.json").read_text())["projection"]
     to_xy = Transformer.from_crs("EPSG:4326", projection, always_xy=True)
 
@@ -73,18 +78,26 @@ def main() -> None:
     kept = dropped = 0
     floors_seen = []
     near_ids = set()
-    far_kept = 0
+    far_kept = mid_kept = 0
+    min_area = (MIN_AREA, MIN_AREA_MID, MIN_AREA_FAR)
 
+    # Tres capas: la franja de 350 m entera (0); hasta 1 km, la parte MOD(OBJECTID,10) de 3 a 6 que
+    # con la muestra de la ciudad suma el 70 % (1); y la muestra del 30 % de la ciudad (2). Lo que la
+    # franja ya trae no se repite.
     def features():
         for f in json.loads((folder / "construccion.json").read_text())["features"]:
             near_ids.add((f.get("attributes") or {}).get("OBJECTID"))
-            yield f, False
+            yield f, 0
+        if mid:
+            for f in json.loads((mid_root / mid / "construccion.json").read_text())["features"]:
+                if (f.get("attributes") or {}).get("OBJECTID") not in near_ids:
+                    yield f, 1
         if city:
             with open(city_root / city / "construccion.jsonl") as fh:
                 for line in fh:
                     f = json.loads(line)
                     if (f.get("attributes") or {}).get("OBJECTID") not in near_ids:
-                        yield f, True
+                        yield f, 2
 
     for f, far in features():
         rings = (f.get("geometry") or {}).get("rings") or []
@@ -103,7 +116,7 @@ def main() -> None:
             continue
         shell = max(shells, key=lambda p: p.area)
         poly = orient(Polygon(shell.exterior).simplify(SIMPLIFY, preserve_topology=True), 1.0)
-        if poly.is_empty or poly.area < (MIN_AREA_FAR if far else MIN_AREA) or poly.geom_type != "Polygon":
+        if poly.is_empty or poly.area < min_area[far] or poly.geom_type != "Polygon":
             dropped += 1
             continue
         if any(busway[i].intersection(poly).area > 0.25 * poly.area or busway[i].contains(poly.centroid) for i in busway_tree.query(poly)):
@@ -117,7 +130,8 @@ def main() -> None:
         tiles[(math.floor(c.x / TILE), math.floor(c.y / TILE))].append((floors, coords))
         floors_seen.append(floors)
         kept += 1
-        far_kept += far
+        far_kept += far == 2
+        mid_kept += far == 1
 
     out = ROOT / "app/dist/buildings"
     shutil.rmtree(out, ignore_errors=True)
@@ -147,6 +161,7 @@ def main() -> None:
             "features": manifest["features"],
             "sha256": manifest["sha256"],
             "license": "Datos Abiertos Bogotá, IDECA; atribución a la entidad productora",
+            "mid": {"snapshot": mid, "features": mid_manifest["features"], "sha256": mid_manifest["sha256"], "method": mid_manifest["method"]} if mid else None,
             "city": {"snapshot": city, "features": city_manifest["features"], "sha256": city_manifest["sha256"], "method": city_manifest["method"]} if city else None,
         },
         "method": {
@@ -155,12 +170,14 @@ def main() -> None:
             "simplify_m": SIMPLIFY,
             "min_area_m2": MIN_AREA,
             "floor_height_m": 3.0,
+            "min_area_mid_m2": MIN_AREA_MID,
             "min_area_far_m2": MIN_AREA_FAR,
-            "rule": "huella exterior más grande de cada construcción, simplificada; pisos de CONNPISOS (mínimo 1). A 350 m de la troncal, todas; más lejos, la muestra del 30 % de la ciudad",
+            "rule": "huella exterior más grande de cada construcción, simplificada; pisos de CONNPISOS (mínimo 1). A 350 m de la troncal, todas; hasta 1 km, el 70 %; más lejos, la muestra del 30 % de la ciudad",
         },
         "projection": projection,
         "coverage": {
             "buildings": kept,
+            "middle": mid_kept,
             "background": far_kept,
             "dropped": dropped,
             "over_busway": over_busway,
