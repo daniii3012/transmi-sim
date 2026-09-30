@@ -50,6 +50,13 @@
   ruta propiamente dicha, si hace falta más detalle.
 - Documentación de pasajeros: solo «validaciones de datos abiertos»; el método queda en el código.
 
+### Fallo menor visto en el sitio publicado (30 sep.)
+
+- De madrugada, «Estaciones con más espera» muestra paradas de calle de la Av. 68 con 40–46 personas
+  (105 sin los datos de origen-destino): la espera no decae después del último bus. Probable: el
+  motor deja de avanzar su reloj sin viajes activos y `waitingAt` usa ese reloj. No lo introdujo el
+  30 sep. Sonda: `HORAS=22:00,23:30,01:50 node work/probe_estacion.mjs 74151 2026-09-29`.
+
 ### Fase 3, niveles (30 sep.) — primer paso
 
 - `build_busway_structures.py` (esquema 2) clasifica cada estructura por lo que cruza, con las calles
