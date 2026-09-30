@@ -105,7 +105,7 @@ Hito: validación del día con la nueva velocidad (mediana y p90 frente a lo obs
 
 ## Fase 3 — Malla vial, niveles y estaciones (2–3 sesiones)
 
-Estado al 30 sep.: punto 1 hecho en su parte automática (16 puentes a nivel, 32 deprimidos como
+Estado al 30 sep.: punto 1 hecho en su parte automática (16 puentes a nivel, 28 deprimidos como
 trinchera de 3 m, puentes viales sobre caños planos). Falta revisar caso a caso con ortofoto, la losa
 de las calles que cruzan sobre un deprimido y el dibujo limpio de la calzada.
 

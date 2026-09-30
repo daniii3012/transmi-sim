@@ -54,8 +54,8 @@
 
 - `build_busway_structures.py` (esquema 2) clasifica cada estructura por lo que cruza, con las calles
   y el agua de `context.json`: 16 puentes de nivel 1 que solo cruzan agua o no cruzan nada quedan
-  `at_grade` (layer 0, carriles medidos); 41 pasan sobre una calle; 11 se conservan. Deprimidos: 36
-  pasan bajo una calle (`underpass`, 5,5 m) y 32 son trinchera a cielo abierto (`cutting`, 3 m). El
+  `at_grade` (layer 0, carriles medidos); 41 pasan sobre una calle; 11 se conservan. Deprimidos: 40
+  pasan bajo una calle (`underpass`, 5,5 m) y 28 son trinchera a cielo abierto (`cutting`, 3 m). El
   motor lee `level` (ahora Float32). En el mapa, los puentes viales de ≤ 60 m que solo cruzan agua
   tampoco suben.
 - Pendiente visual: donde una calle cruza sobre un deprimido, dibujar su losa y cortar los muros

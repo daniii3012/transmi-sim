@@ -75,7 +75,7 @@ def _near(a, b, m=5.0) -> bool:
     return not (a[2] + m < b[0] or b[2] + m < a[0] or a[3] + m < b[1] or b[3] + m < a[1])
 
 
-def classify(structures, context):
+def classify(structures, context, streets=(), crossings=()):
     """Marca `grade` y `grade_reason` en cada puente, según lo que cruza. Devuelve el recuento."""
     water = [(f, _bbox(f["points"])) for f in context if f["kind"] == "water"]
     roads = [(f, _bbox(f["points"])) for f in context if f["kind"] == "road" and not f.get("bridge") and not f.get("tunnel")]
@@ -104,7 +104,11 @@ def classify(structures, context):
             s["kind"], s["layer"] = "at_grade", 0
         for k in ("_length", "_water", "_road"):
             del s[k]
-    above = [(f, _bbox(f["points"])) for f in context if f["kind"] == "road" and not f.get("tunnel")]
+    # Encima de un deprimido puede ir una calle del contexto, una de las calles vecinas o una cebra;
+    # la propia calzada de TransMilenio en un empalme no cuenta.
+    def over(f):
+        return f.get("kind", "road") == "road" and not f.get("tunnel") and f.get("name") != "TransMilenio" and f.get("highway") != "busway"
+    above = [(f, _bbox(f["points"])) for f in list(context) + list(streets) + list(crossings) if over(f)]
     for s in structures:
         if s["kind"] == "tunnel":
             bb = _bbox(s["points"])
@@ -156,7 +160,8 @@ def main() -> None:
         })
     structures.sort(key=lambda s: s["osm_way_id"])
     context = json.loads((ROOT / "app/dist/context.json").read_text())["features"]
-    grades = classify(structures, context)
+    vecinas = json.loads((ROOT / "app/dist/cross_streets.json").read_text())
+    grades = classify(structures, context, vecinas["streets"], vecinas["crossings"])
     result = {
         "schema_version": 2,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
