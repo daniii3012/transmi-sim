@@ -81,6 +81,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Historia completa: la versión legado sale del commit raíz.
+          fetch-depth: 0
 
       - name: Preparar Pages
         uses: actions/configure-pages@v5
@@ -98,6 +101,17 @@ jobs:
           set -euo pipefail
           node tools/build_day_checkpoints.mjs --days 8
           test -s app/dist/checkpoints/index.json
+
+      # La primera versión pública (19 sep. 2026), sin motor de carriles ni vista 3D, se sirve tal
+      # cual en /legado/. Es la raíz de la historia de main, así que no necesita rama propia. Solo
+      # comparte con la actual la preferencia de tema en localStorage.
+      - name: Versión legado en /legado/
+        run: |
+          set -euo pipefail
+          mkdir -p app/dist/legado
+          git archive 30a7840cd072750cc975da3c81b776ad7a4ed9fd app/dist | tar -x --strip-components=2 -C app/dist/legado
+          test -f app/dist/legado/index.html
+          test -f app/dist/legado/app.mjs
 
       - name: Empaquetar solo app/dist
         uses: actions/upload-pages-artifact@v3
@@ -120,3 +134,6 @@ jobs:
             *javascript*|*ecmascript*) echo "Correcto: los módulos cargarán." ;;
             *) echo "AVISO: .mjs se sirve como '$tipo'. Los módulos no cargarán; habría que renombrar a .js."; exit 1 ;;
           esac
+          estado=$(curl -s -o /dev/null -w '%{http_code}' "${url%/}/legado/")
+          echo "Legado: HTTP $estado"
+          [ "$estado" = "200" ] || { echo "La versión legado no responde en /legado/"; exit 1; }
