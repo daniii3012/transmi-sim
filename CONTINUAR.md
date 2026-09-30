@@ -57,6 +57,14 @@
   descuenta ahora cada tramo de 15 min con el abandono (`ABANDON_S`). Dos pruebas que dependían del
   fallo se ajustaron a la regla nueva.
 
+### Lluvia y escenario por enlace (30 sep.) — Fase 4
+
+- Parámetro `rain` (Circulación → Lluvia), estimado y declarado en `RAIN` de `traffic.mjs`: crucero
+  ×0,85, aceleración y frenada ×0,8, distancia ×1,25 y demanda ×1,08.
+- «Copiar enlace de este escenario» en Parámetros: `?escenario=` con fecha, hora, parámetros
+  distintos de los iniciales y eventos, en JSON base64url; al abrir se valida con `parameters()` y,
+  si no valida, se abre el escenario de siempre con un aviso.
+
 ### Vista del metro (30 sep.) — Fase 7
 
 - `?vista=metro` (entrada «Metro L1 (proyecto) ↗» en Más, abre otra pestaña): `metro.mjs` dibuja el

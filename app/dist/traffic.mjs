@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.18';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.18';
-import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.18';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.18';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.18';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.19';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260930.19';
+import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.19';
+import {hash,programmedSpeed} from './operation.mjs?v=20260930.19';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.19';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -276,6 +276,9 @@ export class Guideway{
  * pasa a menos de EVENT_REACH m queda cortado ahí en todos los carriles mientras dure, y sus buses
  * hacen fila detrás, como ante un accidente que tapa la calzada. Sin desvío: los servicios se
  * retienen. */
+/** Lluvia, estimada: se rueda más despacio, se arranca y se frena con más cuidado y se deja más
+ * distancia; entra más gente al sistema. No hay medición propia: son factores declarados. */
+export const RAIN=Object.freeze({speed:.85,accel:.8,headway:1.25,demand:1.08});
 export const EVENT_REACH=18;
 export function eventsOn(path,events=[]){
  const at=[],start=[],end=[];
@@ -339,12 +342,14 @@ const STREET_FLOOR=15/3.6;
  * trecho lento, para que nadie tenga que clavar los frenos por una curva.
  */
 export function speedCells(r,column,params,schedule){
- const n=Math.ceil(r.path.length/V0CELL)+1,out=new Float32Array(n),a=params.acceleration,b=params.braking;
+ // Con lluvia (estimado): crucero 15 % más bajo y arranques y frenadas 20 % más suaves.
+ const wet=params.rain?RAIN:null;
+ const n=Math.ceil(r.path.length/V0CELL)+1,out=new Float32Array(n),a=params.acceleration*(wet?wet.accel:1),b=params.braking*(wet?wet.accel:1);
  const horario=params.programmedRunning?schedule?.routes?.[r.id]:null;
  const curve=r.curve||(r.curve=Float32Array.from({length:n},(_,c)=>Math.min(40,curveCap(r.path,Math.min(r.path.length,c*V0CELL)))));
  for(let i=0;i<r.visits.length-1;i++){
   const from=r.visits[i].at_m,to=r.visits[i+1].at_m,street=r.visits[i].kind==='street'||r.visits[i+1].kind==='street';
-  const cap=(street?params.streetKmh:params.cruiseKmh)/3.6,field=street?null:r.field,limit=rollingLimit(field);
+  const cap=(street?params.streetKmh:params.cruiseKmh)/3.6*(wet?wet.speed:1),field=street?null:r.field,limit=rollingLimit(field);
   const medido=params.observedRunning?horario?.observed?.[i]:null,published=medido||horario?.segments?.[i]||null;
   const target=published?(published[column]||published[0]):0;
   const crossings=r.signals.reduce((m,sg)=>m+(sg.at_m>from+.1&&sg.at_m<to-.1?1:0),0);
@@ -411,7 +416,7 @@ export class Traffic{
   // La demanda también cambia de un día a otro, del orden de lo que cambió entre los días
   // laborables medidos.
   const u=(hash(this.seed+'/demanda')%2001)/1000-1;this.demandFactor=p.dayVariation?1+.05*u:1;
-  this.passengerParams={...p,demand:p.demand*this.demandFactor};
+  this.passengerParams={...p,demand:p.demand*this.demandFactor*(p.rain?RAIN.demand:1)};
   this.kind=dayType(serviceDate);
   // Por servicio: largo del bus, dónde se detiene el frente en cada visita, semáforos y velocidades.
   const signalIds=new Map();this.signalIds=[];const clusters=signalClusters(op.data.busway_signals);
@@ -848,7 +853,7 @@ export class Traffic{
   return true;
  }
  move(t){
-  const a=this.a,p=this.p,g=this.g,dt=this.dt,off=this.off,A=p.acceleration,T=p.headwayTime,S0=p.jamGap,sqrtAB=2*Math.sqrt(A*p.braking);
+  const a=this.a,p=this.p,g=this.g,dt=this.dt,off=this.off,wet=p.rain?RAIN.accel:1,A=p.acceleration*wet,T=p.headwayTime*(p.rain?RAIN.headway:1),S0=p.jamGap,sqrtAB=2*Math.sqrt(A*p.braking*wet);
   const cycle=this.timing.cycle,green=this.timing.green,amber=green+this.timing.amber;
   const n=this.active.length;if(this.scratch.s.length<n){const m=n*2;this.scratch={s:new Float64Array(m),v:new Float64Array(m),bind:new Uint8Array(m),lead:new Int32Array(m)};}
   const newS=this.scratch.s,newV=this.scratch.v,bind=this.scratch.bind,lead=this.scratch.lead,finished=[],entering=[];

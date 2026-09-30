@@ -1,13 +1,13 @@
-import {mountShell} from './shell.mjs?v=20260930.18';
-import {NetworkMap} from './map.mjs?v=20260930.18';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.18';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260930.18';
-import {STATES} from './traffic.mjs?v=20260930.18';
-import {applyFieldCorrections} from './signals.mjs?v=20260930.18';
-import {registerSimulationTools} from './webmcp.mjs?v=20260930.18';
+import {mountShell} from './shell.mjs?v=20260930.19';
+import {NetworkMap} from './map.mjs?v=20260930.19';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.19';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260930.19';
+import {STATES} from './traffic.mjs?v=20260930.19';
+import {applyFieldCorrections} from './signals.mjs?v=20260930.19';
+import {registerSimulationTools} from './webmcp.mjs?v=20260930.19';
 // Aplicación instalable: el service worker guarda código y datos por versión (sw.js). Solo en el sitio
 // publicado: en local se edita y se recarga, y una caché estorbaría.
-if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.18').catch(()=>{});
+if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.19').catch(()=>{});
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -38,6 +38,14 @@ try{
  const inicio=bogotaNow();
  let config={date:inicio.date,params:{...DEFAULTS},selection:{mode:'all'}};
  let clock={time:inicio.time,speed:1,paused:false};
+ // Escenario compartido por enlace (?escenario=…): fecha, hora, parámetros distintos de los iniciales
+ // y eventos. Si no valida, se abre el escenario de siempre y se avisa.
+ const sharedScenario=(()=>{const raw=new URLSearchParams(location.search).get('escenario');if(!raw)return null;
+  try{const json=JSON.parse(decodeURIComponent(escape(atob(raw.replace(/-/g,'+').replace(/_/g,'/')))));const params=parameters({...DEFAULTS,...(json.p||{})});
+   if(json.d)config.date=json.d;if(Number.isFinite(json.t))clock.time=DAY+json.t;config.params=params;return json;}catch(error){console.warn('Escenario del enlace descartado:',error.message);return false;}})();
+ function scenarioLink(){const diff={};for(const [k,v] of Object.entries(config.params))if(JSON.stringify(v)!==JSON.stringify(DEFAULTS[k]))diff[k]=v;
+  const raw=btoa(unescape(encodeURIComponent(JSON.stringify({d:config.date,t:Math.round(((clock.time%DAY)+DAY)%DAY),p:diff})))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const url=new URL(location.href);url.search='';url.searchParams.set('escenario',raw);return url.href;}
  let selection=null,following=false,focusedRoute=null,activePanel='routes',generation=0,ready=false,pendingSample=false,lastUI=0,lastList=0,lastInspect=0,lastSample=0,routeIds=[],settled=false,snap={buses:[],stats:{}};
  let viewMode=config.selection.mode,scrubbing=false,sampleSequence=0,planSequence=0;
  let selectedZones=new Set(config.selection.zones||[]);const map=new NetworkMap($('#canvas-host'),$('#labels'),data,onSelect);
@@ -49,11 +57,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260930.18',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260930.19',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.18',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.19',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -110,6 +118,7 @@ try{
   {key:'supply',type:'range',label:'Oferta de buses',unit:'×',min:.25,max:5,step:.25,help:'Salidas por cada una del plan, repartidas entre ellas: ×2 pone un bus en medio de cada intervalo. Las añadidas no son del horario publicado. Con más de ×1 la flota crece en la misma proporción; con ×3 o más, las troncales se llenan de buses y se ve dónde se atascan.'},
   {key:'fleet',type:'number',label:'Flota disponible',unit:'buses',min:200,max:8000,step:1,help:'2.202 troncales que publica TRANSMILENIO (feb. 2026) más 50 duales eléctricos de 2026. Si se agota, la salida espera un bus libre.'},
   {group:'Circulación',intro:'Cómo ruedan los buses por su carril.'},
+  {key:'rain',type:'check',label:'Lluvia',help:'Estimado: crucero 15 % más bajo, arranques y frenadas 20 % más suaves, más distancia entre buses y 8 % más pasajeros.'},
   {key:'cruiseKmh',type:'number',label:'Tope en la troncal',unit:'km/h',min:25,max:75,step:1,help:'La velocidad de cada trecho sale de las lecturas de la flota; esto es el techo.'},
   {key:'streetKmh',type:'number',label:'Tope en calle mixta',unit:'km/h',min:20,max:60,step:1},
   {key:'acceleration',type:'number',label:'Aceleración',unit:'m/s²',min:.4,max:1.4,step:.05,help:'Media de un articulado cargado: con 0,6 llega a 50 km/h en unos 23 s. Entre estaciones cada bus sube hasta la velocidad libre medida en ese punto.'},
@@ -163,8 +172,9 @@ try{
   const actions=el('div',undefined,'settings-actions');
   const apply=el('button','Aplicar y volver a simular','primary full');apply.type='submit';
   const reset=el('button','Valores iniciales','full');reset.type='button';reset.onclick=()=>{config.params={...DEFAULTS};syncSettings();};
+  const share=el('button','Copiar enlace de este escenario','full');share.type='button';share.onclick=async()=>{const url=scenarioLink();try{await navigator.clipboard.writeText(url);toast('Enlace copiado: abre este mismo día, hora, parámetros y eventos.');}catch{prompt('Copia este enlace:',url);}};
   const other=el('button','Otra versión de este día','full');other.type='button';other.onclick=()=>{$('#param-variant').value=(Number($('#param-variant').value)+1)%1000;$('#param-dayVariation').checked=true;form.requestSubmit();};
-  actions.append(apply,other,reset);form.append(actions);
+  actions.append(apply,share,other,reset);form.append(actions);
   form.onsubmit=e=>{e.preventDefault();const next={...config.params,events:draftEvents.map(({xy,start,end,label,preset})=>({xy,start,end,label,...(preset?{preset}:{})}))};
    for(const f of SETTINGS){if(!f.key)continue;const input=$('#param-'+f.key);next[f.key]=f.type==='check'?input.checked:f.type==='select'?input.value:Number(input.value)*(f.scale||1);}
    try{config.params=parameters(next);}catch(error){toast(error.message.replace('Parámetro fuera de rango: ','Revisa el valor de ').replace(/signalGreen/,'el verde').replace(/(\w+)$/,m=>SETTINGS.find(f=>f.key===m)?.label.toLowerCase()||m));return;}
@@ -563,7 +573,7 @@ try{
  let metro=null;const VIEW=new URLSearchParams(location.search).get('vista');
  async function setupMetro(){
   try{
-   const [{MetroLayer,METRO},data]=await Promise.all([import('./metro.mjs?v=20260930.18'),fetch('./metro_l1.json').then(r=>r.json())]);
+   const [{MetroLayer,METRO},data]=await Promise.all([import('./metro.mjs?v=20260930.19'),fetch('./metro_l1.json').then(r=>r.json())]);
    metro=new MetroLayer(map.scene,data);
    const tt=metro.timetable,banner=el('div',undefined,'metro-banner');banner.id='metro-banner';
    const count=el('b','—');
@@ -574,6 +584,8 @@ try{
   }catch(error){console.error(error);toast('No se pudo cargar el metro.');}
  }
  if(VIEW==='metro')setupMetro();
+ if(sharedScenario===false)toast('El enlace del escenario no se pudo leer: se abre el escenario de siempre.');
+ else if(sharedScenario)toast('Escenario del enlace: fecha, hora, parámetros y eventos compartidos.');
  {const link=el('button','Metro L1 (proyecto) ↗');link.type='button';link.onclick=()=>window.open('./?vista=metro','_blank','noopener');document.querySelector('.more-options')?.append(link);}
  rebuild();requestAnimationFrame(frame);
 }catch(error){$('#loading').hidden=true;$('#error').hidden=false;$('#error').textContent='No fue posible abrir el simulador. '+error.message;console.error(error);}
