@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.14';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.14';
+import {MetricPath} from './simulation.mjs?v=20260930.15';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.15';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.14';
+import {pieceShape} from './wagons.mjs?v=20260930.15';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -539,6 +539,22 @@ export class NetworkMap {
     for(const o of [this.stationGroup,this.stationRoofs]){if(!o)continue;this.scene.remove(o);o.traverse(x=>{x.geometry?.dispose();x.material?.dispose?.();});}
     this.buildStationGeometry();
   }
+  /** ¿Los andenes de OSM de la estación sirven tal cual? Polígonos cerrados de al menos 150 m², a menos
+   *  de 250 m de la estación, con menos del 10 % de su superficie sobre la calzada del motor. */
+  osmPlatformsFit(layout){
+    const polys=layout.platforms.filter(p=>p.closed&&p.points.length>3).map(p=>p.points);if(!polys.length||!this.guideLinks)return false;
+    const station=this.data.stations.find(s=>s.id===layout.station_id);if(!station)return false;
+    const area=q=>Math.abs(q.reduce((a,p,i)=>{const n=q[(i+1)%q.length];return a+p[0]*n[1]-n[0]*p[1];},0))/2;
+    if(polys.reduce((a,q)=>a+area(q),0)<150)return false;
+    const cx=polys.flat().reduce((a,p)=>a+p[0],0)/polys.flat().length,cy=polys.flat().reduce((a,p)=>a+p[1],0)/polys.flat().length;
+    if(Math.hypot(cx-station.xy[0],cy-station.xy[1])>250)return false;
+    const segs=[];for(const l of this.guideLinks){if(l.street)continue;for(let i=1;i<l.points.length;i++){const a=l.points[i-1],b=l.points[i];if(Math.hypot(a[0]-cx,a[1]-cy)>400&&Math.hypot(b[0]-cx,b[1]-cy)>400)continue;segs.push([a,b,3.4*Math.max(1,l.lanes[0]||1)/2]);}}
+    const inside=(x,y,q)=>{let c=false;for(let i=0,j=q.length-1;i<q.length;j=i++){const [xi,yi]=q[i],[xj,yj]=q[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c;}return c;};
+    const onLane=(x,y)=>segs.some(([a,b,w])=>{const ex=b[0]-a[0],ey=b[1]-a[1],l2=ex*ex+ey*ey;if(!l2)return false;const u=Math.max(0,Math.min(1,((x-a[0])*ex+(y-a[1])*ey)/l2));return Math.hypot(x-a[0]-u*ex,y-a[1]-u*ey)<w-.5;});
+    let total=0,over=0;
+    for(const q of polys){const xs=q.map(p=>p[0]),ys=q.map(p=>p[1]);for(let x=Math.min(...xs);x<=Math.max(...xs);x+=1.5)for(let y=Math.min(...ys);y<=Math.max(...ys);y+=1.5)if(inside(x,y,q)){total++;if(onLane(x,y))over++;}}
+    return total>0&&over/total<.1;
+  }
   buildStationGeometry(){
     // Plataformas y cubiertas de OSM en relieve bajo; de arriba se leen como antes, inclinado se ve
     // el andén. Las estaciones sin geometría publicada conservan sus vagones esquemáticos.
@@ -553,8 +569,10 @@ export class NetworkMap {
     const line=(points,key,order)=>{const g=new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(...p,.05)));const l=new THREE.Line(g,new THREE.LineBasicMaterial({color:this.palette[key],depthTest:true,depthWrite:false}));l.renderOrder=order;l.userData.key=key;this.stationGroup.add(l);};
     const aligned=new Set((this.alignedPlatforms||[]).map(p=>p.station));
     for(const layout of this.data.station_layouts?.stations||[]){
-      // Con vagones alineados, la geometría de OSM solo queda en los portales, donde es la del patio.
-      if(aligned.has(layout.station_id)&&!/^portal/i.test(layout.name||''))continue;
+      // Con vagones alineados, la geometría de OSM queda en los portales y donde sus andenes son buenos:
+      // polígonos de andén de verdad, junto a la estación y casi sin pisar la calzada (Banderas, con sus
+      // andenes en diagonal). El contorno del recinto solo, que siempre abarca los carriles, no basta.
+      if(aligned.has(layout.station_id)&&!/^portal/i.test(layout.name||'')&&!this.osmPlatformsFit(layout))continue;
       const areas=layout.areas.filter(a=>a.closed&&a.role==='station_area'),platforms=layout.platforms.filter(p=>p.points.length>1);
       if(!areas.length&&!platforms.length)continue;
       this.layoutIds.add(layout.station_id);

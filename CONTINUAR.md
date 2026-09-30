@@ -57,6 +57,15 @@
   descuenta ahora cada tramo de 15 min con el abandono (`ABANDON_S`). Dos pruebas que dependían del
   fallo se ajustaron a la regla nueva.
 
+### Andenes de OSM que vuelven (30 sep.)
+
+- Desde el 28 sep. toda estación con vagones alineados dejaba su geometría de OSM (salvo portales),
+  porque el contorno del recinto dibujado como andén pisaba la calzada. Ahora `osmPlatformsFit` en
+  `map.mjs` la conserva cuando hay polígonos de andén de verdad (≥ 150 m², a menos de 250 m de la
+  estación) con menos del 10 % sobre la calzada del motor. Vuelven Banderas (0 %), Suba - Tv. 91 y
+  La Campiña; Suba - Av. Boyacá (39 %) sigue con vagones; Quirigua, que trae los andenes de Portal
+  80, queda fuera por distancia.
+
 ### Aplicación instalable (30 sep.) — Fase 5, primer paso
 
 - `manifest.webmanifest`, íconos en `app/dist/icons` (el logo de escritorio; SVG rasterizado con
