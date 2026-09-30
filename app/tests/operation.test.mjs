@@ -381,3 +381,12 @@ test('Cada valor inicial de Parámetros es válido para su campo: con uno invál
  }
  assert.ok(revisados>=15,`${revisados} campos revisados`);
 });
+test('La oferta multiplicada reparte las salidas nuevas entre las del plan y no inventa después de la última',async()=>{
+ const {scaleSupply}=await import('../dist/operation.mjs');
+ const plan=[0,600,1200].map(t=>({time:t,departure:t,rid:'r',programmed:true}));
+ const doble=scaleSupply(plan,2).map(d=>d.time).sort((a,b)=>a-b);
+ assert.deepEqual(doble,[0,300,600,900,1200]);
+ assert.ok(scaleSupply(plan,2).filter(d=>d.added).every(d=>d.programmed===false));
+ assert.equal(scaleSupply(plan,.5).length,2);
+ assert.equal(scaleSupply(plan,1),plan);
+});

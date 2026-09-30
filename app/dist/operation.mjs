@@ -1,17 +1,38 @@
-import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260930.9';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.9';
-import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections,turningOnly} from './signals.mjs?v=20260930.9';
-import {travelTimeAtDistance} from './travel.mjs?v=20260930.9';
-import {generatedPassengers,alightFraction,demandBase} from './passengers.mjs?v=20260930.9';
-import {placeVisit} from './station-layouts.mjs?v=20260930.9';
-import {visitWagons} from './wagons.mjs?v=20260930.9';
-import {MetricPath} from './simulation.mjs?v=20260930.9';
+import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260930.10';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.10';
+import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections,turningOnly} from './signals.mjs?v=20260930.10';
+import {travelTimeAtDistance} from './travel.mjs?v=20260930.10';
+import {generatedPassengers,alightFraction,demandBase} from './passengers.mjs?v=20260930.10';
+import {placeVisit} from './station-layouts.mjs?v=20260930.10';
+import {visitWagons} from './wagons.mjs?v=20260930.10';
+import {MetricPath} from './simulation.mjs?v=20260930.10';
 export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1,mode:'auto',cruiseKmh:60,streetKmh:50,acceleration:.6,cruiseFrom:'local',braking:1.1,turnaround:240,variableDispatch:true,reinforcements:true,signals:true,beyondValidity:true,programmedDispatch:true,programmedRunning:true,observedRunning:true,
  // Espacio físico (traffic.mjs). Separación en marcha y parado, ciclo semafórico y atención son
  // decisiones de modelo, rotuladas como estimación; la variación diaria cambia de una fecha a otra
  // sin perder la reproducibilidad: la misma fecha y la misma versión dan siempre lo mismo.
- physical:true,headwayTime:1.2,jamGap:2.5,signalCycle:90,signalGreen:52,dwellBase:13,boardingRate:.9,dayVariation:true,dispatchJitter:60,variant:0,fleet:2252,odDemand:true});
-export function parameters(input={}){const p={...DEFAULTS,...input};for(const [k,min,max] of [['peakHeadway',120,1200],['offpeakHeadway',180,1800],['demand',.25,3],['cruiseKmh',25,75],['streetKmh',20,60],['acceleration',.4,1.4],['braking',.5,1.8],['turnaround',60,900],['headwayTime',.6,3],['jamGap',1,8],['signalCycle',50,180],['signalGreen',15,150],['dwellBase',5,40],['boardingRate',.3,2],['dispatchJitter',0,300],['variant',0,999],['fleet',200,8000]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw new Error('Parámetro fuera de rango: '+k);if(typeof p.variableDispatch!=='boolean'||typeof p.reinforcements!=='boolean'||typeof p.signals!=='boolean'||typeof p.beyondValidity!=='boolean'||typeof p.programmedDispatch!=='boolean'||typeof p.programmedRunning!=='boolean'||typeof p.observedRunning!=='boolean'||typeof p.physical!=='boolean'||typeof p.dayVariation!=='boolean')throw new Error('Opciones de despacho inválidas');if(p.signalGreen>=p.signalCycle-3)throw new Error('Parámetro fuera de rango: signalGreen');if(!Number.isInteger(p.variant))throw new Error('Parámetro fuera de rango: variant');if(!['auto','peak','offpeak'].includes(p.mode))throw new Error('Demanda inválida');return p;}
+ physical:true,headwayTime:1.2,jamGap:2.5,signalCycle:90,signalGreen:52,dwellBase:13,boardingRate:.9,dayVariation:true,dispatchJitter:60,variant:0,fleet:2252,odDemand:true,supply:1});
+export function parameters(input={}){const p={...DEFAULTS,...input};for(const [k,min,max] of [['peakHeadway',120,1200],['offpeakHeadway',180,1800],['demand',.25,3],['cruiseKmh',25,75],['streetKmh',20,60],['acceleration',.4,1.4],['braking',.5,1.8],['turnaround',60,900],['headwayTime',.6,3],['jamGap',1,8],['signalCycle',50,180],['signalGreen',15,150],['dwellBase',5,40],['boardingRate',.3,2],['dispatchJitter',0,300],['variant',0,999],['fleet',200,8000],['supply',.25,5]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw new Error('Parámetro fuera de rango: '+k);if(typeof p.variableDispatch!=='boolean'||typeof p.reinforcements!=='boolean'||typeof p.signals!=='boolean'||typeof p.beyondValidity!=='boolean'||typeof p.programmedDispatch!=='boolean'||typeof p.programmedRunning!=='boolean'||typeof p.observedRunning!=='boolean'||typeof p.physical!=='boolean'||typeof p.dayVariation!=='boolean')throw new Error('Opciones de despacho inválidas');if(p.signalGreen>=p.signalCycle-3)throw new Error('Parámetro fuera de rango: signalGreen');if(!Number.isInteger(p.variant))throw new Error('Parámetro fuera de rango: variant');if(!['auto','peak','offpeak'].includes(p.mode))throw new Error('Demanda inválida');return p;}
+/** Oferta multiplicada: por cada salida del plan, `supply` salidas repartidas en el intervalo hasta
+ * la siguiente del mismo servicio (×2 pone una en medio; ×0,5 deja una de cada dos). Las añadidas
+ * llevan `added` y no son del horario publicado. Determinista: el mismo plan da las mismas salidas. */
+export function scaleSupply(departures,supply=1){
+ if(!(supply>0)||Math.abs(supply-1)<1e-9)return departures;
+ const byRoute=new Map();for(const d of departures){const list=byRoute.get(d.rid)||[];list.push(d);byRoute.set(d.rid,list);}
+ const out=[];
+ for(const list of byRoute.values()){
+  // El acumulador arranca en 1 − oferta: la primera salida del día siempre queda.
+  list.sort((a,b)=>a.time-b.time);let acc=1-supply;
+  for(let i=0;i<list.length;i++){
+   const d=list[i],gap=i+1<list.length?list[i+1].time-d.time:0,before=Math.floor(acc+1e-9);acc+=supply;const n=Math.floor(acc+1e-9)-before;
+   for(let k=0;k<n;k++){
+    if(k===0){out.push(d);continue;}
+    if(!(gap>0))break;// después de la última salida del día no se inventan viajes
+    const t=d.time+gap*k/n;out.push({...d,time:t,departure:t,programmed:false,reinforcement:false,added:true});
+   }
+  }
+ }
+ return out;
+}
 // Distancia entre centros de vagón donde OSM no publica el andén: la que ya usaba el dibujo.
 export const MODULE_SPACING=64;
 /** Punto del trazado más cercano a `point` entre las abscisas `lo` y `hi`. */
@@ -168,7 +189,7 @@ export class Operation {
     }
    }
   }
-  return out.sort((a,b)=>a.time-b.time||(a.rid<b.rid?-1:a.rid>b.rid?1:0));
+  return scaleSupply(out,this.params.supply).sort((a,b)=>a.time-b.time||(a.rid<b.rid?-1:a.rid>b.rid?1:0));
  }
  prepareDirections(){
   const allRoutes=this.data.routes.filter(r=>r.ready).map(r=>({...r,path:new MetricPath(r.points)}));const axes=new Map();for(const r of allRoutes)for(const s of r.stops){const angle=r.path.sample(Math.min(r.path.length-.1,Math.max(.1,s.at_m))).angle;const accum=axes.get(s.station_id)||[0,0];accum[0]+=Math.cos(2*angle);accum[1]+=Math.sin(2*angle);axes.set(s.station_id,accum);}

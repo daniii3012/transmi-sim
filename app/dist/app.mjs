@@ -1,10 +1,10 @@
-import {mountShell} from './shell.mjs?v=20260930.9';
-import {NetworkMap} from './map.mjs?v=20260930.9';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.9';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260930.9';
-import {STATES} from './traffic.mjs?v=20260930.9';
-import {applyFieldCorrections} from './signals.mjs?v=20260930.9';
-import {registerSimulationTools} from './webmcp.mjs?v=20260930.9';
+import {mountShell} from './shell.mjs?v=20260930.10';
+import {NetworkMap} from './map.mjs?v=20260930.10';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.10';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260930.10';
+import {STATES} from './traffic.mjs?v=20260930.10';
+import {applyFieldCorrections} from './signals.mjs?v=20260930.10';
+import {registerSimulationTools} from './webmcp.mjs?v=20260930.10';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -46,11 +46,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260930.9',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260930.10',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.9',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.10',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -104,6 +104,7 @@ try{
   {key:'variableDispatch',type:'check',label:'Variación entre salidas'},
   {key:'reinforcements',type:'check',label:'Refuerzos ocasionales en pico'},
   {key:'beyondValidity',type:'check',label:'Operar servicios con vigencia vencida',help:'Conservan su último horario publicado; la ficha del servicio dice hasta cuándo rigió.'},
+  {key:'supply',type:'range',label:'Oferta de buses',unit:'×',min:.25,max:5,step:.25,help:'Salidas por cada una del plan, repartidas entre ellas: ×2 pone un bus en medio de cada intervalo. Las añadidas no son del horario publicado. Con más de ×1 la flota crece en la misma proporción; con ×3 o más, las troncales se llenan de buses y se ve dónde se atascan.'},
   {key:'fleet',type:'number',label:'Flota disponible',unit:'buses',min:200,max:8000,step:1,help:'2.202 troncales que publica TRANSMILENIO (feb. 2026) más 50 duales eléctricos de 2026. Si se agota, la salida espera un bus libre.'},
   {group:'Circulación',intro:'Cómo ruedan los buses por su carril.'},
   {key:'cruiseKmh',type:'number',label:'Tope en la troncal',unit:'km/h',min:25,max:75,step:1,help:'La velocidad de cada trecho sale de las lecturas de la flota; esto es el techo.'},

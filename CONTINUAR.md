@@ -58,6 +58,19 @@
   descuenta ahora cada tramo de 15 min con el abandono (`ABANDON_S`). Dos pruebas que dependían del
   fallo se ajustaron a la regla nueva.
 
+### Semáforos de la calle de arriba (30 sep.)
+
+- Un semáforo de otra vía (`carriageway` street) que cae donde la calzada está elevada o hundida ya
+  no detiene al bus (`traffic.mjs`, al armar las señales de cada ruta). Quedan fuera 5: los de la
+  Carrera 7 y la Carrera 10 sobre el paso subterráneo de la Museo Nacional. Los que son de la propia
+  troncal al pie de una rampa se conservan.
+
+### Oferta de buses (30 sep.) — Fase 4, primer paso
+
+- Parámetro `supply` (×0,25–×5, «Oferta de buses» en Servicio): `scaleSupply` reparte las salidas
+  añadidas entre las del plan y marca `added`; la flota disponible escala igual. Con ×3 el día se
+  atasca: 13,6 % del tiempo en marcha, 47 % en cola de andén, 37 % detenido en tráfico.
+
 ### Fase 3, niveles (30 sep.) — primer paso
 
 - `build_busway_structures.py` (esquema 2) clasifica cada estructura por lo que cruza, con las calles

@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.9';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.9';
-import {generatedPassengers,alightFraction,routeOptions} from './passengers.mjs?v=20260930.9';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.9';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.9';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.10';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260930.10';
+import {generatedPassengers,alightFraction,routeOptions} from './passengers.mjs?v=20260930.10';
+import {hash,programmedSpeed} from './operation.mjs?v=20260930.10';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.10';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -381,6 +381,9 @@ export class Traffic{
  /** `op` es una Operation preparada con `plan:true`; `guide`, la red de sus servicios. */
  constructor(op,guide,serviceDate,{dt=DT}={}){
   this.op=op;this.g=guide;this.date=serviceDate;this.dt=dt;this.p=op.params;const p=this.p;
+  // Con la oferta multiplicada la flota crece igual: el tope sigue siendo el que se eligió por cada
+  // bus del plan. Para ver el sistema quedarse sin buses, se baja la flota.
+  this.fleetCap=Math.round(p.fleet*Math.max(1,p.supply||1));
   this.timing={cycle:p.signalCycle,green:p.signalGreen,amber:3};
   this.routes=[...op.routes.values()];this.routeIndex=new Map(this.routes.map((r,i)=>[r.id,i]));
   this.seed=p.dayVariation?hash('dia/'+serviceDate+'/'+p.variant):hash('fijo/'+p.variant);
@@ -391,13 +394,21 @@ export class Traffic{
   this.kind=dayType(serviceDate);
   // Por servicio: largo del bus, dónde se detiene el frente en cada visita, semáforos y velocidades.
   const signalIds=new Map();this.signalIds=[];const clusters=signalClusters(op.data.busway_signals);
+  const signalWay=new Map((op.data.busway_signals?.signals||[]).map(s=>[s.id,s.carriageway]));
   const offsets=op.signalOffsets&&op.signalOffsets.cycle===p.signalCycle?op.signalOffsets.map:(op.signalOffsets={cycle:p.signalCycle,map:coordinatedOffsets(this.routes,clusters,p.signalCycle)}).map;
   this.info=this.routes.map(r=>{
    const spec=vehicleSpec(r),len=spec.length,map=guide.routeMaps.get(r.id);
    const stopFront=Float64Array.from(r.visits,v=>Math.max(len+.5,Math.min(r.path.length-.05,v.at_m+len/2)));
    for(let i=1;i<stopFront.length;i++)if(stopFront[i]<=stopFront[i-1]+.1)stopFront[i]=Math.min(r.path.length-.05,stopFront[i-1]+.1);
-   const sigAt=Float64Array.from(r.signals.map(s=>s.at_m)),sigIx=Int32Array.from(r.signals.map(s=>{if(!signalIds.has(s.id)){signalIds.set(s.id,this.signalIds.length);this.signalIds.push(s.id);}return signalIds.get(s.id);}));
-   const sigOff=Float64Array.from(r.signals.map(s=>offsets.get(clusters.get(s.id)||s.id)));
+   // Un semáforo no detiene a un bus que pasa por un puente o por un paso inferior: es de la calle de
+   // arriba o de abajo, aunque quede a menos de 12 m del trazado. Así pasaba en la Museo Nacional,
+   // subterránea, con el semáforo de la Carrera 7 encima.
+   // Los que están sobre la propia calzada exclusiva (carriageway busway) se quedan: al pie de una
+   // rampa el semáforo es de la troncal.
+   const signals=r.signals.filter(s=>{if(signalWay.get(s.id)==='busway')return true;const {link,offset}=guide.locate(r.id,s.at_m),L=guide.links[link];if(!L?.level)return true;const c=Math.max(0,Math.min(L.level.length-1,Math.floor(offset/CELL)));return Math.abs(L.level[c])<.3;});
+   this.skippedSignals=(this.skippedSignals||0)+r.signals.length-signals.length;
+   const sigAt=Float64Array.from(signals.map(s=>s.at_m)),sigIx=Int32Array.from(signals.map(s=>{if(!signalIds.has(s.id)){signalIds.set(s.id,this.signalIds.length);this.signalIds.push(s.id);}return signalIds.get(s.id);}));
+   const sigOff=Float64Array.from(signals.map(s=>offsets.get(clusters.get(s.id)||s.id)));
    const keys=r.visits.map(v=>v.station_id+'/'+v.direction);
    const origin=guide.locate(r.id,stopFront[0]);
    // Zonas de estación a lo largo del recorrido, en su propia abscisa.
@@ -577,7 +588,7 @@ export class Traffic{
    if(!best||d<best.d)best={d,list};
   }
   if(best){this.acc.deadheads++;return best.list.shift()[0];}
-  if(this.vehicles.length<this.p.fleet){const vehicle=this.vehicles.length;this.vehicles.push({id:`TM-${String(vehicle+1).padStart(4,'0')}`,home:info.originStation,kind,label:info.spec.label});return vehicle;}
+  if(this.vehicles.length<this.fleetCap){const vehicle=this.vehicles.length;this.vehicles.push({id:`TM-${String(vehicle+1).padStart(4,'0')}`,home:info.originStation,kind,label:info.spec.label});return vehicle;}
   return -1;
  }
  // El bus aparece en la plataforma de salida de su terminal a la hora de despacho y embarca ahí.
@@ -958,7 +969,7 @@ export class Traffic{
   let layover=this.releases.a.length;for(const list of this.parked.values())for(const [,ready] of list)if(ready>this.t-1800)layover++;
   return {time_s:this.t,fleet:this.active.length,layover,moving:counts[0],dwell:counts[1],queue:counts[2],signal:counts[3],traffic:counts[4],onboard,boarded:s.boarded,stops:s.stops,
    averageWait:s.stops?s.waitSum/s.stops:0,boardingDenials:s.denied,scheduled:this.trips.length,dispatched:s.dispatched,completed:s.completed,routes:this.routes.length,peakActive:s.peak,
-   waitingVehicle:this.waitingVehicle.length,deadheads:s.deadheads,fleetWait:s.fleetWait,fleetCap:this.p.fleet,waitingToEnter:this.active.reduce((m,i)=>m+(a.offnet[i]===1&&a.state[i]===QUEUE?1:0),0),forced:s.forced,entryWait:s.entries?s.entryWait/s.entries:0,vehicles:this.vehicles.length,demandFactor:this.demandFactor};
+   waitingVehicle:this.waitingVehicle.length,deadheads:s.deadheads,fleetWait:s.fleetWait,fleetCap:this.fleetCap,waitingToEnter:this.active.reduce((m,i)=>m+(a.offnet[i]===1&&a.state[i]===QUEUE?1:0),0),forced:s.forced,entryWait:s.entries?s.entryWait/s.entries:0,vehicles:this.vehicles.length,demandFactor:this.demandFactor};
  }
  /** Ficha de un bus, con los mismos campos que usaba la interfaz. */
  detail(i){
