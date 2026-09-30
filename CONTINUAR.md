@@ -25,6 +25,16 @@
   3D y gira con el rumbo suavizado; girar a mano, el norte o dejar de seguir lo apagan.
 - Logo de móvil igual al de escritorio, a escala. `?v=20260930.1`.
 
+### Fase 2, velocidad (30 sep.) — hecha
+
+- Crucero = velocidad libre medida en cada punto (`v_free_kmh`, percentil 85 de lo que se rueda),
+  aceleración 0,6 m/s². La distribución simulada calca la observada (p90 50 frente a 50, p97 56
+  frente a 57). Viajes 0,89 del tiempo medido (antes 0,98): faltan colas de andén y detenciones en
+  tráfico (sim 3 % del tiempo, calle 10,7 %). Detalle en `docs/VELOCIDAD_LIBRE_20260930.md`.
+- Regenerar el campo: `build_speed_field.py --capture <lecturas> --exclude 20260914 --stops
+  <stops.txt del 12 sep.>` con el Python geográfico, luego `build_services.py --perfiles`.
+- La hora casi no cambia la velocidad en marcha: no hizo falta dimensión de franja.
+
 ## 28 sep. 2026 — estado
 
 Todo esto está en `main` **solo en local** (desde `da1c904`; no se ha empujado a `origin`).

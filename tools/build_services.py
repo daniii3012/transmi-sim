@@ -6,6 +6,7 @@ source hashes accompany the output, separately from official attributes.
 """
 import hashlib
 import json
+import sys
 import math
 import unicodedata
 from collections import Counter
@@ -32,7 +33,8 @@ def clock(s):
 PASO_PERFIL=50
 
 def speed_profiles(routes,corridors,field):
-    """Resuelve el campo medido a lo largo de cada ruta: [abscisa, velocidad de travesía, parte detenida].
+    """Resuelve el campo medido a lo largo de cada ruta: [abscisa, velocidad de travesía ×10, parte
+    detenida en %, velocidad libre ×10]. La libre es el crucero del motor; ver build_speed_field.py.
 
     La velocidad es la de travesía —lo que el trecho le cuesta a un bus que pasa, sin la atención ni
     la cola de su propio servicio—, porque en calzada segregada un trecho congestionado se ve como
@@ -66,8 +68,8 @@ def speed_profiles(routes,corridors,field):
             cubeta=min(int(abscisa//CUBETA),int(largos[eje]//CUBETA))
             celda=field['buckets'].get(f'{eje}|{sentido}|{cubeta}')
             if not celda:continue
-            valor=(round(celda['v_kmh']*10),round(celda['stop_share']*100))
-            if valor!=ultimo:perfil.append([round(at),valor[0],valor[1]]);ultimo=valor
+            valor=(round(celda['v_kmh']*10),round(celda['stop_share']*100),round(celda.get('v_free_kmh',celda['v_kmh'])*10))
+            if valor!=ultimo:perfil.append([round(at),*valor]);ultimo=valor
         if perfil:salida[r['id']]={'coverage':round(enganchadas/max(1,muestras),3),'profile':perfil}
     return salida
 
@@ -273,7 +275,24 @@ def build(prefer_old=frozenset()):
        'vehicle':{'length_m':18.5,'width_m':2.5,'capacity':160,'label':'Articulado de referencia; perfiles por servicio en vehicles.mjs'},
        'fleet_types':{k:fleet[k] for k in ('observed_from','method','fleet_seen','observed_ranges','sources')}}
 
-if __name__=='__main__':
+def write_profiles(data):
+    field=read(ROOT/'data/curated/speed_field.json')
+    profiles=speed_profiles(data['routes'],data['corridors'],field)
+    write(ROOT/'app/dist/speed_profiles.json',{'schema_version':2,'step_m':PASO_PERFIL,
+       'field':{k:field[k] for k in ('observed_from','excluded_reason',
+                                     'assumptions','parameters','coverage','fallback') if k in field},
+       'routes':profiles})
+    cubierto=[p['coverage'] for p in profiles.values()]
+    print(json.dumps({'speed_profiles':len(profiles),'coverage_median':round(sorted(cubierto)[len(cubierto)//2],3) if cubierto else None}))
+
+if __name__=='__main__' and '--perfiles' in sys.argv:
+    # Solo el campo de velocidad cambió: se rehacen los perfiles sobre las rutas ya construidas y se
+    # actualiza su hash de procedencia, sin necesitar las instantáneas del catálogo.
+    data=read(ROOT/'app/dist/services.json')
+    data['source_hashes']['speed_field']=digest(ROOT/'data/curated/speed_field.json')
+    write(ROOT/'app/dist/services.json',data)
+    write_profiles(data)
+elif __name__=='__main__':
     data=build()
     # Un registro que el detalle nuevo deja pendiente —el buscador le cambió el trazado y sus
     # paradas quedan lejos— se rehace con el último detalle completo anterior, si lo hay.
@@ -285,14 +304,7 @@ if __name__=='__main__':
             data=build(prefer_old=frozenset(fixed))
             print('Detalle anterior para',len(fixed),'registros:',sorted(fixed))
     write(ROOT/'app/dist/services.json',data)
-    field=read(ROOT/'data/curated/speed_field.json')
-    profiles=speed_profiles(data['routes'],data['corridors'],field)
-    write(ROOT/'app/dist/speed_profiles.json',{'schema_version':1,'step_m':PASO_PERFIL,
-       'field':{k:field[k] for k in ('observed_from','excluded_reason',
-                                     'assumptions','parameters','coverage','fallback') if k in field},
-       'routes':profiles})
-    cubierto=[p['coverage'] for p in profiles.values()]
-    print(json.dumps({'speed_profiles':len(profiles),'coverage_median':round(sorted(cubierto)[len(cubierto)//2],3) if cubierto else None}))
+    write_profiles(data)
     audit={'counts':data['counts'],'snapshot':data['snapshot'],'routes':[{k:r[k] for k in ['id','code','name','ready','valid_from','valid_until','issues','warnings']} for r in data['routes']]}
     write(ROOT/'data/processed/services_audit.json',audit)
     print(json.dumps(data['counts']))

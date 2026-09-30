@@ -130,3 +130,27 @@ class Excluir(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class VelocidadLibre(unittest.TestCase):
+    """La libre es el percentil 85 de lo que se rueda y nunca queda por debajo de la media."""
+
+    def test_percentil_del_histograma(self):
+        from build_speed_field import percentil_histograma
+        histograma = [0] * 121
+        for kmh in range(20, 60):          # 40 pares, uno por km/h de 20 a 59
+            histograma[kmh] += 1
+        self.assertEqual(percentil_histograma(histograma, .85), 53.5)  # el par 34 de 40
+        self.assertIsNone(percentil_histograma([0] * 121, .85))
+
+    def test_un_bus_rapido_entre_estaciones_sube_la_libre(self):
+        ejes = corredores(EJE)
+        malla = indice(ejes)
+        # Treinta pasadas a 54 km/h por el centro del eje, en pares de 20 s: 300 m cada una.
+        por_bus = {f'b{n}': [(0, 600, 0, ''), (20, 900, 0, '')] for n in range(30)}
+        campo, _, _ = medir(por_bus, malla, {})
+        salida, conteo, _, _ = rellenar(campo, ejes)
+        celda = salida['T1:0|1|7']
+        self.assertGreaterEqual(celda['v_free_kmh'], celda['v_roll_kmh'])
+        self.assertAlmostEqual(celda['v_free_kmh'], 54.5, delta=1)
+        self.assertGreater(conteo['free_observed'], 0)

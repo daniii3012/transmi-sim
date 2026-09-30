@@ -19,18 +19,18 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.1';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.1';
-import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260930.1';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.1';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.1';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.2';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260930.2';
+import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260930.2';
+import {hash,programmedSpeed} from './operation.mjs?v=20260930.2';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.2';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
 export const CHECKPOINT=900;           // un punto de control cada 15 min simulados
 const CELL=5;                          // resolución del mapa de carriles, m
 const V0CELL=10;                       // resolución de la velocidad deseada, m
-export const CRUISE_QUANTILE=.75;       // qué percentil de la velocidad de rodar del tramo se toma como crucero
+export const CRUISE_QUANTILE=.75;       // qué percentil de la velocidad del campo a lo largo del tramo se toma como crucero
 const ZONE_BEFORE=70;                  // m de zona de estación antes del centro del bus en su vagón
 const LOOK=240;                        // hasta dónde mira un conductor, m
 const EMERGENCY=6;                     // frenada máxima, m/s²
@@ -296,6 +296,14 @@ function rollingLimit(field){
  if(!field)return null;
  return at=>{let lo=0,hi=field.at.length;while(lo<hi){const m=(lo+hi)>>1;if(field.at[m]<=at)lo=m+1;else hi=m;}const i=Math.max(0,lo-1);return field.v[i]/(1-Math.min(.8,field.stop[i]));};
 }
+// Velocidad libre medida: a la que llega un bus en ese trecho cuando nada lo detiene (percentil 85
+// de lo que se rueda, build_speed_field.py). Es la que corresponde al crucero: andenes, semáforos,
+// colas y curvas ya los pone la simulación. La de rodar es una media que mezcla arrancadas y frenadas,
+// y con ella ningún bus pasaba de ~45 km/h, cuando entre estaciones las lecturas dan 50 a 59.
+function freeLimit(field){
+ if(!field?.free)return rollingLimit(field);
+ return at=>{let lo=0,hi=field.at.length;while(lo<hi){const m=(lo+hi)>>1;if(field.at[m]<=at)lo=m+1;else hi=m;}return field.free[Math.max(0,lo-1)];};
+}
 
 const STREET_FLOOR=15/3.6;
 
@@ -328,7 +336,11 @@ export function speedCells(r,column,params,schedule){
    // Crucero del tramo: la velocidad a la que se rueda en su trecho más rápido. Arrancar, frenar,
    // las curvas, los semáforos y las colas los pone la simulación; tomar la media del trecho los
    // contaría dos veces y dejaba a los buses rodando a 21 km/h donde la calle mide 28.
-   if(!params.calibrateField){const vs=[];for(let c=c0;c<c1;c++)vs.push(limit(c*V0CELL));vs.sort((x,y)=>x-y);const q=params.cruiseQuantile??CRUISE_QUANTILE,top=vs.length?vs[Math.min(vs.length-1,Math.floor(q*(vs.length-1)))]:cap;speedAt=c=>Math.max(2,Math.min(cap,curve[c],top));}
+   // Con `cruiseFrom:'local'` el crucero es la velocidad libre de cada punto, no una por tramo: los
+   // trechos lentos de verdad —el paso por una estación, una curva, un cruce— quedan donde están, y
+   // entre ellos se llega a lo que la calle permite.
+   if(!params.calibrateField&&params.cruiseFrom==='local'){const free=freeLimit(field);speedAt=c=>Math.max(2,Math.min(cap,curve[c],free(c*V0CELL)));}
+   else if(!params.calibrateField){const cruise=params.cruiseFrom==='roll'?limit:freeLimit(field),vs=[];for(let c=c0;c<c1;c++)vs.push(cruise(c*V0CELL));vs.sort((x,y)=>x-y);const q=params.cruiseQuantile??CRUISE_QUANTILE,top=vs.length?vs[Math.min(vs.length-1,Math.floor(q*(vs.length-1)))]:cap;speedAt=c=>Math.max(2,Math.min(cap,curve[c],top));}
    else if(target>0&&budget>0){let lo=.35,hi=3;if(time(hi)>=budget)f=hi;else if(time(lo)<=budget)f=lo;else{for(let it=0;it<22;it++){const m=(lo+hi)/2;if(time(m)>budget)lo=m;else hi=m;}f=(lo+hi)/2;}}
    else if(target>0)f=3;
    if(params.calibrateField)speedAt=c=>Math.max(2,Math.min(cap,curve[c],base(c)*f));

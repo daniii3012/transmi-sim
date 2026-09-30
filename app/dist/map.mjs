@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.1';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.1';
+import {MetricPath} from './simulation.mjs?v=20260930.2';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.2';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.1';
+import {pieceShape} from './wagons.mjs?v=20260930.2';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la

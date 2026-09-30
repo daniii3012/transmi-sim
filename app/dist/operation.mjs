@@ -1,12 +1,12 @@
-import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260930.1';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.1';
-import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections,turningOnly} from './signals.mjs?v=20260930.1';
-import {travelTimeAtDistance} from './travel.mjs?v=20260930.1';
-import {generatedPassengers,alightFraction,demandBase} from './passengers.mjs?v=20260930.1';
-import {placeVisit} from './station-layouts.mjs?v=20260930.1';
-import {visitWagons} from './wagons.mjs?v=20260930.1';
-import {MetricPath} from './simulation.mjs?v=20260930.1';
-export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1,mode:'auto',cruiseKmh:60,streetKmh:50,acceleration:.8,braking:1.1,turnaround:240,variableDispatch:true,reinforcements:true,signals:true,beyondValidity:true,programmedDispatch:true,programmedRunning:true,observedRunning:true,
+import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260930.2';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.2';
+import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections,turningOnly} from './signals.mjs?v=20260930.2';
+import {travelTimeAtDistance} from './travel.mjs?v=20260930.2';
+import {generatedPassengers,alightFraction,demandBase} from './passengers.mjs?v=20260930.2';
+import {placeVisit} from './station-layouts.mjs?v=20260930.2';
+import {visitWagons} from './wagons.mjs?v=20260930.2';
+import {MetricPath} from './simulation.mjs?v=20260930.2';
+export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1,mode:'auto',cruiseKmh:60,streetKmh:50,acceleration:.6,cruiseFrom:'local',braking:1.1,turnaround:240,variableDispatch:true,reinforcements:true,signals:true,beyondValidity:true,programmedDispatch:true,programmedRunning:true,observedRunning:true,
  // Espacio físico (traffic.mjs). Separación en marcha y parado, ciclo semafórico y atención son
  // decisiones de modelo, rotuladas como estimación; la variación diaria cambia de una fecha a otra
  // sin perder la reproducibilidad: la misma fecha y la misma versión dan siempre lo mismo.
@@ -82,12 +82,14 @@ export function congestionHolds(profile,from,to,departure,signals,signalDelay,su
 // por su cuenta, así que en el mismo punto uno se paraba y otro le pasaba al lado.
 export const FIELD=Object.freeze({minFactor:.35,maxFactor:3,step:.05,giveBack:90});
 
-/** Perfil de una ruta, de [abscisa, km/h×10, % detenido] a arreglos en metros y m/s. */
+/** Perfil de una ruta, de [abscisa, km/h×10, % detenido, libre km/h×10] a arreglos en metros y m/s.
+ * La libre —a la que llega un bus que nada detiene— falta en perfiles viejos: entonces vale la de
+ * rodar, travesía / (1 − detenido). */
 export function routeField(entry){
  if(!entry?.profile?.length)return null;
- const n=entry.profile.length,at=new Float64Array(n),v=new Float64Array(n),stop=new Float64Array(n);
- for(let i=0;i<n;i++){at[i]=entry.profile[i][0];v[i]=entry.profile[i][1]/10/3.6;stop[i]=entry.profile[i][2]/100;}
- return {at,v,stop,coverage:entry.coverage};
+ const n=entry.profile.length,at=new Float64Array(n),v=new Float64Array(n),stop=new Float64Array(n),free=new Float64Array(n);
+ for(let i=0;i<n;i++){const p=entry.profile[i];at[i]=p[0];v[i]=p[1]/10/3.6;stop[i]=p[2]/100;free[i]=p[3]>0?p[3]/10/3.6:v[i]/(1-Math.min(.8,stop[i]));}
+ return {at,v,stop,free,coverage:entry.coverage};
 }
 
 /** Techo de velocidad en cada posición de la ruta, con el campo escalado por `factor`. */

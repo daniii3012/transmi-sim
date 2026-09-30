@@ -66,6 +66,9 @@ QUIETO_KMH = 2        # por debajo de esto la lectura cuenta como detenido
 ATENCION_M = 60       # quieto a menos de esto de su parada destino es atención
 ESTACION_M = 120      # quieto a esta distancia de cualquier estación es andén, no corredor
 SEMAFORO_M = 45       # quieto a esta distancia de un semáforo corroborado es el rojo, no el corredor
+LIBRE_PASO_MAX = 40       # pares más largos promedian la parada y el arranque: no sirven para la libre
+LIBRE_PERCENTIL = .85     # la velocidad libre es este percentil de lo que se rueda en la cubeta
+LIBRE_MINIMO = 30         # pares en movimiento para leer la libre de la cubeta sola
 MINIMO_OBSERVADO = 300    # segundos medidos para usar una cubeta tal cual
 MINIMO_SUAVIZADO = 60     # segundos para promediarla con sus vecinas
 VECINAS = 2               # cubetas a cada lado al suavizar
@@ -190,7 +193,8 @@ def estaciones(servicios):
 def medir(por_bus, malla, paradas, luces=(), andenes=()):
     """Acumula por (eje, sentido, cubeta) lo rodado, lo detenido en tráfico y la atención."""
     campo = defaultdict(lambda: {'t': 0.0, 'd': 0.0, 'stop_t': 0.0, 'dwell_t': 0.0, 'queue_t': 0.0,
-                                 'signal_t': 0.0, 'move_t': 0.0, 'move_d': 0.0, 'buses': set()})
+                                 'signal_t': 0.0, 'move_t': 0.0, 'move_d': 0.0, 'buses': set(),
+                                 'free': [0] * 121})
     usadas = descartadas = 0
     for bus, v in por_bus.items():
         for (t1, x1, y1, parada), (t2, x2, y2, _) in zip(v, v[1:]):
@@ -217,8 +221,14 @@ def medir(por_bus, malla, paradas, luces=(), andenes=()):
             # Lo que queda en `v_kmh` es lo que consigue quien pasa de largo.
             en_anden = quieto and not atendiendo and cerca_de(andenes, x1, y1, ESTACION_M)
             en_rojo = quieto and not atendiendo and not en_anden and cerca_de(luces, x1, y1, SEMAFORO_M)
+            # Velocidad libre: la del par entero, anotada en cada cubeta que atraviesa, en un
+            # histograma de 1 km/h. Solo pares cortos y en marcha: uno de un minuto ya mezcla la
+            # arrancada con el crucero.
+            libre = None if quieto or dt > LIBRE_PASO_MAX else min(120, int(distancia / dt * 3.6))
             for cubeta, parte_d, parte_t in repartir(a[1], b[1], distancia, dt):
                 celda = campo[(eje, sentido, cubeta)]
+                if libre is not None:
+                    celda['free'][libre] += 1
                 celda['t'] += parte_t
                 celda['d'] += parte_d
                 celda['buses'].add(bus)
@@ -234,6 +244,33 @@ def medir(por_bus, malla, paradas, luces=(), andenes=()):
                     celda['move_t'] += parte_t
                     celda['move_d'] += parte_d
     return campo, usadas, descartadas
+
+
+def percentil_histograma(histograma, q):
+    """Percentil q de un histograma de 1 km/h, en el centro de su clase; None si está vacío."""
+    total = sum(histograma)
+    if not total:
+        return None
+    objetivo, acumulado = q * total, 0
+    for kmh, n in enumerate(histograma):
+        acumulado += n
+        if acumulado >= objetivo:
+            return kmh + .5
+    return len(histograma) - .5
+
+
+def libre(crudo, clave, vecinas_de):
+    """Velocidad libre de la cubeta: la suya si tiene pares bastantes; si no, con sus vecinas."""
+    propio = crudo.get(clave)
+    if propio and sum(propio['free']) >= LIBRE_MINIMO:
+        return percentil_histograma(propio['free'], LIBRE_PERCENTIL), 'observed'
+    juntas = [0] * 121
+    for n in vecinas_de:
+        if n:
+            juntas = [x + y for x, y in zip(juntas, n['free'])]
+    if sum(juntas) >= LIBRE_MINIMO:
+        return percentil_histograma(juntas, LIBRE_PERCENTIL), 'smoothed'
+    return None, None
 
 
 def rellenar(campo, ejes):
@@ -282,27 +319,33 @@ def rellenar(campo, ejes):
                         travesia = (base[2] if len(base) > 2 and base[2] else None) or vel * (1 - quieto)
                         horas, buses = (v['t'] / 3600 if v else 0.0), (len(v['buses']) if v else 0)
                 conteo[origen] += 1
+                vecinas_libre = [crudo.get((eje['id'], sentido, cubeta + p)) for p in range(-VECINAS, VECINAS + 1)]
+                v_libre, origen_libre = libre(crudo, clave, vecinas_libre)
+                conteo['free_' + (origen_libre or 'none')] += 1
+                # Nunca por debajo de lo que se rueda de media: un histograma pobre no puede frenar.
+                v_libre = max(vel, v_libre) if v_libre else vel
                 salida[f'{eje["id"]}|{sentido}|{cubeta}'] = {
+                    'v_free_kmh': round(v_libre, 1),
                     'v_kmh': round(max(3.0, travesia), 1),
                     'v_roll_kmh': round(vel, 1), 'stop_share': round(min(0.95, quieto), 3),
                     'hours': round(horas, 2), 'buses': buses, 'source': origen}
     return salida, conteo, round(global_v, 1), round(global_s, 3)
 
 
-def construir(carpeta, servicios, excluidos=(), motivo=''):
+def construir(carpeta, servicios, excluidos=(), motivo='', paradas_txt=None):
     rutas = {r['route_id']: r['agency_id']
              for r in csv.DictReader((carpeta / 'routes.txt').open(encoding='utf-8-sig'))}
     ejes = corredores(servicios)
     malla = indice(ejes)
     por_bus, archivos = lecturas(carpeta, rutas, excluidos)
     gtfs = sorted((ROOT / 'data/raw/gtfs').glob('*/stops.txt'))
-    paradas = paraderos(gtfs[-1] if gtfs else None)
+    paradas = paraderos(Path(paradas_txt) if paradas_txt else gtfs[-1] if gtfs else None)
     luces = semaforos(ROOT / 'app/dist/busway_signals.json')
     campo, usadas, descartadas = medir(por_bus, malla, paradas, luces, estaciones(servicios))
     cubetas, conteo, global_v, global_s = rellenar(campo, ejes)
     dias = sorted({m.group(1) for m in (re.search(r'(\d{8})', n) for n in archivos) if m})
     return {
-        'schema_version': 1,
+        'schema_version': 2,
         'observed_from': f'{dias[0][:4]}-{dias[0][4:6]}-{dias[0][6:]}' if dias else None,
         'assumptions': {
             'applies_to': 'todas las horas y tipos de día',
@@ -318,6 +361,11 @@ def construir(carpeta, servicios, excluidos=(), motivo=''):
                            'en la parada destino y la cola por su andén, que el motor ya modela aparte. '
                            'Queda lo que detiene a cualquiera que pase por ahí, que es lo que un '
                            'expreso sí hereda al cruzar el trecho'),
+            'v_free_kmh': ('velocidad libre: percentil 85 de la velocidad de los pares en marcha de '
+                           'hasta 40 s que cruzan la cubeta. Es a la que llega un bus cuando nada lo '
+                           'detiene; el motor la toma como crucero y deja que andenes, semáforos y colas '
+                           'lo frenen. La velocidad media de rodar queda por debajo porque mezcla '
+                           'arrancadas y frenadas'),
             'known_bias': ('el vehículo que no refresca su posición repite la anterior y parece '
                            'detenido: infla stop_share y la cola alta de v_roll_kmh'),
             'review': ('nivel por hora y tipo de día: no hace falta en el campo. Medido sobre las lecturas, '
@@ -325,14 +373,14 @@ def construir(carpeta, servicios, excluidos=(), motivo=''):
                        'punta, valle, sábado y domingo— y el nivel que sí cambia ya lo lleva el tiempo '
                        'publicado de cada tramo, cuyas columnas por tipo de día coinciden con lo medido')},
         'excluded_reason': motivo or None,
-        'parameters': {'dwell_radius_m': ATENCION_M, 'station_radius_m': ESTACION_M, 'signal_radius_m': SEMAFORO_M, 'bucket_m': CUBETA, 'snap_m': ENGANCHE, 'max_step_s': PASO_MAX,
+        'parameters': {'free_quantile': LIBRE_PERCENTIL, 'free_max_step_s': LIBRE_PASO_MAX, 'free_min_pairs': LIBRE_MINIMO, 'dwell_radius_m': ATENCION_M, 'station_radius_m': ESTACION_M, 'signal_radius_m': SEMAFORO_M, 'bucket_m': CUBETA, 'snap_m': ENGANCHE, 'max_step_s': PASO_MAX,
                        'max_jump_m': SALTO_MAX, 'stopped_below_kmh': QUIETO_KMH,
                        'observed_min_s': MINIMO_OBSERVADO, 'smoothed_min_s': MINIMO_SUAVIZADO},
         'sources': {'routes_sha256': hashlib.sha256((carpeta / 'routes.txt').read_bytes()).hexdigest(),
                     'corridors': 'app/dist/services.json · corridors kind=trunk',
                     'feed': 'Lecturas de posición de la flota'},
         'coverage': {'pairs_used': usadas, 'pairs_off_corridor': descartadas,
-                     'buckets': sum(conteo.values()), **{k: conteo[k] for k in sorted(conteo)},
+                     'buckets': sum(v for k, v in conteo.items() if not k.startswith('free_')), **{k: conteo[k] for k in sorted(conteo)},
                      'trunk_km': round(sum(e['length'] for e in ejes) / 1000, 1),
                      'gtfs_stops': len(paradas),
                      'dwell_hours': round(sum(v['dwell_t'] for v in campo.values()) / 3600, 1),
@@ -356,10 +404,11 @@ def main():
     parser.add_argument('--exclude', action='append', default=[], metavar='AAAAMMDD',
                         help='Día que no entra al campo; se anota en la salida con su motivo')
     parser.add_argument('--exclude-note', default='', help='Por qué se excluyen esos días')
+    parser.add_argument('--stops', help='stops.txt del paquete de horarios (por omisión, el último en data/raw/gtfs)')
     parser.add_argument('--dry-run', action='store_true')
     args = parser.parse_args()
     datos = construir(Path(args.capture), json.loads(Path(args.services).read_text()),
-                      set(args.exclude), args.exclude_note)
+                      set(args.exclude), args.exclude_note, args.stops)
     c = datos['coverage']
     print(f"{c['trunk_km']} km de eje troncal · {c['buckets']} cubetas")
     print(f"  observadas {c.get('observed', 0)} ({100 * c.get('observed', 0) / c['buckets']:.0f} %) · "
@@ -370,6 +419,8 @@ def main():
         trav = sorted(v['v_kmh'] for v in observadas)
         q0 = lambda a, x: a[min(len(a) - 1, int(len(a) * x))]
         print(f"  travesía p10 {q0(trav, .1)} · mediana {q0(trav, .5)} · p90 {q0(trav, .9)} km/h")
+        libre_obs = sorted(v['v_free_kmh'] for v in observadas)
+        print(f"  libre    p10 {q0(libre_obs, .1)} · mediana {q0(libre_obs, .5)} · p90 {q0(libre_obs, .9)} km/h")
         vel = sorted(v['v_roll_kmh'] for v in observadas)
         quieto = sorted(v['stop_share'] for v in observadas)
         q = lambda a, x: a[min(len(a) - 1, int(len(a) * x))]
