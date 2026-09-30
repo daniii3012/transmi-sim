@@ -1,4 +1,4 @@
-import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20260930.12';
+import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20260930.13';
 
 // Existence is sourced from OSM. These phases are explicitly scenario estimates.
 export const SIGNAL_CYCLE=Object.freeze({cycle:90,green:52,amber:3});
