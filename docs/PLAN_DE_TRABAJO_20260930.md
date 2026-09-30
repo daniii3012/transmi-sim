@@ -192,6 +192,9 @@ Hito: cabinas en movimiento sobre el terreno, con horario y capacidad declarados
 
 ## Fase 7 — Metro de Bogotá, Línea 1 (investigación + 2–3 sesiones)
 
+Estado al 30 sep.: investigación y datos hechos (`docs/METRO_L1_20260930.md`, `tools/build_metro.py`,
+`data/curated/metro_l1.json`). Falta la vista.
+
 Vista aparte («Metro L1 · proyecto»), con el mismo mapa, reloj y motor, fuera de la simulación
 principal.
 
