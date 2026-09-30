@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260929.15';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260929.15';
+import {MetricPath} from './simulation.mjs?v=20260930.1';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.1';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260929.15';
+import {pieceShape} from './wagons.mjs?v=20260930.1';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -121,6 +121,7 @@ export class NetworkMap {
     this.signalsEnabled=true;const signalCount=data.busway_signals?.signals.length||0;
     if(signalCount){this.signalMesh=new THREE.InstancedMesh(new THREE.CircleGeometry(1,12),new THREE.MeshBasicMaterial({depthTest:true,depthWrite:false,transparent:true}),signalCount);this.signalMesh.frustumCulled=false;this.signalMesh.renderOrder=4.5;this.scene.add(this.signalMesh);}
     this.resizeObserver=new ResizeObserver(()=>{this.resize();});this.resizeObserver.observe(host);
+    new MutationObserver(()=>this.refocus()).observe(document.body,{attributes:true,attributeFilter:['data-detail','data-inspect','data-sheet','data-sheet-size','data-panel']});
     this.resize();this.fitNetwork();this.bind();
   }
 
@@ -131,31 +132,66 @@ export class NetworkMap {
   // Los paneles tapan parte del lienzo, así que el centro útil no es el geométrico. El mismo
   // cálculo sirve para encuadrar y para centrar o seguir: lo que se mira tiene que caer en el
   // hueco libre y no debajo de la hoja inferior, que en el móvil se lleva media pantalla.
-  insets(){
-    const mobile=this.w<800,left=mobile?18:350;
-    const inspector=document.querySelector('#inspector');
-    const right=!mobile&&this.w>1100&&!inspector.hidden?400:60;
-    const top=mobile?120:70;
-    const panel=inspector.hidden?document.querySelector('#sidebar'):inspector;
-    const rect=panel?.getBoundingClientRect();
-    const bottom=mobile&&rect?.height?Math.max(40,this.host.getBoundingClientRect().bottom-rect.top+20):235;
-    return {left,right,top,bottom};
+  insets({fresh=false}={}){
+    const now=performance.now();
+    if(!fresh&&this.insetCache&&now-this.insetCache.at<250&&this.insetCache.w===this.w&&this.insetCache.h===this.h)return this.insetCache.value;
+    const mobile=this.w<800,host=this.host.getBoundingClientRect();
+    let left=mobile?18:60,right=60;const top=mobile?120:70;let bottom=mobile?40:235;
+    // Se mide lo que de verdad tapa el lienzo: un panel alto pegado a un lado le quita ese lado; uno
+    // ancho pegado abajo, la parte de abajo. Una ficha plegada —una franja con su título— no cuenta:
+    // plegarla tiene que devolver el hueco al mapa y el encuadre se corre con ella.
+    for(const panel of [document.querySelector('#sidebar'),document.querySelector('#inspector')]){
+      if(!panel||panel.hidden||getComputedStyle(panel).visibility==='hidden')continue;
+      const r=panel.getBoundingClientRect(),x0=r.left-host.left,x1=r.right-host.left,y0=r.top-host.top;
+      if(!r.width||!r.height)continue;
+      if(r.width>this.w*.6){if(y0>this.h*.25)bottom=Math.max(bottom,this.h-y0+20);continue;}
+      if(r.height<this.h*.35)continue;
+      if(x0<this.w*.3)left=Math.max(left,x1+10);else if(x1>this.w*.7)right=Math.max(right,this.w-x0+10);
+    }
+    const value={left,right,top,bottom};
+    this.insetCache={at:now,w:this.w,h:this.h,value};
+    return value;
   }
   // Cuánto hay que correr el punto mirado para que un lugar quede en medio del hueco libre. Se
   // recuerda unas décimas porque seguir un bus lo pregunta en cada fotograma.
   focusShift({fresh=false}={}){
     const now=performance.now();
-    if(fresh||!this.shiftCache||now-this.shiftCache.at>200||this.shiftCache.mpp!==this.mpp||this.shiftCache.bearing!==this.bearing){
-      const {left,right,top,bottom}=this.insets(),sx=-(left-right)/2*this.mpp,sy=(top-bottom)/2*this.mpp/Math.max(.35,Math.cos(this.tilt)),r=this.right(),f=this.forward();
-      this.shiftCache={at:now,mpp:this.mpp,bearing:this.bearing,value:[r[0]*sx+f[0]*sy,r[1]*sx+f[1]*sy]};
+    if(fresh||!this.shiftCache||now-this.shiftCache.at>200||this.shiftCache.mpp!==this.mpp||this.shiftCache.bearing!==this.bearing||this.shiftCache.tilt!==this.tilt){
+      this.shiftCache={at:now,mpp:this.mpp,bearing:this.bearing,tilt:this.tilt,value:this.shiftFor(this.insets({fresh}))};
     }
     return this.shiftCache.value;
+  }
+  shiftFor({left,right,top,bottom}){
+    const sx=-(left-right)/2*this.mpp,sy=(top-bottom)/2*this.mpp/Math.max(.35,Math.cos(this.tilt)),r=this.right(),f=this.forward();
+    return [r[0]*sx+f[0]*sy,r[1]*sx+f[1]*sy];
+  }
+  // Al plegar o desplegar un panel el hueco libre cambia de sitio: lo que estaba en su centro se lleva
+  // al centro del hueco nuevo, con un deslizamiento corto. Se mide cuando la transición del panel ya
+  // terminó. Mientras se sigue un bus no hace falta: el seguimiento ya apunta al hueco en cada cuadro.
+  refocus(){
+    // «Antes» son los márgenes que quedaron medidos con el diseño anterior: cuando este observador
+    // se entera, el panel ya cambió y medir ahora daría el hueco nuevo.
+    const cache=this.insetCache;
+    if(!cache||cache.w!==this.w||cache.h!==this.h)return;
+    this.refocusFrom||=cache.value;
+    clearTimeout(this.refocusTimer);
+    this.refocusTimer=setTimeout(()=>{
+      const from=this.refocusFrom;this.refocusFrom=null;
+      if(performance.now()-(this.lastFollowAt||0)<300)return;
+      const before=this.shiftFor(from),after=this.focusShift({fresh:true}),dx=after[0]-before[0],dy=after[1]-before[1];
+      if(Math.hypot(dx,dy)<this.mpp*8)return;
+      this.pan={start:performance.now(),from:this.target.slice(),to:[this.target[0]+dx,this.target[1]+dy],duration:380};
+    },260);
+  }
+  stepPan(now){
+    const p=this.pan;if(!p)return;const u=Math.min(1,(now-p.start)/p.duration),e=1-(1-u)**3;
+    this.target=[p.from[0]+(p.to[0]-p.from[0])*e,p.from[1]+(p.to[1]-p.from[1])*e];if(u>=1)this.pan=null;this.updateCamera();
   }
   get center(){return this.target;}
   set center(v){this.target=v;}
   setDistanceFromMpp(mpp){this.distance=Math.max(25,Math.min(160000,mpp*this.h/(2*TAN)));}
-  focusOn(xy,mpp){if(mpp!==undefined)this.setDistanceFromMpp(mpp);this.updateMpp();const [dx,dy]=this.focusShift({fresh:true});this.target=[xy[0]+dx,xy[1]+dy];this.updateCamera();}
-  fit(bounds){const {left,right,top,bottom}=this.insets();const mpp=Math.max((bounds[2]-bounds[0])/Math.max(100,this.w-left-right),(bounds[3]-bounds[1])/Math.max(100,this.h-top-bottom),.3);this.setDistanceFromMpp(mpp);this.updateMpp();const [dx,dy]=this.focusShift({fresh:true});this.target=[(bounds[0]+bounds[2])/2+dx,(bounds[1]+bounds[3])/2+dy];this.updateCamera();}
+  focusOn(xy,mpp){this.pan=null;if(mpp!==undefined)this.setDistanceFromMpp(mpp);this.updateMpp();const [dx,dy]=this.focusShift({fresh:true});this.target=[xy[0]+dx,xy[1]+dy];this.updateCamera();}
+  fit(bounds){this.pan=null;const {left,right,top,bottom}=this.insets({fresh:true});const mpp=Math.max((bounds[2]-bounds[0])/Math.max(100,this.w-left-right),(bounds[3]-bounds[1])/Math.max(100,this.h-top-bottom),.3);this.setDistanceFromMpp(mpp);this.updateMpp();const [dx,dy]=this.focusShift({fresh:true});this.target=[(bounds[0]+bounds[2])/2+dx,(bounds[1]+bounds[3])/2+dy];this.updateCamera();}
   fitNetwork(){this.fit(this.data.bounds);}
   fitPilot(){this.fitNetwork();}
   focusStation(station){const layout=this.data.station_layouts?.stations.find(s=>s.station_id===station.id);const points=layout?[...layout.platforms,...layout.areas].flatMap(p=>p.points):[];if(points.length){const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]);this.fit([Math.min(...xs)-45,Math.min(...ys)-45,Math.max(...xs)+45,Math.max(...ys)+45]);}else this.focusOn(station.xy,.8);}
@@ -182,11 +218,12 @@ export class NetworkMap {
   rotate(dBearing,dTilt){this.bearing=((this.bearing+dBearing)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);this.tilt=Math.max(0,Math.min(MAX_TILT,this.tilt+dTilt));this.mode=this.is3D?'3d':'2d';this.updateCamera();this.onView?.();}
   /** Pasa entre la vista cenital y la inclinada con una transición corta. */
   setView(mode){
+    if(mode!=='3d'&&this.chase)this.setChase(false);
     const from={tilt:this.tilt,bearing:this.bearing},to=mode==='3d'?{tilt:TILT_3D,bearing:this.is3D?this.bearing:-25*Math.PI/180}:{tilt:0,bearing:0};
     let db=to.bearing-from.bearing;db=((db+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
     this.transition={start:performance.now(),from,db,to,duration:650};this.mode=mode;
   }
-  resetNorth(){const from={tilt:this.tilt,bearing:this.bearing};let db=-this.bearing;db=((db+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;this.transition={start:performance.now(),from,db,to:{tilt:this.tilt,bearing:0},duration:500};}
+  resetNorth(){if(this.chase)this.setChase(false);const from={tilt:this.tilt,bearing:this.bearing};let db=-this.bearing;db=((db+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;this.transition={start:performance.now(),from,db,to:{tilt:this.tilt,bearing:0},duration:500};}
   stepTransition(now){
     const t=this.transition;if(!t)return;const u=Math.min(1,(now-t.start)/t.duration),e=u<.5?2*u*u:1-(-2*u+2)**2/2;
     this.tilt=t.from.tilt+(t.to.tilt-t.from.tilt)*e;this.bearing=((t.from.bearing+t.db*e)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
@@ -280,7 +317,7 @@ export class NetworkMap {
       const before=midpoint(gesture.values),after=midpoint(values);
       if(gesture.rotate){
         // Girar e inclinar: arrastre con el botón derecho, o con Ctrl o Mayúsculas.
-        this.transition=null;this.bearing=gesture.bearing+(after[0]-before[0])*.006;this.tilt=Math.max(0,Math.min(MAX_TILT,gesture.tilt+(after[1]-before[1])*.005));
+        this.transition=null;if(this.chase)this.setChase(false);this.bearing=gesture.bearing+(after[0]-before[0])*.006;this.tilt=Math.max(0,Math.min(MAX_TILT,gesture.tilt+(after[1]-before[1])*.005));
         this.mode=this.is3D?'3d':'2d';this.updateCamera();this.onView?.();gesture.moved=true;return;
       }
       if(values.length>1&&gesture.values.length>1){
@@ -289,7 +326,7 @@ export class NetworkMap {
         // Dos dedos: girar el par cambia el rumbo; moverlos juntos en vertical inclina.
         let turn=ang(values)-ang(gesture.values);if(turn>Math.PI)turn-=2*Math.PI;if(turn<-Math.PI)turn+=2*Math.PI;
         const lift=after[1]-before[1],spread=Math.abs(dist(values)-dist(gesture.values));
-        if(Math.abs(turn)>.08)this.bearing=gesture.bearing-turn;
+        if(Math.abs(turn)>.08){if(this.chase)this.setChase(false);this.bearing=gesture.bearing-turn;}
         if(Math.abs(lift)>30&&spread<40){this.tilt=Math.max(0,Math.min(MAX_TILT,gesture.tilt+lift*.006));this.mode=this.is3D?'3d':'2d';this.onView?.();}
       }
       this.updateMpp();this.placeCamera();
@@ -665,7 +702,7 @@ export class NetworkMap {
     this.previousVisual=new Map((animate?this.visualBuses||[]:[]).map(b=>[b.id,b]));this.targetSimulation=simulation;this.visualSettled=false;this.visualStart=performance.now();this.visualBuses=simulation.buses;if(!animate)this.updateBuses(simulation);
   }
   animateBuses(now){
-    this.stepTransition(now);
+    this.stepTransition(now);this.stepPan(now);
     if(!this.targetSimulation||this.visualSettled)return;
     const blend=Math.min(1,(now-this.visualStart)/60);
     // Entre dos muestras cada bus avanza por su recorrido y se desliza de carril; nunca retrocede.
@@ -742,7 +779,20 @@ export class NetworkMap {
     if((forceClusters||!this.lastClusterTime||performance.now()-this.lastClusterTime>300)){this.lastClusterTime=performance.now();this.clusterLayer.replaceChildren();for(const c of clusters.filter(c=>c.count>5).sort((a,b)=>b.count-a.count).slice(0,32)){const el=document.createElement('div');el.className='cluster-label';el.textContent=c.count;el.style.left=c.screen[0]+5+'px';el.style.top=c.screen[1]-16+'px';this.clusterLayer.append(el);}}
     this.visibleBuses=this.busSamples.length;this.busMesh.count=i;this.busNose.count=nose;this.busJoint.count=joint;this.busMesh.instanceMatrix.needsUpdate=true;if(this.busMesh.instanceColor)this.busMesh.instanceColor.needsUpdate=true;this.busNose.instanceMatrix.needsUpdate=true;this.busJoint.instanceMatrix.needsUpdate=true;this.updateMarker();
   }
-  follow(xy,dt){const [dx,dy]=this.focusShift(),blend=1-Math.exp(-Math.min(.1,Math.max(0,dt))*15);this.target[0]+=(xy[0]+dx-this.target[0])*blend;this.target[1]+=(xy[1]+dy-this.target[1])*blend;const now=performance.now();const labels=!this.lastFollowLabels||now-this.lastFollowLabels>150;if(labels)this.lastFollowLabels=now;this.updateCamera({labels});}
+  // Seguir un bus. Con `chase` la vista además gira con él, como una cámara que va detrás: el rumbo
+  // se suaviza (constante de ~1,2 s) para que las curvas no mareen, y no se mueve con el bus quieto,
+  // cuyo ángulo en una terminal o un giro cerrado salta.
+  follow(xy,dt,angle){
+    const step=Math.min(.1,Math.max(0,dt)),now=performance.now();this.lastFollowAt=now;this.pan=null;
+    if(this.chase&&Number.isFinite(angle)){
+      const moved=this.lastChaseXY?Math.hypot(xy[0]-this.lastChaseXY[0],xy[1]-this.lastChaseXY[1]):0;this.lastChaseXY=xy.slice();
+      if(moved>.05){const want=Math.PI/2-angle;let d=want-this.bearing;d=((d+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
+        this.bearing=((this.bearing+d*(1-Math.exp(-step/1.2)))%(2*Math.PI)+2*Math.PI)%(2*Math.PI);this.updateCompass?.();}
+    }
+    const [dx,dy]=this.focusShift(),blend=1-Math.exp(-step*15);this.target[0]+=(xy[0]+dx-this.target[0])*blend;this.target[1]+=(xy[1]+dy-this.target[1])*blend;
+    const labels=!this.lastFollowLabels||now-this.lastFollowLabels>150;if(labels)this.lastFollowLabels=now;this.updateCamera({labels});
+  }
+  setChase(on){this.chase=!!on;this.lastChaseXY=null;if(this.chase&&!this.is3D)this.setView('3d');this.onChase?.(this.chase);}
   // El semáforo es una estimación del modelo, no un dato: se puede apagar para leer el mapa.
   setSignals(enabled){this.signalsEnabled=enabled;if(this.signalMesh&&!enabled)this.signalMesh.visible=false;}
   updateSignals(time){

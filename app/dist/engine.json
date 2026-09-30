@@ -1,0 +1,32 @@
+{
+ "engine": "b356e8f42d716392",
+ "modules": [
+  "calendar.mjs",
+  "checkpoints.mjs",
+  "operation.mjs",
+  "passengers.mjs",
+  "signals.mjs",
+  "simulation.mjs",
+  "station-layouts.mjs",
+  "traffic.mjs",
+  "travel.mjs",
+  "vehicles.mjs",
+  "wagons.mjs",
+  "worker.mjs"
+ ],
+ "data": [
+  "services.json",
+  "schedule.json",
+  "speed_profiles.json",
+  "demand.json",
+  "busway_geometry.json",
+  "wagon_stops.json",
+  "field_corrections.json",
+  "od_profiles.json",
+  "busway_structures.json",
+  "busway_signals.json",
+  "busway_lanes.json",
+  "station_layouts.json",
+  "station_wagons.json"
+ ]
+}

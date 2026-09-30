@@ -39,6 +39,10 @@ jobs:
       - name: Pruebas del motor
         run: node --test app/tests/*.test.mjs
 
+      # Los puntos de control guardados se reconocen por la huella del motor, no por ?v=.
+      - name: Huella del motor al día
+        run: node tools/engine_fingerprint.mjs --check
+
       - name: Comprobar que lo publicado está completo y es coherente
         run: |
           set -euo pipefail

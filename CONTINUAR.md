@@ -12,6 +12,19 @@
   frente a `20260929.15`) que obligan a simular el día entero al abrir; crucero sin dimensión de
   franja; transbordos que no esperan en la estación de transbordo.
 
+### Fase 1 (30 sep.) — hecha
+
+- Puntos de control con la huella del motor (`app/dist/engine.json`, `tools/engine_fingerprint.mjs`):
+  módulos del motor sin la cadena `?v=` más los JSON que simula. Un cambio de interfaz ya no los
+  invalida. **Tras tocar el motor o sus datos: `node tools/engine_fingerprint.mjs`**; la prueba
+  `engine.test.mjs` y el workflow fallan si no. El precálculo empieza ayer (la madrugada es su día de
+  servicio) y el lanzador local lo rehace en segundo plano si no es del motor actual o no cubre ayer
+  y hoy (~7 min).
+- Cámara: los márgenes del hueco libre se miden de los paneles reales; plegar o desplegar la ficha
+  desliza la vista al centro del hueco nuevo. Botón «Girar con el bus» al seguir uno: la vista pasa a
+  3D y gira con el rumbo suavizado; girar a mano, el norte o dejar de seguir lo apagan.
+- Logo de móvil igual al de escritorio, a escala. `?v=20260930.1`.
+
 ## 28 sep. 2026 — estado
 
 Todo esto está en `main` **solo en local** (desde `da1c904`; no se ha empujado a `origin`).

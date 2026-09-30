@@ -47,27 +47,27 @@ Hallazgos comprobados en el código y los datos el 29–30 sep., que ordenan el 
 
 - [x] Espacio de trabajo local reunido en una sola carpeta (copia; los árboles anteriores quedan
       intactos).
-- [ ] **Versión legado publicada.** La primera versión pública (`30a7840`, 19 sep.) es la raíz de la
+- [x] **Versión legado publicada.** La primera versión pública (`30a7840`, 19 sep.) es la raíz de la
       historia de `main`, así que no necesita rama propia: el workflow de Pages la extrae con
       `git archive 30a7840 app/dist` y la sirve en `/transmi-sim/legado/`, junto a la actual en la
       raíz. Solo comparte con la nueva la preferencia de tema en `localStorage` (`transmi-theme`),
       que es inocua. Enlace a «Versión 1 (legado)» desde el panel Fuentes.
-- [ ] Empujar `main` a `origin` (42 commits revisados: sin coautoría, sin direcciones de servicios,
+- [x] Empujar `main` a `origin` (42 commits revisados: sin coautoría, sin direcciones de servicios,
       sin la matriz por pares).
 - [ ] Publicar en Pages la versión actual en la raíz y el legado en `/legado/` — **solo cuando se
       pida**.
 
 Hito: las dos URL responden y el workflow pasa sus comprobaciones.
 
-## Fase 1 — Arreglos rápidos (1 sesión)
+## Fase 1 — Arreglos rápidos (1 sesión) · hecha el 30 sep. salvo el punto 4, que pasa a la fase 5
 
 1. **Puntos de control ligados al motor, no a la versión de la interfaz.** La llave pasa a ser un
    hash de lo que cambia el resultado (motor, horario, parámetros), no `?v=`. Un cambio de CSS ya no
    invalida nada. El lanzador local regenera los que falten al abrir, y el workflow ya los genera.
    Objetivo: móvil en la LAN abre a cualquier hora en segundos.
 2. **Cámara.** Recentrar al plegar/desplegar la tarjeta o la hoja. Nuevo modo «Cámara detrás del
-   bus»: la vista gira con el rumbo suavizado del bus (sin mareo en curvas) y vuelve al norte al
-   soltarlo. Doble toque en el bus alterna entre seguir con norte fijo y seguir girando.
+   bus»: la vista gira con el rumbo suavizado del bus (sin mareo en curvas); girar a mano, pedir el
+   norte o dejar de seguir lo apagan.
 3. **Logo único**: el de escritorio en todas las anchuras.
 4. Lista de solapamientos y errores visuales de la hoja móvil, corregidos uno por uno con capturas a
    375×812 y 390×844.

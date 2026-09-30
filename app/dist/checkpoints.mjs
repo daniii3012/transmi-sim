@@ -6,10 +6,14 @@
 // 2. Los que este navegador ya simuló, guardados en IndexedDB: cualquier escenario —otros parámetros,
 //    otra selección, otro día— vuelve a abrirse al instante la segunda vez.
 //
-// La llave de cada uno es la versión de la aplicación, la llave del escenario (Traffic.scenarioKey) y
-// el segundo del día de servicio. Un punto de control de otra versión o de otro escenario no se usa:
-// el motor restaurado tiene que llegar exactamente al mismo estado que simulando desde cero.
+// La llave de cada uno es la huella del motor (engine.json, tools/engine_fingerprint.mjs), la llave del
+// escenario (Traffic.scenarioKey) y el segundo del día de servicio. Un punto de control de otro motor
+// o de otro escenario no se usa: el motor restaurado tiene que llegar exactamente al mismo estado que
+// simulando desde cero. La huella no cambia con la interfaz ni con la cadena ?v=, así que un ajuste
+// de estilos no obliga a volver a simular el día desde las 03:00.
 const VERSION=new URL(import.meta.url).searchParams.get('v')||'dev';
+let ENGINE=null;
+const engine=()=>ENGINE||=fetch(new URL(`./engine.json?v=${VERSION}`,import.meta.url)).then(r=>r.ok?r.json():null).then(j=>j?.engine||VERSION).catch(()=>VERSION);
 const DB='transmi-sim',KEEP=8,MAGIC=[0x1f,0x8b];
 let db=null,published=null;
 const known=new Map();// llave del escenario → Map(segundo → 'pub'|'idb')
@@ -23,13 +27,14 @@ function openDb(){
   r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('meta');d.createObjectStore('data');};
   r.onsuccess=()=>ok(r.result);r.onerror=()=>fail(r.error);r.onblocked=()=>fail(new Error('IndexedDB bloqueada'));
  }).then(async d=>{
-  // Limpieza al abrir: fuera lo de otras versiones y, de lo demás, los escenarios menos usados.
+  const current=await engine();
+  // Limpieza al abrir: fuera lo de otros motores y, de lo demás, los escenarios menos usados.
   const tx=d.transaction(['meta','data'],'readwrite'),meta=tx.objectStore('meta'),store=tx.objectStore('data');
   const [keys,values]=await Promise.all([request(meta.getAllKeys()),request(meta.getAll())]);
   const used=new Map();
-  keys.forEach((k,x)=>{const v=values[x];if(v.version!==VERSION){meta.delete(k);store.delete(k);return;}used.set(v.scenario,Math.max(used.get(v.scenario)||0,v.used));});
+  keys.forEach((k,x)=>{const v=values[x];if(v.version!==current){meta.delete(k);store.delete(k);return;}used.set(v.scenario,Math.max(used.get(v.scenario)||0,v.used));});
   const drop=new Set([...used].sort((a,b)=>b[1]-a[1]).slice(KEEP).map(e=>e[0]));
-  keys.forEach((k,x)=>{const v=values[x];if(v.version===VERSION&&drop.has(v.scenario)){meta.delete(k);store.delete(k);}});
+  keys.forEach((k,x)=>{const v=values[x];if(v.version===current&&drop.has(v.scenario)){meta.delete(k);store.delete(k);}});
   await new Promise(ok=>{tx.oncomplete=ok;tx.onerror=ok;tx.onabort=ok;});
   return d;
  });
@@ -37,13 +42,15 @@ function openDb(){
  return db;
 }
 function loadPublished(){
- published ||= fetch(new URL('./checkpoints/index.json',import.meta.url)).then(r=>r.ok?r.json():null).then(index=>index&&index.version===VERSION?index:null).catch(()=>null);
+ published ||= fetch(new URL('./checkpoints/index.json',import.meta.url)).then(r=>r.ok?r.json():null).then(async index=>index&&index.engine===await engine()?index:null).catch(()=>null);
  return published;
 }
-const id=(scenario,t)=>`${VERSION}|${scenario}|${t}`;
+const id=(scenario,t)=>`${KEY}|${scenario}|${t}`;
+let KEY=VERSION;engine().then(k=>{KEY=k;});
 
 /** Qué instantes hay guardados para este escenario, de cualquiera de los dos orígenes. */
 export async function available(scenario){
+ KEY=await engine();
  const times=known.get(scenario)||new Map();known.set(scenario,times);
  const index=await loadPublished();
  for(const t of index?.scenarios?.[scenario]?.times||[])times.set(t,'pub');
@@ -88,7 +95,7 @@ export async function save(scenario,t,buffer){
  if(broken||times.has(t))return;times.set(t,'idb');
  try{
   const packed=await deflate(buffer),d=await openDb(),tx=d.transaction(['meta','data'],'readwrite'),key=id(scenario,t);
-  tx.objectStore('data').put(packed,key);tx.objectStore('meta').put({version:VERSION,scenario,t,used:Date.now(),bytes:packed.byteLength},key);
+  tx.objectStore('data').put(packed,key);tx.objectStore('meta').put({version:KEY,scenario,t,used:Date.now(),bytes:packed.byteLength},key);
   await new Promise((ok,fail)=>{tx.oncomplete=ok;tx.onerror=()=>fail(tx.error);tx.onabort=()=>fail(tx.error);});
  }catch{times.delete(t);broken=true;}// sin espacio o sin IndexedDB (ventana privada): se sigue sin caché
 }

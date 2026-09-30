@@ -5,10 +5,13 @@ open it without a build step. Directory listing is refused and nothing is cached
 and reloading shows the change.
 """
 import argparse
+import datetime
 import functools
 import http.server
 import json
+import shutil
 import socket
+import subprocess
 import threading
 import urllib.parse
 import webbrowser
@@ -33,6 +36,36 @@ class LocalHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Content-Length', str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+def refresh_checkpoints():
+    """Recalcula en segundo plano el día precalculado si es de otro motor.
+
+    Sin él, cada navegador —un teléfono en la red local, sobre todo— simula desde las 03:00 hasta la
+    hora actual antes de mostrar nada. Mientras se recalcula, la página funciona igual, solo que abre
+    más despacio; cuando termina, la siguiente carga ya lo usa.
+    """
+    try:
+        engine = json.loads((DIRECTORY / 'engine.json').read_text())['engine']
+    except (OSError, ValueError, KeyError):
+        return
+    try:
+        index = json.loads((DIRECTORY / 'checkpoints/index.json').read_text())
+    except (OSError, ValueError):
+        index = {}
+    # Hace falta ayer (la madrugada es todavía su día de servicio) y hoy.
+    bogota = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-5))).date()
+    needed = {str(bogota - datetime.timedelta(days=1)), str(bogota)}
+    covered = {d for s in index.get('scenarios', {}).values() for d in s.get('dates', [])}
+    node = shutil.which('node')
+    if (index.get('engine') == engine and needed <= covered) or not node:
+        return
+    print('Precalculando el día del escenario inicial para este motor (un par de minutos)…', flush=True)
+    def run():
+        result = subprocess.run([node, str(ROOT / 'tools/build_day_checkpoints.mjs'), '--days', '8'],
+                                cwd=ROOT, capture_output=True, text=True)
+        print('Día precalculado listo.' if result.returncode == 0 else
+              'No se pudo precalcular el día: ' + (result.stderr.strip().splitlines() or ['?'])[-1], flush=True)
+    threading.Thread(target=run, daemon=True).start()
 
 def lan_address():
     try:
@@ -71,6 +104,7 @@ def main():
     if args.lan:
         print('Abre esa dirección desde otro dispositivo de la misma red. Cada dispositivo tiene su propio escenario.', flush=True)
     print('Mantén esta Terminal abierta; Ctrl+C cierra este servidor.', flush=True)
+    refresh_checkpoints()
     if args.open:
         threading.Timer(.3, lambda: webbrowser.open(local_url)).start()
     try:

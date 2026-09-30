@@ -16,6 +16,7 @@
 import fs from 'node:fs';
 import zlib from 'node:zlib';
 import {fileURLToPath} from 'node:url';
+import {fingerprint} from './engine_fingerprint.mjs';
 
 const ROOT=new URL('../',import.meta.url),DIST=new URL('app/dist/',ROOT);
 const arg=(name,fallback)=>{const x=process.argv.indexOf('--'+name);return x>0?process.argv[x+1]:fallback;};
@@ -24,7 +25,9 @@ const load=m=>import(new URL(`${m}?v=${version}`,DIST).href);
 const [{Operation,DEFAULTS},{Guideway,Traffic,SERVICE_START},{DAY,addDays}]=await Promise.all([load('operation.mjs'),load('traffic.mjs'),load('calendar.mjs')]);
 
 const bogotaToday=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Bogota',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-const from=arg('from',bogotaToday()),days=Number(arg('days',21)),every=3600;
+// Se empieza el día anterior: de 00:00 a 03:00 el reloj está todavía en el día de servicio de ayer, y
+// quien abre la página de madrugada simularía ese día entero desde sus 03:00.
+const from=arg('from',addDays(bogotaToday(),-1)),days=Number(arg('days',21)),every=3600;
 const out=new URL(arg('out','app/dist/checkpoints')+'/',ROOT);
 
 // Los datos, armados igual que en app.mjs antes de pasarlos al worker.
@@ -44,7 +47,8 @@ for(let d=0;d<days;d++){
  scenarios.get(key).dates.push(date);
 }
 fs.rmSync(out,{recursive:true,force:true});fs.mkdirSync(out,{recursive:true});
-const index={version,every,generated_at:new Date().toISOString(),from,days,scenarios:{}};
+const engine=fingerprint(DIST);
+const index={version,engine,every,generated_at:new Date().toISOString(),from,days,scenarios:{}};
 let bytes=0;
 for(const [key,s] of scenarios){
  const start=performance.now(),folder=new URL(key+'/',out),times=[];fs.mkdirSync(folder);
@@ -59,4 +63,4 @@ for(const [key,s] of scenarios){
  s.traffic=null;
 }
 fs.writeFileSync(new URL('index.json',out),JSON.stringify(index,null,1)+'\n');
-console.log(`${scenarios.size} escenarios, ${(bytes/1e6).toFixed(1)} MB en ${fileURLToPath(out)} (versión ${version})`);
+console.log(`${scenarios.size} escenarios, ${(bytes/1e6).toFixed(1)} MB en ${fileURLToPath(out)} (motor ${engine}, versión ${version})`);
