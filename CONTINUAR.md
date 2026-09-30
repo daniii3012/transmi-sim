@@ -68,7 +68,31 @@
   que arranque el de delante (mediana 14 s, p90 20 s). Sonda: `work/probe_banderas.mjs`.
 - Tarjeta del metro en la esquina superior derecha.
 
-### Puentes opacos (30 sep.) — Fase 3
+### Puentes y deprimidos contra el satélite (30 sep.) — Fase 3, urgente
+
+- **Vuelve la transparencia.** Daniel prefirió los puentes semitransparentes (regla anterior):
+  `structureMesh` otra vez translúcida (.38), encima, sin escribir profundidad.
+- **Rampas dentro del puente.** En OSM un puente largo ya incluye su rampa (glorieta NQS/Calle 6:
+  el tramo empieza donde la calzada deja el suelo). `Guideway.elevate` pone la rampa de 7 % dentro
+  cuando el conjunto conectado llega al 75 % de su altura; si no, como antes, fuera. La de Comuneros
+  empezaba 157 m antes, dentro de la estación. Huecos de hasta 40 m sin nivel (una curva de la
+  glorieta que no casó con OSM) se cierran a la altura vecina. Solo cambia `z`: carriles idénticos.
+  Sondas: `work/probe_alturas.mjs x y radio`, `work/probe_alturas_diff.mjs`.
+- **Tres pisos de dibujo.** Lo hundido (calzada y muros del deprimido) antes que las calles; lo elevado
+  (calzada de TM y tableros viales) después de los edificios. Antes la troncal a nivel se pintaba
+  encima del puente vial que la cruza («huecos»), los edificios de atrás tapaban tableros y los
+  muros cortaban las calles de arriba. Los buses se siguen viendo bajo un tablero.
+- Muros de trinchera: solo la cara interior, color plano `trench` (en sombra quedaban casi negros:
+  las «cuñas» de la Calle 80 con NQS, junto a Escuela Militar y San Martín).
+- Las calles vecinas ya no redibujan la calzada de TM (748 vías de `cross_streets.json`).
+- Referencia satelital: el export de Esri World Imagery acepta la proyección del mapa en WKT
+  (`bboxSR`/`imageSR` con la aeqd), así la foto cae en metros del mapa sin reproyectar.
+- Seleccionar un bus o una estación ya no corre el mapa (Daniel: el bus quedaba bajo el panel).
+  Plegar o desplegar paneles sí recentra.
+- Pendiente visto: los cupos del patio De la Hoja se pintan sobre el techo del edificio de Catastro
+  de la plaza.
+
+### Puentes opacos (30 sep.) — Fase 3 (revertido)
 
 - `structureMesh` pasa de semitransparente y encima de todo a opaca y antes que la calzada: el
   tablero se lee limpio y lo de debajo queda debajo (la glorieta de la Calle 26 con la Av. 68 dejó de

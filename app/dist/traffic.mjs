@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.21';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.21';
-import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.21';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.21';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.21';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.22';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260930.22';
+import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.22';
+import {hash,programmedSpeed} from './operation.mjs?v=20260930.22';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.22';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -94,21 +94,53 @@ export class Guideway{
   this.assignLanes(routes,lanes,geometry,structures);
  }
  /** Altura de la calzada en cada celda, para la vista 3D: un puente sube 5,5 m por nivel y un
-  * deprimido baja lo mismo, con rampas de 7 % fuera de la estructura que cruzan de un tramo al
-  * siguiente. No cambia nada del movimiento. */
+  * deprimido baja lo mismo, con rampas de 7 %. No cambia nada del movimiento.
+  *
+  * En OSM un puente largo ya incluye su rampa: en la glorieta de la NQS con Calle 6 el tramo marcado
+  * empieza donde la calzada deja el suelo. Por eso la rampa va dentro del puente cuando cabe (el
+  * conjunto conectado llega al 75 % de su altura subiendo desde el suelo); si no cabe, como en un
+  * puente corto sobre una calle, el puente va entero a su altura y las rampas quedan fuera. Antes
+  * iban siempre fuera y la de Comuneros empezaba 157 m antes, dentro de la estación. Los deprimidos
+  * siguen con las rampas fuera: OSM marca solo la parte cubierta. */
  elevate(){
   const H=5.5,G=.07*CELL,L=this.links;
-  for(const link of L){link.up=Float32Array.from(link.level,v=>v>0?v*H:0);link.down=Float32Array.from(link.level,v=>v<0?v*H:0);}
-  for(let it=0;it<30;it++){let changed=false;
-   for(const link of L){const u=link.up,d=link.down,n=u.length;
-    for(const P of link.prev){const p=L[P],pu=p.up[p.up.length-1],pd=p.down[p.down.length-1];if(pu-G>u[0]+1e-3){u[0]=pu-G;changed=true;}if(pd+G<d[0]-1e-3){d[0]=pd+G;changed=true;}}
-    for(const N of link.next){const q=L[N],qu=q.up[0],qd=q.down[0];if(qu-G>u[n-1]+1e-3){u[n-1]=qu-G;changed=true;}if(qd+G<d[n-1]-1e-3){d[n-1]=qd+G;changed=true;}}
-    for(let c=1;c<n;c++){if(u[c-1]-G>u[c]){u[c]=u[c-1]-G;changed=true;}if(d[c-1]+G<d[c]){d[c]=d[c-1]+G;changed=true;}}
-    for(let c=n-2;c>=0;c--){if(u[c+1]-G>u[c]){u[c]=u[c+1]-G;changed=true;}if(d[c+1]+G<d[c]){d[c]=d[c+1]+G;changed=true;}}
-   }
-   if(!changed)break;
+  const relax=(get,better)=>{for(let it=0;it<40;it++){let changed=false;
+   for(const link of L){const v=get(link),n=v.length;
+    for(const P of link.prev){const w=get(L[P]),x=better(w[w.length-1],v[0]);if(x!==v[0]){v[0]=x;changed=true;}}
+    for(const N of link.next){const x=better(get(L[N])[0],v[n-1]);if(x!==v[n-1]){v[n-1]=x;changed=true;}}
+    for(let c=1;c<n;c++){const x=better(v[c-1],v[c]);if(x!==v[c]){v[c]=x;changed=true;}}
+    for(let c=n-2;c>=0;c--){const x=better(v[c+1],v[c]);if(x!==v[c]){v[c]=x;changed=true;}}}
+   if(!changed)break;}};
+  // Huecos de hasta 40 m entre celdas de puente (una curva de la glorieta que no casó con la vía de
+  // OSM) se cierran a la altura del puente vecino: sin esto la calzada bajaba al suelo en medio del
+  // anillo. Es un cierre morfológico sobre el grafo de celdas: dilatar 4 celdas y erosionar 4.
+  const K=4,level=L.map(l=>Float32Array.from(l.level,v=>v>0?v:0));
+  const around=(k,i,f)=>{const l=L[k],n=l.level.length;if(i>0)f(k,i-1);if(i<n-1)f(k,i+1);if(i===0)for(const P of l.prev)f(P,L[P].level.length-1);if(i===n-1)for(const N of l.next)f(N,0);};
+  const bfs=(seed,steps)=>{const d=L.map(l=>new Int16Array(l.level.length).fill(-1)),from=L.map(l=>new Float32Array(l.level.length));let q=[];
+   for(const link of L)for(let c=0;c<link.level.length;c++){const v=seed(link.id,c);if(v!=null){d[link.id][c]=0;from[link.id][c]=v;q.push([link.id,c]);}}
+   for(let st=1;st<=steps&&q.length;st++){const next=[];for(const [k,i] of q)around(k,i,(kk,ii)=>{if(d[kk][ii]<0){d[kk][ii]=st;from[kk][ii]=from[k][i];next.push([kk,ii]);}});q=next;}
+   return {d,from};};
+  const grown=bfs((k,c)=>level[k][c]>0?level[k][c]:null,K),shrunk=bfs((k,c)=>grown.d[k][c]<0?0:null,K);
+  for(const link of L)for(let c=0;c<link.level.length;c++)if(!(link.level[c]>0)&&!(link.level[c]<0)&&grown.d[link.id][c]>0&&shrunk.d[link.id][c]<0)level[link.id][c]=grown.from[link.id][c];
+  // Rampas dentro: el techo de cada celda es su altura, y a partir del suelo sube 7 %.
+  for(const link of L)link.inside=Float32Array.from(level[link.id],v=>v*H);
+  relax(l=>l.inside,(from,v)=>from+G<v-1e-3?from+G:v);
+  // Conjuntos de celdas de puente conectadas; uno sirve si llega al 75 % de su altura.
+  const run=L.map(l=>new Int32Array(l.level.length).fill(-1)),good=[];
+  for(const link of L)for(let c=0;c<link.level.length;c++){
+   if(!(level[link.id][c]>0)||run[link.id][c]>=0)continue;
+   const id=good.length,stack=[[link.id,c]];let top=0,reach=0;run[link.id][c]=id;
+   while(stack.length){const [k,i]=stack.pop();top=Math.max(top,level[k][i]*H);reach=Math.max(reach,L[k].inside[i]);
+    around(k,i,(kk,ii)=>{if(level[kk][ii]>0&&run[kk][ii]<0){run[kk][ii]=id;stack.push([kk,ii]);}});}
+   good.push(reach>=.75*top);
   }
-  for(const link of L){link.z=new Float32Array(link.up.length);for(let c=0;c<link.z.length;c++)link.z[c]=Math.max(0,link.up[c])+Math.min(0,link.down[c]);delete link.up;delete link.down;}
+  // Rampas fuera, solo desde los puentes que no alcanzan, y los deprimidos.
+  for(const link of L){const r=run[link.id];link.up=Float32Array.from(level[link.id],(v,c)=>v>0&&!good[r[c]]?v*H:0);link.down=Float32Array.from(link.level,v=>v<0?v*H:0);}
+  relax(l=>l.up,(from,v)=>from-G>v+1e-3?from-G:v);
+  relax(l=>l.down,(from,v)=>from+G<v-1e-3?from+G:v);
+  for(const link of L){const r=run[link.id];link.z=new Float32Array(link.up.length);
+   for(let c=0;c<link.z.length;c++)link.z[c]=Math.max(link.up[c],r[c]>=0&&good[r[c]]?link.inside[c]:0)+Math.min(0,link.down[c]);
+   delete link.up;delete link.down;delete link.inside;}
  }
  makeLink(nodes,xy){
   const points=nodes.map(i=>xy[i]),cum=new Float64Array(points.length);
