@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.20';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.20';
-import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.20';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.20';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.20';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.21';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260930.21';
+import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.21';
+import {hash,programmedSpeed} from './operation.mjs?v=20260930.21';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.21';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -553,6 +553,7 @@ export class Traffic{
 
  /** El que va delante en ese carril, aunque ya esté en el tramo siguiente o saliendo de este.
   * Devuelve su número y deja la distancia libre en `this.lg`. */
+ tailLaneOf(j,L){const now=this.g.links[this.linkOf(j)];return now.lanes[0]<2?this.tailLane[L]:this.a.lane[j];}
  leader(i,lane){
   const a=this.a,off=this.off,map=this.info[a.route[i]].map,k=a.k[i],L=map.links[k],own=off[i],list=this.lists[L*2+lane];
   // En el propio carril la lista ya está ordenada; en el otro hay que buscar el primero por
@@ -560,14 +561,17 @@ export class Traffic{
   if(a.lane[i]===lane){const pos=this.listPos[i];if(pos>0){const j=list[pos-1];this.lg=off[j]-a.len[j]-own;return j;}}
   else for(let x=list.length-1;x>=0;x--){const j=list[x];if(off[j]>own){this.lg=off[j]-a.len[j]-own;return j;}}
   let best=Infinity,who=-1,j=this.tails[L];
-  // Quien acaba de salir de este tramo puede tener todavía la cola dentro.
-  if(j>=0&&j!==i&&a.status[j]===2&&!a.offnet[j]&&this.tailLane[L]===lane){const rear=a.sR[j]-a.len[j]-this.tailEnd[L];if(rear<0){best=this.g.links[L].length+rear-own;who=j;}}
+  // Quien acaba de salir de este tramo puede tener todavía la cola dentro, en el carril por el que va
+  // ahora: un cambio de carril mueve el bus entero. El carril con que salió solo vale si el tramo
+  // nuevo empieza con uno. En Banderas el M51 salía por el de paso, se acomodaba en el andén, y el 5
+  // que venía por el de paso esperaba a una cola que ya no estaba ahí.
+  if(j>=0&&j!==i&&a.status[j]===2&&!a.offnet[j]&&this.tailLaneOf(j,L)===lane){const rear=a.sR[j]-a.len[j]-this.tailEnd[L];if(rear<0){best=this.g.links[L].length+rear-own;who=j;}}
   let dist=map.starts[k+1]-a.sR[i];
   for(let q=k+1;q<map.links.length&&dist<LOOK&&dist<best;q++){
    const L2=map.links[q],link=this.g.links[L2],lane2=link.lanes[0]<2?0:lane,l2=this.lists[L2*2+lane2];
    if(l2.length){const jj=l2[l2.length-1],g=dist+off[jj]-a.len[jj];if(g<best){best=g;who=jj;}break;}
    j=this.tails[L2];
-   if(j>=0&&j!==i&&a.status[j]===2&&!a.offnet[j]&&this.tailLane[L2]===lane2){const rear=a.sR[j]-a.len[j]-this.tailEnd[L2];if(rear<0){const g=dist+link.length+rear;if(g<best){best=g;who=j;}}}
+   if(j>=0&&j!==i&&a.status[j]===2&&!a.offnet[j]&&this.tailLaneOf(j,L2)===lane2){const rear=a.sR[j]-a.len[j]-this.tailEnd[L2];if(rear<0){const g=dist+link.length+rear;if(g<best){best=g;who=j;}}}
    dist+=link.length;
   }
   this.lg=best;return who;
@@ -978,7 +982,9 @@ export class Traffic{
   // Un empalme se suelta cuando el frente de su dueño lo cruza: desde ahí quien llega por la otra
   // aproximación ya lo ve delante y guarda la distancia solo. Un cierre de carril, cuando su dueño
   // ya está en el carril de atención y lo ha cruzado. En los dos casos, si el dueño ya no circula.
-  if(this.claimed.length){const base=this.g.pointBase;this.claimed=this.claimed.filter(node=>{const i=this.claims[node];if(i>=0&&a.status[i]===2&&!a.offnet[i]&&(node<base?a.sR[i]<=this.claimPos[node]+.5:a.lane[i]===1||a.sR[i]-a.len[i]<=this.claimPos[node]+1))return true;this.claims[node]=-1;return false;});}
+  // Quien atiende suelta los turnos que tuviera: quieto con las puertas abiertas no se incorpora, y el
+  // que viene por el carril de paso le cedía el cierre hasta que arrancaba (Banderas, M51 y 5).
+  if(this.claimed.length){const base=this.g.pointBase;this.claimed=this.claimed.filter(node=>{const i=this.claims[node];if(i>=0&&a.status[i]===2&&!a.offnet[i]&&a.state[i]!==DWELL&&(node<base?a.sR[i]<=this.claimPos[node]+.5:a.lane[i]===1||a.sR[i]-a.len[i]<=this.claimPos[node]+1))return true;this.claims[node]=-1;return false;});}
  }
 
  // --- Lo que ve la interfaz ---------------------------------------------------------------

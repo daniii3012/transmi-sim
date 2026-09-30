@@ -57,6 +57,17 @@
   descuenta ahora cada tramo de 15 min con el abandono (`ABANDON_S`). Dos pruebas que dependían del
   fallo se ajustaron a la regla nueva.
 
+### Banderas: cola fantasma al cambiar de tramo (30 sep.) — corregido
+
+- Un bus largo que salía de un tramo por el carril de paso y se acomodaba en el andén (`dock`) dejaba
+  `tailLane` del tramo anterior en el carril de paso: el que venía detrás por ese carril veía su cola
+  y esperaba hasta que el otro arrancaba (5 detrás de M51 en Banderas, «En cola para su vagón»).
+  `leader` usa ahora `tailLaneOf`: el carril actual del bus si su tramo nuevo empieza con dos. Además,
+  quien atiende suelta los turnos de cierre de carril.
+- Queda, y es razonable: tras atender, esperar en el andén a que haya hueco en el carril de paso o a
+  que arranque el de delante (mediana 14 s, p90 20 s). Sonda: `work/probe_banderas.mjs`.
+- Tarjeta del metro en la esquina superior derecha.
+
 ### Puentes opacos (30 sep.) — Fase 3
 
 - `structureMesh` pasa de semitransparente y encima de todo a opaca y antes que la calzada: el
