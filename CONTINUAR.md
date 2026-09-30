@@ -1,5 +1,17 @@
 # Continuidad — Transmi
 
+## 30 sep. 2026 — nuevo lugar de trabajo y plan por fases
+
+- El trabajo sigue en `~/Documents/code/tm/transmi-sim` (copia completa del árbol anterior, con
+  `data/raw` y `work`). El árbol anterior queda intacto pero ya no es el de trabajo: nada nuevo se
+  escribe allí.
+- **Plan vigente: `docs/PLAN_DE_TRABAJO_20260930.md`**, fases 0 a 8. Sustituye la lista de pendientes
+  de abajo. Reparto entre sesiones: una sola sesión por fase; la que tome una fase la anota aquí con
+  fecha y los archivos que toca.
+- Hallazgos de la revisión que abren las fases 1 y 2: puntos de control de otra versión (`20260928.4`
+  frente a `20260929.15`) que obligan a simular el día entero al abrir; crucero sin dimensión de
+  franja; transbordos que no esperan en la estación de transbordo.
+
 ## 28 sep. 2026 — estado
 
 Todo esto está en `main` **solo en local** (desde `da1c904`; no se ha empujado a `origin`).

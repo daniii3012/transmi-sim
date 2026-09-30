@@ -1,6 +1,6 @@
 # Transmi 2D — dirección vigente
 
-Leer README.md, CONTINUAR.md y docs/PLAN_DEL_PROYECTO.md. Trabajar en español. Mantener notas de continuidad y guardar hitos comprobados en GitHub; push autorizado a daniii3012/transmi-sim. No desplegar ni publicar una versión jugable en internet sin solicitud. Servir app/dist en la LAN mediante el lanzador separado está autorizado.
+Leer README.md, CONTINUAR.md, docs/PLAN_DE_TRABAJO_20260930.md (fases vigentes) y docs/PLAN_DEL_PROYECTO.md. Trabajar en español. Mantener notas de continuidad y guardar hitos comprobados en GitHub; push autorizado a daniii3012/transmi-sim. No desplegar ni publicar una versión jugable en internet sin solicitud. Servir app/dist en la LAN mediante el lanzador separado está autorizado.
 
 **Más de una sesión escribe en este árbol.** Antes de la primera edición, anuncia qué archivos vas a tocar y pregunta si alguien está en ellos; el reparto se acuerda entre las sesiones vivas y queda anotado en CONTINUAR.md con fecha. Nunca `git add -A` aquí: prepara por nombre y comprueba que cada archivo solo traiga lo tuyo. La cadena `?v=` de `app/dist` la sube una sola sesión y tiene que quedar idéntica en todo el directorio; un cambio de motor también la necesita. `services.json`, `speed_profiles.json` y `schedule.json` no se editan ni se fusionan a mano: se regeneran con su herramienta. Detalle y fallos conocidos en CONTINUAR.md.
 
