@@ -142,3 +142,7 @@ details.bus-route .stop-list{margin:4px 0 12px 12px}
 .event-row b{flex:1 1 100%}
 .event-row input[type=time]{width:auto;min-width:0;padding:4px 6px}
 .event-row button{padding:4px 10px;min-height:32px}
+/* Vista del metro: un rótulo arriba, al centro, que dice qué es proyecto y qué es estimado. */
+.metro-banner{position:absolute;top:84px;left:50%;transform:translateX(-50%);z-index:9;display:grid;gap:3px;max-width:min(560px,calc(100% - 32px));padding:10px 14px;border-radius:14px;background:var(--surface,#fff);border:1px solid var(--edge,#0001);box-shadow:0 4px 16px #10233514;font-size:.8rem}
+.metro-banner strong{color:#d4252f}.metro-banner small{color:var(--muted,#697687);line-height:1.35}
+@media(max-width:800px){.metro-banner{top:auto;bottom:calc(var(--peek,156px) + 12px)}}

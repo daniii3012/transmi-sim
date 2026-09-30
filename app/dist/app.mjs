@@ -1,13 +1,13 @@
-import {mountShell} from './shell.mjs?v=20260930.17';
-import {NetworkMap} from './map.mjs?v=20260930.17';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.17';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260930.17';
-import {STATES} from './traffic.mjs?v=20260930.17';
-import {applyFieldCorrections} from './signals.mjs?v=20260930.17';
-import {registerSimulationTools} from './webmcp.mjs?v=20260930.17';
+import {mountShell} from './shell.mjs?v=20260930.18';
+import {NetworkMap} from './map.mjs?v=20260930.18';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.18';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260930.18';
+import {STATES} from './traffic.mjs?v=20260930.18';
+import {applyFieldCorrections} from './signals.mjs?v=20260930.18';
+import {registerSimulationTools} from './webmcp.mjs?v=20260930.18';
 // Aplicación instalable: el service worker guarda código y datos por versión (sw.js). Solo en el sitio
 // publicado: en local se edita y se recarga, y una caché estorbaría.
-if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.17').catch(()=>{});
+if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.18').catch(()=>{});
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -49,11 +49,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260930.17',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260930.18',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.17',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.18',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -548,12 +548,32 @@ try{
  // ficha de un bus dejaba el mapa y el reloj congelados.
  function frame(now,manual=false){try{frameBody(now);}catch(error){console.error(error);}if(!manual)requestAnimationFrame(frame);}
  function frameBody(now){const dt=(now-last)/1000;last=now;if(!document.hidden||debug){if(ready&&settled&&!clock.paused&&!scrubbing&&document.activeElement!==$('#time')){clock.time+=dt*clock.speed;if(clock.time>=2*DAY)jump(clock.time);}if(now-lastSample>=50){sample();lastSample=now;}
-  map.animateBuses(now);if(following&&selection?.kind==='bus'){const b=(map.visualBuses||snap.buses).find(b=>b.id===selection.id);if(b){map.follow(b.xy,dt,b.angle);}}else if(map.chase)map.setChase(false);
+  map.animateBuses(now);if(metro){const t=((clock.time%DAY)+DAY)%DAY;metro.update(t);
+   // El encuadre del metro va cuando la simulación ya se asentó: antes, el de la red lo pisaba.
+   if(VIEW==='metro'&&settled&&!metro.framed){metro.framed=true;map.setCorridorsFaded(true);for(const m of [map.busMesh,map.busNose,map.busJoint])if(m){m.material.transparent=true;m.material.opacity=.25;}const pts=metro.data.alignment,xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);map.fit([Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)]);map.setView('3d');}
+  if(metro.countEl&&(!metro.lastCount||now-metro.lastCount>1000)){metro.lastCount=now;metro.countEl.textContent=`${metro.trains.length} trenes en la vía · estimado`;}}if(following&&selection?.kind==='bus'){const b=(map.visualBuses||snap.buses).find(b=>b.id===selection.id);if(b){map.follow(b.xy,dt,b.angle);}}else if(map.chase)map.setChase(false);
   map.render();if(now-lastUI>200){updateUI();renderNow();lastUI=now;}if(map.crowdEnabled&&now-crowdAt>2000)requestCrowd();if(now-lastList>5000){if(activePanel==='routes'&&!$('#route-list').contains(document.activeElement))renderRoutes();if(activePanel==='depots'&&ready)worker.postMessage({type:'depots',generation});lastList=now;}
   if(timeline&&now-(timeline.at||0)>250){timeline.at=now;updateTimeline();}if(now-lastInspect>1000){if(selection?.kind==='bus'){const focus=document.activeElement?.id;renderBus();if(focus==='follow')$('#follow')?.focus({preventScroll:true});}if(selection?.kind==='station'){if(ready&&!$('#inspector').contains(document.activeElement))worker.postMessage({type:'station',generation,id:selection.id});}lastInspect=now;}}
  }
  const dispose=registerSimulationTools(document.modelContext,{read:()=>({...snap.stats,date:config.date,paused:clock.paused,speed:clock.speed,selected:selection}),control:input=>{if('paused'in input)clock.paused=input.paused;if('speed'in input)clock.speed=input.speed;syncControls();}});
  window.addEventListener('pagehide',()=>{worker.terminate();dispose?.();},{once:true});
  document.addEventListener('keydown',e=>{if(e.code==='Space'&&!['INPUT','SELECT','BUTTON','TEXTAREA'].includes(e.target.tagName)){e.preventDefault();clock.paused=!clock.paused;syncControls();}});
+ // Vista del metro (?vista=metro): la Línea 1 en proyecto, con su viaducto, estaciones y trenes con la
+ // operación estimada, sobre el mismo mapa y el mismo reloj. Se abre aparte desde «Más».
+ let metro=null;const VIEW=new URLSearchParams(location.search).get('vista');
+ async function setupMetro(){
+  try{
+   const [{MetroLayer,METRO},data]=await Promise.all([import('./metro.mjs?v=20260930.18'),fetch('./metro_l1.json').then(r=>r.json())]);
+   metro=new MetroLayer(map.scene,data);
+   const tt=metro.timetable,banner=el('div',undefined,'metro-banner');banner.id='metro-banner';
+   const count=el('b','—');
+   banner.append(el('strong','Metro de Bogotá · Línea 1 (proyecto)'),el('span',`${data.stations.length} estaciones · ${(data.length_m/1000).toFixed(1)} km · operación prevista desde marzo de 2028`),count,
+    el('small',`Trazado, viaducto y estaciones: Empresa Metro de Bogotá, datos abiertos. Estimado: horario 04:30–23:00, intervalo ${METRO.peak} s en punta (el publicado) y ${METRO.offpeak} s en valle, parada de ${METRO.dwell} s. Ida ${Math.round(tt.oneWay/60)} min, ${tt.peakTrains} trenes en punta de 30.`));
+   document.querySelector('main').append(banner);
+   metro.countEl=count;
+  }catch(error){console.error(error);toast('No se pudo cargar el metro.');}
+ }
+ if(VIEW==='metro')setupMetro();
+ {const link=el('button','Metro L1 (proyecto) ↗');link.type='button';link.onclick=()=>window.open('./?vista=metro','_blank','noopener');document.querySelector('.more-options')?.append(link);}
  rebuild();requestAnimationFrame(frame);
 }catch(error){$('#loading').hidden=true;$('#error').hidden=false;$('#error').textContent='No fue posible abrir el simulador. '+error.message;console.error(error);}

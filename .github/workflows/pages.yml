@@ -65,7 +65,7 @@ jobs:
             assert h['source']['sha256'], 'schedule.json no declara de qué paquete salió'; \
             print(f\"schedule.json: {len(r)} servicios, paquete {h['source']['sha256'][:12]}\")" 
           # Los JSON curados y su copia web tienen que ser idénticos byte a byte.
-          for f in station_layouts busway_signals busway_lanes busway_geometry wagon_stops field_corrections od_profiles busway_structures busway_context cross_streets depots station_wagons; do
+          for f in station_layouts busway_signals busway_lanes busway_geometry wagon_stops field_corrections od_profiles busway_structures busway_context cross_streets depots station_wagons metro_l1; do
             a=$(sha256sum "data/curated/$f.json" | cut -d' ' -f1)
             b=$(sha256sum "app/dist/$f.json" | cut -d' ' -f1)
             [ "$a" = "$b" ] || { echo "$f.json difiere entre data/curated y app/dist"; exit 1; }

@@ -57,6 +57,15 @@
   descuenta ahora cada tramo de 15 min con el abandono (`ABANDON_S`). Dos pruebas que dependían del
   fallo se ajustaron a la regla nueva.
 
+### Vista del metro (30 sep.) — Fase 7
+
+- `?vista=metro` (entrada «Metro L1 (proyecto) ↗» en Más, abre otra pestaña): `metro.mjs` dibuja el
+  viaducto a 13 m con pilas cada 35 m, las 16 estaciones con su contorno publicado y los trenes de
+  6 vagones; la posición sale del horario estimado (140/240 s, 04:30–23:00, parada 35 s, 1 m/s²,
+  80 km/h): ida 29,4 min, 42,6 km/h (la publicada es 42,5), 28 trenes en punta. Rótulo de proyecto
+  con lo publicado y lo estimado. Corredores de TransMilenio atenuados en esa vista.
+- Falta: nombres de estación en el mapa, patio taller, Línea 2, integración visual con TransMilenio.
+
 ### Pasajeros: cada bus se lleva a quienes les sirve (30 sep.)
 
 - Diagnóstico con Daniel en la calle: en la mañana hacia el centro los buses ya llegaban llenos a
