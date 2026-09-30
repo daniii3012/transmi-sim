@@ -47,7 +47,7 @@ Abre <http://127.0.0.1:8766/>. En macOS también sirve el doble clic en
 
 | Dato | Fuente |
 |---|---|
-| Recorridos, paradas, horarios y vagones | Catálogo de servicios y GTFS abierto de TRANSMILENIO S.A. |
+| Recorridos, paradas, horarios y vagones | Catálogo de servicios y [GTFS de TRANSMILENIO S.A., datos abiertos](https://datosabiertos-transmilenio.hub.arcgis.com/search?tags=gtfs) |
 | Velocidad por trecho y tipo de bus por servicio | Lecturas de posición de la flota, septiembre de 2026 |
 | Pasajeros por estación y hora | [Validaciones diarias](https://datosabiertos.bogota.gov.co/dataset/validaciones-diarias-sitp), Datos Abiertos Bogotá |
 | Calzada, carriles, edificios y patios | [Mapa de Referencia IDECA](https://datosabiertos.bogota.gov.co/dataset/mapa-de-referencia) y [OpenStreetMap](https://www.openstreetmap.org/copyright) |

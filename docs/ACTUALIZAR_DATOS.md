@@ -74,7 +74,7 @@ los `build_*` escriben ambas.
 | Sentido de salida y descenso por estación | Validaciones diarias SITP (datos abiertos) | archivos oficiales fuera del repositorio | `build_od_matrix.py` y `build_od_profiles.py` | `app/dist/od_profiles.json` |
 | Edificios de la vista 3D | Mapa de Referencia (IDECA / UAECD), capa Construcción | descarga fuera del repositorio | `build_buildings.py` | `app/dist/buildings/` |
 | Geometría física de estaciones y portales | OpenStreetMap API 0.6 y Overpass | `fetch_station_layouts.py` | `build_station_layouts.py` | `app/dist/station_layouts.json` |
-| Salidas programadas de cada servicio | GTFS abierto de TRANSMILENIO S.A. | `fetch_gtfs.py` | `build_schedule.py` | `app/dist/schedule.json` |
+| Salidas programadas de cada servicio | [GTFS de TRANSMILENIO S.A., datos abiertos](https://datosabiertos-transmilenio.hub.arcgis.com/search?tags=gtfs) | `fetch_gtfs.py` | `build_schedule.py` | `app/dist/schedule.json` |
 | Tipo de vehículo por servicio | Lecturas de posición de la flota, desde el 12 sep 2026 | herramienta de captura, fuera del repositorio | `classify_fleet.py` | `data/curated/fleet_types.json` |
 | Velocidad de cada trecho de corredor | Las mismas lecturas | ídem | `build_speed_field.py` | `data/curated/speed_field.json` |
 | Tiempo real entre parada y parada | Las mismas lecturas | ídem | `build_observed_times.py` | `data/curated/observed_times.json` |

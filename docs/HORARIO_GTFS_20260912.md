@@ -1,6 +1,6 @@
 # Horario publicado: del intervalo fijo a las salidas del GTFS
 
-12 de septiembre de 2026. Sustituye dos invenciones por lo que TRANSMILENIO publica en su GTFS: la
+12 de septiembre de 2026. Sustituye dos invenciones por lo que TRANSMILENIO publica en su [GTFS](https://datosabiertos-transmilenio.hub.arcgis.com/search?tags=gtfs) (datos abiertos): la
 regla de despacho de cuatro y ocho minutos, por las salidas reales; y el crucero único de 60 km/h,
 por la velocidad que se despeja del tiempo que el horario da a cada tramo. Las dos mitades se pueden
 apagar por separado desde la interfaz.
