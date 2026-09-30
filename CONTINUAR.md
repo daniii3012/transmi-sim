@@ -57,6 +57,15 @@
   descuenta ahora cada tramo de 15 min con el abandono (`ABANDON_S`). Dos pruebas que dependían del
   fallo se ajustaron a la regla nueva.
 
+### Aplicación instalable (30 sep.) — Fase 5, primer paso
+
+- `manifest.webmanifest`, íconos en `app/dist/icons` (el logo de escritorio; SVG rasterizado con
+  `qlmanage`) y `sw.js`: una caché por versión, página primero de la red, módulos con `?v=` primero de
+  la caché, datos y teselas con copia al instante y actualización por detrás. Solo se registra en
+  HTTPS fuera de localhost, así el desarrollo local no se cachea.
+- Buses de patio: `build_depots.py` descuenta vías, construcciones de Catastro < 1.500 m² y la
+  calzada con sus accesos también dentro de los parqueaderos; 1.567 puestos.
+
 ### Cierres de vía (30 sep.) — Fase 4
 
 - Parámetro `events` (hasta 20): punto, inicio y fin en segundos del día de servicio. `eventsOn`

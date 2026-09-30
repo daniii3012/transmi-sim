@@ -137,6 +137,9 @@ Hito: 151 estaciones con estado; mapa sin solapes en Banderas, Calle 26/Caracas,
 
 ## Fase 4 — Panel de simulación y eventos (2 sesiones)
 
+Estado al 30 sep.: multiplicador de oferta y cierres de vía hechos (sin desvío ni cierre de un solo
+carril todavía), con el ejemplo de la Calle 80.
+
 1. **Revisar el panel Parámetros** entero: agrupar en Oferta, Circulación, Estaciones, Pasajeros y
    Eventos; cada uno con su explicación y su valor por defecto medido o estimado.
 2. **Multiplicador de oferta** (×0,25 a ×5): añade salidas entre las publicadas o las retira. Con
@@ -158,6 +161,9 @@ Hito: 151 estaciones con estado; mapa sin solapes en Banderas, Calle 26/Caracas,
 Hito: un cierre colocado a mano da filas y desvíos plausibles.
 
 ## Fase 5 — Móvil instalable (1–2 sesiones)
+
+Estado al 30 sep.: punto 1 hecho (manifiesto, íconos y service worker). Falta probar la
+instalación en un teléfono real y los puntos 2 y 3.
 
 Recomendación: **una sola aplicación con dos cascarones**, no dos aplicaciones. El motor, el mapa y
 los datos son los mismos; cambian el diseño de controles y los valores por defecto. Mantener dos
