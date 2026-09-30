@@ -35,6 +35,19 @@
   <stops.txt del 12 sep.>` con el Python geográfico, luego `build_services.py --perfiles`.
 - La hora casi no cambia la velocidad en marcha: no hizo falta dimensión de franja.
 
+### Fase 2, pasajeros (30 sep.) — transbordos hechos; espera por ruta pendiente
+
+- `od_profiles.json` (esquema 2) trae por estación y franja los transbordos del día (`transfer`,
+  llevados a todas las entradas) y hacia dónde sale el segundo tramo (`transfer_sectors`); el
+  descenso ya cuenta a quien baja a cambiar. `passengers.mjs` los pone a esperar en la estación de
+  cambio (`transferRate`). Ricaurte 139 mil al día, Jiménez 73 mil; en la simulación, 220–250
+  personas esperando en Ricaurte en horas activas. Viajes 0,90 del tiempo medido.
+- **Pendiente, causa de Las Nieves:** la espera se agrupa por estación y sentido y cada bus sube la
+  parte de 3 servicios (`ROUTE_OPTIONS`); en la calle cada quien espera su ruta. Separar la espera por
+  ruta con el primer tramo de cada viaje asignado (ya se calcula en `build_od_profiles.py`) es el
+  siguiente cambio del motor. Las Nieves tiene poco transbordo (4,8 mil al día).
+- Documentación de pasajeros: solo «validaciones de datos abiertos»; el método queda en el código.
+
 ## 28 sep. 2026 — estado
 
 Todo esto está en `main` **solo en local** (desde `da1c904`; no se ha empujado a `origin`).

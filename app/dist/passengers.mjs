@@ -1,8 +1,9 @@
 /** Aggregate, deterministic synthetic passenger demand. Not an OD survey. */
-import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260930.2';
+import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260930.3';
 export const DEMAND_BASELINE=2.25; // User-calibrated reference; 1× means this scenario baseline.
-// Con la matriz origen-destino medida, cada entrada es un viaje entero que sigue en el bus hasta su
-// destino —un transbordo cuenta como seguir de largo—: 1× son las entradas registradas. El 2,25 se
+// Con la matriz origen-destino medida, cada entrada es un viaje entero: 1× son las entradas
+// registradas. Quien transborda baja en la estación de cambio y vuelve a esperar allí (transferRate),
+// porque el archivo solo registra la entrada y dentro del sistema no se valida otra vez. El 2,25 se
 // calibró con el descenso supuesto, más alto, y con la demanda que se perdía en las terminales.
 export const demandBase=params=>params.odDemand?1:DEMAND_BASELINE;
 export const EMPLOYMENT_CENTER=[6960,-300]; // Approx. Centro Internacional, projected metres; scenario assumption.
@@ -27,6 +28,20 @@ export function directionShare(station,angle,second,date){
  }
  return .5*directionalFactor(station,angle,second);
 }
+// Parte de un histograma de 16 sectores que va en el sentido `angle` (la mitad del sector de costado).
+function sectorShare(hist,angle){
+ let toward=0,total=0;
+ for(let k=0;k<hist.length;k++){const w=hist[k];if(!w)continue;total+=w;const cos=Math.cos((k+.5)/hist.length*2*Math.PI-angle);toward+=cos>1e-9?w:cos<-1e-9?0:w/2;}
+ return total>0?toward/total:.5;
+}
+/** Quien cambia de servicio en la estación: se bajó de un bus y espera el siguiente, aunque no haya
+ * validado. Viajes por día en la franja (od_profiles.json, `transfer`) repartidos en ella, en el
+ * sentido de su segundo tramo. Sin perfil medido no hay transbordo aparte: el viaje sigue de largo. */
+export function transferRate(station,angle,time,date){
+ const od=station.od_profile?.[dayType(date)],period=odPeriod(time),n=od?.transfer?.[period];if(!n)return 0;
+ const [,a,b]=OD_PERIODS.find(p=>p[0]===period);
+ return n/((b-a)*3600)*sectorShare(od.transfer_sectors?.[period]||[],angle);
+}
 export function arrivalRate(station,angle,time,date,params){
  const hour=((time%DAY)+DAY)%DAY/3600;if(hour<4||hour>=23.5)return 0;
  if(station.demand_profile){
@@ -35,7 +50,7 @@ export function arrivalRate(station,angle,time,date,params){
   // reduction of a weekday. The estimated factors only remain for a single-day aggregate.
   const hourly=measured||profile.hourly,dayFactor=measured?1:kind==='weekday'?1:kind==='saturday'?.7:.55;
   const observed=hourly[Math.floor(hour)]/3600,override=params.mode==='peak'?1.5:params.mode==='offpeak'?.7:1;
-  return demandBase(params)*observed*directionShare(station,angle,time,date)*dayFactor*override*params.demand;
+  return (demandBase(params)*observed*directionShare(station,angle,time,date)*dayFactor+(params.odDemand?transferRate(station,angle,time,date):0))*override*params.demand;
  }
  const central=centrality(station.xy),morning=hour<11,peak=demandPeriod(time,date,params.mode)==='peak';
  const landUse=peak?(morning?1.35-.6*central:.6+1.2*central):1;

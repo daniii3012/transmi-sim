@@ -86,6 +86,11 @@ Hito: carga en teléfono medida y anotada; capturas de antes/después.
    para las 119 rutas. Tabla en `docs/` y ficha en «Datos». Objetivo: que la noche salga más rápida
    que el pico y que el 5,7 % de tramos que hoy no alcanzan su tiempo publicado baje.
 
+**Estado al 30 sep.** Velocidad hecha (`docs/VELOCIDAD_LIBRE_20260930.md`): la franja resultó no
+importar; lo que faltaba era la velocidad libre. Transbordos hechos. Pendientes: espera por ruta en
+vez de por sentido (causa probable de Las Nieves), las colas de andén y detenciones en tráfico que
+faltan (viajes en 0,90 del tiempo medido) y la tabla ruta por ruta.
+
 **Pasajeros.**
 4. Transbordos: quien cambia de servicio baja en la estación de transbordo y vuelve a esperar allí
    (sentido del segundo tramo), en vez de seguir de largo. Afecta sobre todo a Las Nieves, Jiménez,
