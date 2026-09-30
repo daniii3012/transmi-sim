@@ -1,8 +1,8 @@
 # La velocidad la pone el lugar; detenerse, solo el andén o el rojo
 
 > **Actualización posterior.** El campo se rehizo con todas las lecturas en vez de la primera
-> medición suelta con la que se escribió esto: ocho millones de pares, 98 % de cubetas medidas, y el
-> día de la manifestación de la Calle 80 fuera. El método no cambia y el motor tampoco; las cifras
+> medición suelta con la que se escribió esto: ocho millones de pares, 98 % de cubetas medidas, y un
+> día atípico fuera. El método no cambia y el motor tampoco; las cifras
 > de aquí son las de la primera calibración. Lo medido después, incluida la respuesta a si hacía
 > falta separar por hora y tipo de día —no hacía falta—, está en
 > [la operación medida](OPERACION_MEDIDA_20260912.md).

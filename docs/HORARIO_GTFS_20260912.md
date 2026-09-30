@@ -21,18 +21,13 @@ poder construir escenarios a mano y para comparar contra lo anterior.
 
 ## De dónde sale
 
-TRANSMILENIO S.A. publica datos abiertos sin credencial, con un `manifest.json` que declara sus
-archivos y frecuencias. El paquete estático se regenera a diario hacia las 04:19 de Bogotá.
-
-El paquete descargado se guarda en `data/raw/gtfs` con su fecha y su SHA-256. Esa carpeta no se
-versiona por tamaño, pero `app/dist/schedule.json` lleva dentro el hash del paquete del que salió,
+Del GTFS que TRANSMILENIO S.A. publica en sus [datos abiertos](https://datosabiertos-transmilenio.hub.arcgis.com/search?tags=gtfs). El paquete usado se guarda
+fuera del repositorio con su fecha y su SHA-256, y `app/dist/schedule.json` lleva dentro ese hash,
 así que siempre se puede decir de qué bytes exactos viene el horario publicado.
 
-`tools/fetch_gtfs.py` descarga el paquete, guarda su SHA-256 y recorre los 580 MB de `stop_times.txt`
-en una sola pasada, dejando una fila por viaje troncal o dual y otra por cada tramo entre dos paradas
-consecutivas. `tools/build_schedule.py` empareja catálogos y escribe `app/dist/schedule.json`
-(310 kB) y `data/processed/schedule_audit.json`. Con `--archive` se rehace la reducción sobre un
-paquete ya descargado, recalculando su SHA-256 de esos mismos bytes en vez de copiarlo.
+`tools/build_schedule.py` toma el paquete reducido a una fila por viaje troncal o dual y otra por
+cada tramo entre dos paradas consecutivas, empareja catálogos y escribe `app/dist/schedule.json`
+(310 kB) y `data/processed/schedule_audit.json`.
 
 El paquete pesa 121 MB y se vuelve a publicar cada día: **no se versiona**. Lo que acredita de qué
 bytes salió todo lo demás es su SHA-256 en el manifiesto. El del paquete leído aquí es
@@ -281,14 +276,9 @@ explícitos, sin volver a sumar sobre el tiempo programado los rojos y descensos
 
 ## Actualizarlo
 
-```
-python3 tools/fetch_gtfs.py      # ~3 min: descarga 121 MB y recorre stop_times.txt
-python3 tools/build_schedule.py  # segundos
-```
-
-El primero deja una carpeta fechada en `data/raw/gtfs/` con su manifiesto y actualiza `latest.json`;
-el segundo lee siempre la última. Conviene revisar en la auditoría si cambió el número de pendientes
-antes de dar por buena una actualización.
+Con el paquete nuevo reducido en `data/raw/gtfs/`, `python3 tools/build_schedule.py` (segundos).
+Conviene revisar en la auditoría si cambió el número de pendientes antes de dar por buena una
+actualización.
 
 ## Verificación
 

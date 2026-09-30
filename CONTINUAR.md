@@ -263,9 +263,8 @@ sin geometría o con calendario ambiguo, y no se rellenan con líneas rectas.
   45 s. Detalle en `docs/VELOCIDAD_POR_LUGAR_20260912.md`.
 - **La operación medida.** El campo de velocidad y la tabla de flota se rehicieron con todas las
   lecturas —8 millones de pares, 98 % de cubetas con medición propia— en vez de la primera medición
-  suelta. **El día de la manifestación de la Calle 80 queda excluido**: dejó el corredor a 8,4 km/h
-  con el 60 % del tiempo detenido entre Minuto de Dios y Ferias, y `build_speed_field.py --exclude`
-  lo aparta dejándolo escrito en la salida. Hora y tipo de día **no** hacen falta en el campo: la
+  suelta. **Un día atípico queda excluido**: `build_speed_field.py --exclude` lo aparta dejándolo
+  escrito en la salida. Hora y tipo de día **no** hacen falta en el campo: la
   forma del corredor correlaciona 0,93–0,97 entre franjas y el nivel ya lo pone la columna por tipo
   de día del horario publicado. La densidad vale un 14 % en punta y sigue sin implementarse. El 73 %
   de la detención del corredor ocurre a menos de 300 m de una estación, o sea que es cola de andén.

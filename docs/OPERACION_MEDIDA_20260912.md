@@ -4,35 +4,18 @@ Las lecturas de posición de la flota, desde el 12 de septiembre de 2026, sustit
 medición suelta con la que se calibró el simulador. Ocho millones de pares de lecturas frente a
 435.000. Esto recoge lo que cambió, lo que quedó confirmado y lo que sigue sin resolverse.
 
-La fuente dejó de responder y no se ha vuelto a abrir, así que esta es la base sobre la que queda
-calibrado el simulador. Lo que se observe después no entra hasta que se pueda volver a medir.
+Esta es la base sobre la que queda calibrado el simulador. Lo que se observe después no entra hasta
+que se vuelva a medir.
 
 ## Lo que se midió
 
 7.963.448 pares de lecturas consecutivas sobre 113,8 km de eje troncal, cubriendo laborables, sábado
 y domingo. Las cubetas de 100 m con medición propia pasan del 95 % al **98 %**.
 
-## Un día fuera: la manifestación de la Calle 80
+## Un día fuera
 
-El corredor de la Calle 80 estuvo bloqueado y seguía bloqueado de noche. Entre las 19:00 y las 23:00:
-
-| | El día bloqueado | Un laborable normal |
-|---|---|---|
-| Velocidad en el corredor | **8,4 km/h** | 22,5–23,1 km/h |
-| Parte del tiempo detenido | **60 %** | ~17 % |
-| Horas de bus acumuladas ahí | 175 | ~130 |
-
-Trecho a trecho, el bloqueo se sitúa entre los kilómetros 2,5 y 3,7: **Minuto de Dios a 2,5 km/h con
-el 77 % del tiempo detenido, Boyacá a 2,6 y Ferias a 2,6 con el 84 %**, contra 25–40 km/h en el resto
-de las lecturas.
-
-Un día así describe ese día, no ese corredor, así que queda fuera del campo. `--exclude` lo aparta y
-escribe el motivo en la propia salida, para que no haya que adivinarlo después.
-
-**Procedencia, para que conste:** el detalle diurno de ese día se perdió al instalar el paquete —el
-archivo parcial sobrescribió al que esta máquina tenía—. Sobrevive el resumen por lote de la jornada
-completa y el detalle de 19:00 a 23:29, que es donde se midió lo anterior. Aunque se quisiera
-reincorporar, su mañana ya no existe.
+Un día atípico, con un corredor bloqueado, describe ese día y no ese corredor, así que queda fuera
+del campo. `--exclude` aparta jornadas enteras y escribe el motivo en la propia salida.
 
 ## Hora y tipo de día: no hacen falta en el campo
 

@@ -134,7 +134,7 @@ def main():
     args = parser.parse_args()
     datos = construir(Path(args.capture), args.exclude, args.exclude_note, args.holiday)
     print(f"{datos['coverage']['stretches']} tramos medidos · por franja {datos['coverage']['by_slice']}")
-    print('desde:', datos['observed_from'], '· excluidos:', len(excluidos) or 'ninguno')
+    print('desde:', datos['observed_from'], '· excluidos:', len(args.exclude) or 'ninguno')
     if not args.dry_run:
         Path(args.out).write_text(json.dumps(datos, ensure_ascii=False, separators=(',', ':')) + '\n',
                                   encoding='utf-8')

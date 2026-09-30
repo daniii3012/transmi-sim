@@ -27,8 +27,7 @@ quieto a menos de ATENCION_M de ella, es atención y se contabiliza aparte de `s
 reservado a lo que de verdad detiene a cualquiera que pase por ahí.
 
 Un día con el corredor bloqueado no describe ese corredor: describe ese día. Por eso `--exclude`
-aparta jornadas enteras y deja escrito en la salida el motivo —una manifestación dejó la Calle 80 a
-8,4 km/h con el 60 % del tiempo detenido, contra los 23 km/h y 17 % del resto de las lecturas—.
+aparta jornadas enteras y deja escrito en la salida el motivo.
 
 Lo que esto no es. No es un aforo de tráfico ni una medida de congestión por hora: son las jornadas
 que se listan en la salida, aplicadas a todas las horas y tipos de día. El reparto entre rodar y estar

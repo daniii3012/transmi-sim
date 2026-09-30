@@ -73,7 +73,7 @@ def combined(route):
 def newest(folder):
     latest = folder / 'latest.json'
     if not latest.exists():
-        raise SystemExit('Falta data/raw/gtfs/latest.json: ejecutar antes tools/fetch_gtfs.py')
+        raise SystemExit('Falta data/raw/gtfs/latest.json: hace falta el paquete de horarios reducido')
     return folder / json.loads(latest.read_text(encoding='utf-8'))['folder']
 
 
