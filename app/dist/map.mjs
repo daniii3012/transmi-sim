@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.5';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.5';
+import {MetricPath} from './simulation.mjs?v=20260930.6';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.6';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.5';
+import {pieceShape} from './wagons.mjs?v=20260930.6';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -639,11 +639,22 @@ export class NetworkMap {
     // cruces. Un puente vial sube 5,5 m por nivel con rampas dentro de su propio tramo.
     // Las calles de cross_streets.json solo van como franja: de lejos serían ruido.
     const bands=[],decks=[];
+    // Un puente vial corto que solo cruza agua —el paso de una calle sobre un caño— va a nivel, como
+    // la calzada de TransMilenio en busway_structures.json: OSM marca la estructura, la vía no sube.
+    const box=pts=>{let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;for(const [x,y] of pts){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}return [x0,y0,x1,y1];};
+    const touch=(a,b)=>!(a[2]+5<b[0]||b[2]+5<a[0]||a[3]+5<b[1]||b[3]+5<a[1]);
+    const side=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+    const crosses=(P,Q,closed)=>{const n=Q.length-(closed?0:1);for(let i=1;i<P.length;i++)for(let j=0;j<n;j++){const c=Q[j],d=Q[(j+1)%Q.length];if(side(P[i-1],P[i],c)*side(P[i-1],P[i],d)<0&&side(c,d,P[i-1])*side(c,d,P[i])<0)return true;}return false;};
+    const waterBoxes=data.features.filter(f=>f.kind==='water').map(f=>[f,box(f.points)]);
+    const groundRoads=data.features.filter(f=>f.kind==='road'&&!f.bridge&&!f.tunnel).map(f=>[f,box(f.points)]);
+    const atGrade=f=>{let L=0;for(let i=1;i<f.points.length;i++)L+=Math.hypot(f.points[i][0]-f.points[i-1][0],f.points[i][1]-f.points[i-1][1]);if(L>60||(Number(f.layer)||1)>1)return false;
+      const b=box(f.points);if(groundRoads.some(([g,gb])=>g!==f&&touch(b,gb)&&crosses(f.points,g.points,false)))return false;
+      return waterBoxes.some(([w,wb])=>touch(b,wb)&&crosses(f.points,w.points,w.closed));};
     for(const f of [...data.features,...streets]){
       if(f.kind!=='road'||f.closed||f.tunnel||f.points.length<2)continue;
       const W=(f.width||7.2)/2;
       const P=fillet(f.points),cum=[0];for(let i=1;i<P.length;i++)cum.push(cum[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));
-      const L=cum.at(-1),H=f.bridge?Math.max(1,Number(f.layer)||1)*5.5:0,ramp=Math.min(60,L/3),z=s=>H?H*Math.min(1,s/ramp,(L-s)/ramp):0;
+      const L=cum.at(-1),H=f.bridge&&!atGrade(f)?Math.max(1,Number(f.layer)||1)*5.5:0,ramp=Math.min(60,L/3),z=s=>H?H*Math.min(1,s/ramp,(L-s)/ramp):0;
       for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],len=cum[i]-cum[i-1];if(!len)continue;const nx=-(b[1]-a[1])/len*W,ny=(b[0]-a[0])/len*W,za=z(cum[i-1]),zb=z(cum[i]);
         bands.push(a[0]+nx,a[1]+ny,za,a[0]-nx,a[1]-ny,za,b[0]+nx,b[1]+ny,zb,b[0]+nx,b[1]+ny,zb,a[0]-nx,a[1]-ny,za,b[0]-nx,b[1]-ny,zb);
       }

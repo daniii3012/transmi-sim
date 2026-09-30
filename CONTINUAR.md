@@ -50,6 +50,18 @@
   ruta propiamente dicha, si hace falta más detalle.
 - Documentación de pasajeros: solo «validaciones de datos abiertos»; el método queda en el código.
 
+### Fase 3, niveles (30 sep.) — primer paso
+
+- `build_busway_structures.py` (esquema 2) clasifica cada estructura por lo que cruza, con las calles
+  y el agua de `context.json`: 16 puentes de nivel 1 que solo cruzan agua o no cruzan nada quedan
+  `at_grade` (layer 0, carriles medidos); 41 pasan sobre una calle; 11 se conservan. Deprimidos: 36
+  pasan bajo una calle (`underpass`, 5,5 m) y 32 son trinchera a cielo abierto (`cutting`, 3 m). El
+  motor lee `level` (ahora Float32). En el mapa, los puentes viales de ≤ 60 m que solo cruzan agua
+  tampoco suben.
+- Pendiente visual: donde una calle cruza sobre un deprimido, dibujar su losa y cortar los muros
+  bajo ella (hoy la calle queda en el aire sobre el hueco). El terreno sigue plano: el desnivel solo
+  existe en la calzada.
+
 ## 28 sep. 2026 — estado
 
 Todo esto está en `main` **solo en local** (desde `da1c904`; no se ha empujado a `origin`).

@@ -105,6 +105,10 @@ Hito: validación del día con la nueva velocidad (mediana y p90 frente a lo obs
 
 ## Fase 3 — Malla vial, niveles y estaciones (2–3 sesiones)
 
+Estado al 30 sep.: punto 1 hecho en su parte automática (16 puentes a nivel, 32 deprimidos como
+trinchera de 3 m, puentes viales sobre caños planos). Falta revisar caso a caso con ortofoto, la losa
+de las calles que cruzan sobre un deprimido y el dibujo limpio de la calzada.
+
 1. **Auditoría de estructuras.** Cada puente/deprimido de `busway_structures.json` con su clase:
    - a nivel sobre cuerpo de agua (puentes sobre caños, alcantarillas): se dibujan planos;
    - elevado (puentes y viaductos reales): altura desde `layer` y longitud;

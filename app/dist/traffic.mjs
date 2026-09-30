@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.5';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.5';
-import {generatedPassengers,alightFraction,routeOptions} from './passengers.mjs?v=20260930.5';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.5';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.5';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.6';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260930.6';
+import {generatedPassengers,alightFraction,routeOptions} from './passengers.mjs?v=20260930.6';
+import {hash,programmedSpeed} from './operation.mjs?v=20260930.6';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.6';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -133,7 +133,7 @@ export class Guideway{
  // que es la abstracción autorizada del proyecto y lo que se ve en cualquier estación troncal. En
  // calle mixta el bus tiene siempre un carril para adelantar a otro detenido en un paradero.
  assignLanes(routes,lanes,geometry=null,structures=null){
-  for(const link of this.links){const n=Math.ceil(link.length/CELL)+1;link.lanes=new Uint8Array(n).fill(1);link.station=new Uint8Array(n);link.osm=new Uint8Array(n);link.level=new Int8Array(n);}
+  for(const link of this.links){const n=Math.ceil(link.length/CELL)+1;link.lanes=new Uint8Array(n).fill(1);link.station=new Uint8Array(n);link.osm=new Uint8Array(n);link.level=new Float32Array(n);}
   // Carriles medidos: el ancho de la calzada del IDU, cada 5 m de cada arista, en la misma clave de
   // vértices que la red (tools/build_busway_geometry.py). Mandan sobre la etiqueta de OSM, que
   // queda para donde la calzada no tiene polígono; y si no hay ninguna de las dos, un carril.
@@ -195,7 +195,8 @@ export class Guideway{
       best=w;bestD=d;
      }
      if(!best)continue;
-     link.level[c]=best.layer;
+     // `level`: niveles de 5,5 m; una trinchera a cielo abierto queda más somera que un paso inferior.
+     link.level[c]=best.level??best.layer;
      const per=best.lanes?(best.oneway?best.lanes:Math.max(1,Math.floor(best.lanes/2))):null;
      if(best.kind==='bridge')link.lanes[c]=Math.min(2,per||1);else if(per)link.lanes[c]=Math.min(2,per);
     }
