@@ -126,10 +126,12 @@ de las calles que cruzan sobre un deprimido y el dibujo limpio de la calzada.
    abierta de IDECA, con vagones, paradas y calzada superpuestos; estado por estación («confirmada»,
    «corregida», «sin evidencia») guardado en un JSON con fecha y fuente. Primero las 42 sin
    geometría OSM, luego las que pisan calzada o tienen paradas fuera del vagón.
-4. **Buses en los patios.** Hoy se acomodan en filas por área del polígono de IDECA y algunos pisan
-   vías internas y estructuras. Se recortan del polígono las vías (OSM `service`, calzadas) y las
-   construcciones de Catastro, y las filas se orientan por el eje largo de cada zona libre, revisado
-   contra ortofoto. La posición sigue siendo estimada: no hay dato abierto de puestos.
+4. **Buses en los patios.** `tools/build_depots.py` ya descuenta los parqueaderos, vías internas y
+   edificios de OSM. Los solapes vienen de lo que OSM no trae: se descuentan además las construcciones
+   de Catastro (las del 3D, `data/raw/construcciones*`), la calzada de TransMilenio que entra al patio
+   (`busway_context.json`, `busway_geometry.json`) y los puentes; las filas se orientan por el eje
+   largo de cada zona libre, revisado contra ortofoto. La posición sigue siendo estimada: no hay dato
+   abierto de puestos.
 
 Hito: 151 estaciones con estado; mapa sin solapes en Banderas, Calle 26/Caracas, NQS/26 y Ricaurte.
 
