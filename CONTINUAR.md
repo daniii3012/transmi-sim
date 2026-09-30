@@ -2,9 +2,8 @@
 
 ## 30 sep. 2026 — nuevo lugar de trabajo y plan por fases
 
-- El trabajo sigue en `~/Documents/code/tm/transmi-sim` (copia completa del árbol anterior, con
-  `data/raw` y `work`). El árbol anterior queda intacto pero ya no es el de trabajo: nada nuevo se
-  escribe allí.
+- El trabajo sigue en una copia nueva del árbol (completa, con `data/raw` y `work`). El árbol
+  anterior queda intacto pero ya no es el de trabajo: nada nuevo se escribe allí.
 - **Plan vigente: `docs/PLAN_DE_TRABAJO_20260930.md`**, fases 0 a 8. Sustituye la lista de pendientes
   de abajo. Reparto entre sesiones: una sola sesión por fase; la que tome una fase la anota aquí con
   fecha y los archivos que toca.
@@ -57,6 +56,14 @@
   madrugada (Av. 68, 46 personas a las 01:50), y el primer bus se lo llevaba. `generatedPassengers`
   descuenta ahora cada tramo de 15 min con el abandono (`ABANDON_S`). Dos pruebas que dependían del
   fallo se ajustaron a la regla nueva.
+
+### Cierres de vía (30 sep.) — Fase 4
+
+- Parámetro `events` (hasta 20): punto, inicio y fin en segundos del día de servicio. `eventsOn`
+  corta cada recorrido que pasa a menos de 18 m; en `move` es un obstáculo quieto en todos los
+  carriles (`BLOCK`) mientras dura, sin desvío. Panel Parámetros → Eventos: colocar en el mapa,
+  horas editables y el ejemplo «Cierre en la Calle 80». Marcador rojo en el mapa (`setEvents`).
+- Siguiente: cierre de un solo carril (con cambio de carril) y desvío por la calzada alternativa.
 
 ### Semáforos de la calle de arriba (30 sep.)
 

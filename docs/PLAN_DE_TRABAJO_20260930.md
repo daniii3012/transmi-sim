@@ -145,19 +145,17 @@ Hito: 151 estaciones con estado; mapa sin solapes en Banderas, Calle 26/Caracas,
 3. **Eventos** colocables en el mapa, con hora de inicio y duración:
    - bloqueo de carril o de calzada (accidente, bus varado): los buses hacen fila o rebasan por el
      otro carril donde lo haya;
-   - cierre de un tramo (manifestación): los servicios se detienen o se desvían por la ruta
+   - cierre de un tramo: los servicios se detienen o se desvían por la ruta
      alternativa más corta de la red de calzada; si no hay desvío posible, se retienen;
    - estación cerrada (los servicios pasan sin parar);
    - lluvia (factor de velocidad y de demanda).
    El motor ya tiene lo necesario: carriles, turnos en empalmes y colas.
-4. **Escenario de referencia: la manifestación de la Calle 80** (día excluido del campo de
-   velocidad). Se reproduce como evento con la franja y la ubicación medidas y se compara con lo que
-   pasó.
+4. **Escenario de ejemplo: cierre en la Calle 80**, entre Minuto de Dios y Ferias, precargado en el
+   panel de eventos.
 5. Escenario compartible por URL (fecha, hora, parámetros y eventos), sin guardar nada en el
    navegador sin pedirlo.
 
-Hito: una manifestación colocada a mano da filas y desvíos plausibles, y el escenario de la Calle 80
-queda documentado frente a lo observado.
+Hito: un cierre colocado a mano da filas y desvíos plausibles.
 
 ## Fase 5 — Móvil instalable (1–2 sesiones)
 
@@ -217,8 +215,8 @@ simulación principal:
 
 ## Fase 8 — Juego de observación (después)
 
-Retos acotados sobre la red existente, sin construir líneas: sostener un corredor durante una
-manifestación, reorganizar la oferta de un pico, llevar la ocupación por debajo de un umbral con
+Retos acotados sobre la red existente, sin construir líneas: sostener un corredor durante un
+cierre, reorganizar la oferta de un pico, llevar la ocupación por debajo de un umbral con
 una flota dada. Se diseña cuando las fases 2 y 4 estén firmes.
 
 ## Fuera de alcance por ahora

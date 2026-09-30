@@ -163,3 +163,12 @@ test('En la NQS hacia el norte el semáforo solo detiene a quien gira; el del se
  assert.ok([...op.routes.values()].some(r=>r.signals.some(s=>s.id==='osm-node-5631009101')),'algún servicio que gira sí lo encuentra');
  assert.ok([...op.routes.values()].some(r=>r.signals.some(s=>s.id==='osm-node-13252352390')));
 });
+
+test('Un cierre corta el recorrido donde pasa a menos de 18 m, una vez por pasada, y solo mientras dura',async()=>{
+ const {eventsOn}=await import('../dist/traffic.mjs');
+ const path={points:[[0,0],[1000,0],[1000,400],[0,400]],cumulative:[0,1000,1400,2400]};
+ const on=eventsOn(path,[{xy:[500,10],start:100,end:200}]);
+ assert.deepEqual([...on.evAt],[500]);assert.equal(on.evStart[0],100);assert.equal(on.evEnd[0],200);
+ assert.equal(eventsOn(path,[{xy:[500,60],start:0,end:1}]).evAt.length,0,'a 60 m de la vía no corta nada');
+ assert.deepEqual([...eventsOn(path,[{xy:[500,390],start:0,end:1}]).evAt],[1900],'la pasada de vuelta, en su sentido');
+});

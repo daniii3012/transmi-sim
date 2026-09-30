@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.10';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.10';
-import {generatedPassengers,alightFraction,routeOptions} from './passengers.mjs?v=20260930.10';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.10';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.10';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.12';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260930.12';
+import {generatedPassengers,alightFraction,routeOptions} from './passengers.mjs?v=20260930.12';
+import {hash,programmedSpeed} from './operation.mjs?v=20260930.12';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.12';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -41,7 +41,7 @@ const PLATFORM_LAT=2.3;                // plataforma de terminal, en carriles ha
 // la línea recta y unos minutos para salir. Más allá de la distancia máxima se prefiere uno del patio.
 export const DEADHEAD=Object.freeze({speed:7,factor:1.35,setup:180,maxDistance:18000});
 const MOVING=0,DWELL=1,QUEUE=2,SIGNAL=3,TRAFFIC=4;
-const FREE=0,BUS=1,STOP=2,LIGHT=3,LANE_END=4,MERGE=5;
+const FREE=0,BUS=1,STOP=2,LIGHT=3,LANE_END=4,MERGE=5,BLOCK=6;
 // Puertas del lado del andén por tipo de bus: con ellas se reparte el embarque.
 export const DOORS={biarticulated:5,articulated:4,dual_electric:4,dual:2};
 // Cuántos de los servicios que paran en un sentido le sirven, en promedio, a quien espera ahí, cuando
@@ -271,6 +271,27 @@ export class Guideway{
  * velocidad de progresión: quien sale en verde tiende a encontrar verde en el siguiente. Los que no
  * tienen un vecino ya fijado a menos de 600 m conservan el desfase que sale de su identificador.
  * Es una estimación declarada, como el ciclo mismo. */
+/** Cierres de vía (parámetro `events`): dónde corta cada uno el recorrido de un servicio. Un cierre
+ * es un punto del mapa con hora de inicio y de fin, en segundos del día de servicio; el recorrido que
+ * pasa a menos de EVENT_REACH m queda cortado ahí en todos los carriles mientras dure, y sus buses
+ * hacen fila detrás, como ante un accidente que tapa la calzada. Sin desvío: los servicios se
+ * retienen. */
+export const EVENT_REACH=18;
+export function eventsOn(path,events=[]){
+ const at=[],start=[],end=[];
+ for(const e of events||[]){
+  const hits=[];
+  for(let i=1;i<path.points.length;i++){
+   const a=path.points[i-1],b=path.points[i],dx=b[0]-a[0],dy=b[1]-a[1],len=path.cumulative[i]-path.cumulative[i-1];if(!len)continue;
+   const u=Math.max(0,Math.min(1,((e.xy[0]-a[0])*dx+(e.xy[1]-a[1])*dy)/(len*len))),d=Math.hypot(e.xy[0]-a[0]-u*dx,e.xy[1]-a[1]-u*dy);
+   if(d<=EVENT_REACH)hits.push([d,path.cumulative[i-1]+u*len]);
+  }
+  hits.sort((x,y)=>x[0]-y[0]);const chosen=[];for(const h of hits)if(!chosen.some(c=>Math.abs(c-h[1])<60))chosen.push(h[1]);
+  for(const c of chosen){at.push(c);start.push(e.start);end.push(e.end);}
+ }
+ const order=at.map((_,k)=>k).sort((x,y)=>at[x]-at[y]);
+ return {evAt:Float64Array.from(order,k=>at[k]),evStart:Float64Array.from(order,k=>start[k]),evEnd:Float64Array.from(order,k=>end[k])};
+}
 export const PROGRESSION=8;            // m/s, unos 29 km/h
 export function coordinatedOffsets(routes,clusters,cycle){
  const out=new Map(),rep=id=>clusters.get(id)||id;
@@ -415,7 +436,8 @@ export class Traffic{
    const zones=[];let cur=null;
    for(let k=0;k<map.links.length;k++){const link=guide.links[map.links[k]];for(let c=0;c<link.lanes.length;c++){const at=map.starts[k]+c*CELL;if(at>=map.starts[k+1])break;if(link.station[c]){if(!cur){cur={start:at,end:at+CELL,id:link.zoneId[c]};zones.push(cur);}else cur.end=at+CELL;}else cur=null;}}
    return {r,spec,len,map,stopFront,sigAt,sigIx,sigOff,keys,cells:[],origin,originStation:r.stops[0].station_id,last:r.visits.length-1,
-    zStart:Float64Array.from(zones,z=>z.start),zEnd:Float64Array.from(zones,z=>z.end),zId:Int32Array.from(zones,z=>z.id)};
+    zStart:Float64Array.from(zones,z=>z.start),zEnd:Float64Array.from(zones,z=>z.end),zId:Int32Array.from(zones,z=>z.id),
+    ...eventsOn(r.path,p.events)};
   });
   // Salidas del día, con el desfase de despacho de este día: el horario dice a qué hora sale cada
   // bus, y en la calle sale con un minuto de más o de menos. Cada fecha tiene su propio desfase.
@@ -851,6 +873,12 @@ export class Traffic{
     const d=info.sigAt[q]-1.5-sR;if(d>LOOK)break;if(d<-.2)continue;
     const ph=(t+info.sigOff[q])%cycle;
     if(ph>=amber||ph>=green&&d>v*v/6){const dd=d>0?d:0,s=S0+vT+v*v/sqrtAB,qq=s/Math.max(.1,dd+S0),tq=qq*qq;if(tq>term){term=tq;binding=LIGHT;}if(dd<limit)limit=dd;break;}
+   }
+   // Cierres de vía: mientras dure el evento, un muro en todos los carriles; el bus frena como ante un
+   // obstáculo quieto y los de atrás hacen fila.
+   for(let q=0;q<info.evAt.length;q++){
+    const d=info.evAt[q]-1.5-sR;if(d>LOOK)break;if(d<-.2||t<info.evStart[q]||t>=info.evEnd[q])continue;
+    const dd=d>0?d:0,s=S0+vT+v*v/sqrtAB,qq=s/Math.max(.1,dd+S0),tq=qq*qq;if(tq>term){term=tq;binding=BLOCK;}if(dd<limit)limit=dd;break;
    }
    // Cierre del carril de paso: el de paso no lo cruza nunca en su carril; el de atención se
    // detiene en la línea si el turno es de uno que se está incorporando.

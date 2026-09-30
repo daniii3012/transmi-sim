@@ -1,10 +1,10 @@
-import {mountShell} from './shell.mjs?v=20260930.10';
-import {NetworkMap} from './map.mjs?v=20260930.10';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.10';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260930.10';
-import {STATES} from './traffic.mjs?v=20260930.10';
-import {applyFieldCorrections} from './signals.mjs?v=20260930.10';
-import {registerSimulationTools} from './webmcp.mjs?v=20260930.10';
+import {mountShell} from './shell.mjs?v=20260930.12';
+import {NetworkMap} from './map.mjs?v=20260930.12';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.12';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260930.12';
+import {STATES} from './traffic.mjs?v=20260930.12';
+import {applyFieldCorrections} from './signals.mjs?v=20260930.12';
+import {registerSimulationTools} from './webmcp.mjs?v=20260930.12';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -46,11 +46,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260930.10',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260930.12',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.10',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.12',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -146,18 +146,48 @@ try{
    if(f.help)wrap.append(el('p',f.help,'muted help'));
    fieldset.append(wrap);
   }
+  // Eventos: cierres de vía colocados en el mapa, con hora de inicio y duración. Se aplican con el
+  // resto de los parámetros y viajan en la llave del escenario.
+  const events=el('fieldset',undefined,'settings-group');events.append(el('legend','Eventos'),el('p','Un cierre corta la vía en todos los carriles mientras dura: los buses que pasan por ahí hacen fila detrás. Todavía sin desvío: los servicios quedan retenidos.','muted'));
+  const list=el('div',undefined,'event-list');list.id='event-list';events.append(list);
+  const place=el('button','Colocar un cierre en el mapa','full');place.type='button';
+  place.onclick=()=>{toast('Toca en el mapa el punto de la vía que se cierra.');map.pickHook=xy=>{draftEvents.push({xy:xy.map(v=>Math.round(v*10)/10),start:clockToService('17:00'),end:clockToService('19:00'),label:'Cierre'});renderEvents();map.setEvents(draftEvents);toast('Cierre colocado. Ajusta la hora y aplica.');};};
+  const preset=el('button','Cierre en la Calle 80','full');preset.type='button';
+  preset.onclick=()=>{draftEvents=draftEvents.filter(e=>e.preset!=='calle80');draftEvents.push({...CALLE80});renderEvents();map.setEvents(draftEvents);map.focusOn(CALLE80.xy,4);};
+  events.append(place,preset,el('p','Ejemplo: la Calle 80 cerrada entre Minuto de Dios y Ferias, de 19:00 a 23:30, en los dos sentidos.','muted help'));
+  form.append(events);
   const actions=el('div',undefined,'settings-actions');
   const apply=el('button','Aplicar y volver a simular','primary full');apply.type='submit';
   const reset=el('button','Valores iniciales','full');reset.type='button';reset.onclick=()=>{config.params={...DEFAULTS};syncSettings();};
   const other=el('button','Otra versión de este día','full');other.type='button';other.onclick=()=>{$('#param-variant').value=(Number($('#param-variant').value)+1)%1000;$('#param-dayVariation').checked=true;form.requestSubmit();};
   actions.append(apply,other,reset);form.append(actions);
-  form.onsubmit=e=>{e.preventDefault();const next={...config.params};
+  form.onsubmit=e=>{e.preventDefault();const next={...config.params,events:draftEvents.map(({xy,start,end,label,preset})=>({xy,start,end,label,...(preset?{preset}:{})}))};
    for(const f of SETTINGS){if(!f.key)continue;const input=$('#param-'+f.key);next[f.key]=f.type==='check'?input.checked:f.type==='select'?input.value:Number(input.value)*(f.scale||1);}
    try{config.params=parameters(next);}catch(error){toast(error.message.replace('Parámetro fuera de rango: ','Revisa el valor de ').replace(/signalGreen/,'el verde').replace(/(\w+)$/,m=>SETTINGS.find(f=>f.key===m)?.label.toLowerCase()||m));return;}
    rebuild();toast('Escenario reconstruido con los parámetros nuevos.');};
   syncSettings();
  }
+ // Horas de los eventos en segundos del día de servicio, que va de 03:00 a 03:00: la 01:00 es 25 h.
+ function clockToService(text){const [h,m]=text.split(':').map(Number);return ((h<3?h+24:h)*60+(m||0))*60;}
+ function serviceToClock(t){const m=Math.round(t/60)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
+ const CALLE80={xy:[5562,6880],start:clockToService('19:00'),end:clockToService('23:30'),label:'Cierre en la Calle 80',preset:'calle80'};
+ let draftEvents=[];
+ function renderEvents(){
+  const list=$('#event-list');if(!list)return;list.replaceChildren();
+  if(!draftEvents.length){list.append(el('p','Sin eventos.','muted'));return;}
+  draftEvents.forEach((ev,k)=>{
+   const row=el('div',undefined,'event-row');row.append(el('b',ev.label||'Cierre'));
+   const from=el('input');from.type='time';from.value=serviceToClock(ev.start);from.setAttribute('aria-label','Inicio');
+   const to=el('input');to.type='time';to.value=serviceToClock(ev.end);to.setAttribute('aria-label','Fin');
+   const fix=()=>{const a=clockToService(from.value||'00:00');let b=clockToService(to.value||'00:00');if(b<=a)b=a+900;ev.start=a;ev.end=b;};
+   from.onchange=fix;to.onchange=fix;
+   const go=el('button','Ver');go.type='button';go.onclick=()=>map.focusOn(ev.xy,4);
+   const del=el('button','Quitar');del.type='button';del.onclick=()=>{draftEvents.splice(k,1);renderEvents();map.setEvents(draftEvents);};
+   row.append(from,el('span','a'),to,go,del);list.append(row);
+  });
+ }
  function syncSettings(){
+  draftEvents=(config.params.events||[]).map(e=>({...e,xy:[...e.xy]}));renderEvents();map.setEvents?.(draftEvents);
   for(const f of SETTINGS){if(!f.key)continue;const input=$('#param-'+f.key);if(!input)continue;const v=config.params[f.key];
    if(f.type==='check')input.checked=!!v;else input.value=f.scale?v/f.scale:v;
    if(f.type==='range')$('#'+input.id+'-value').textContent=input.value+(f.unit||'');}

@@ -1,17 +1,17 @@
-import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260930.10';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.10';
-import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections,turningOnly} from './signals.mjs?v=20260930.10';
-import {travelTimeAtDistance} from './travel.mjs?v=20260930.10';
-import {generatedPassengers,alightFraction,demandBase} from './passengers.mjs?v=20260930.10';
-import {placeVisit} from './station-layouts.mjs?v=20260930.10';
-import {visitWagons} from './wagons.mjs?v=20260930.10';
-import {MetricPath} from './simulation.mjs?v=20260930.10';
+import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260930.12';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.12';
+import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections,turningOnly} from './signals.mjs?v=20260930.12';
+import {travelTimeAtDistance} from './travel.mjs?v=20260930.12';
+import {generatedPassengers,alightFraction,demandBase} from './passengers.mjs?v=20260930.12';
+import {placeVisit} from './station-layouts.mjs?v=20260930.12';
+import {visitWagons} from './wagons.mjs?v=20260930.12';
+import {MetricPath} from './simulation.mjs?v=20260930.12';
 export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1,mode:'auto',cruiseKmh:60,streetKmh:50,acceleration:.6,cruiseFrom:'local',braking:1.1,turnaround:240,variableDispatch:true,reinforcements:true,signals:true,beyondValidity:true,programmedDispatch:true,programmedRunning:true,observedRunning:true,
  // Espacio físico (traffic.mjs). Separación en marcha y parado, ciclo semafórico y atención son
  // decisiones de modelo, rotuladas como estimación; la variación diaria cambia de una fecha a otra
  // sin perder la reproducibilidad: la misma fecha y la misma versión dan siempre lo mismo.
- physical:true,headwayTime:1.2,jamGap:2.5,signalCycle:90,signalGreen:52,dwellBase:13,boardingRate:.9,dayVariation:true,dispatchJitter:60,variant:0,fleet:2252,odDemand:true,supply:1});
-export function parameters(input={}){const p={...DEFAULTS,...input};for(const [k,min,max] of [['peakHeadway',120,1200],['offpeakHeadway',180,1800],['demand',.25,3],['cruiseKmh',25,75],['streetKmh',20,60],['acceleration',.4,1.4],['braking',.5,1.8],['turnaround',60,900],['headwayTime',.6,3],['jamGap',1,8],['signalCycle',50,180],['signalGreen',15,150],['dwellBase',5,40],['boardingRate',.3,2],['dispatchJitter',0,300],['variant',0,999],['fleet',200,8000],['supply',.25,5]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw new Error('Parámetro fuera de rango: '+k);if(typeof p.variableDispatch!=='boolean'||typeof p.reinforcements!=='boolean'||typeof p.signals!=='boolean'||typeof p.beyondValidity!=='boolean'||typeof p.programmedDispatch!=='boolean'||typeof p.programmedRunning!=='boolean'||typeof p.observedRunning!=='boolean'||typeof p.physical!=='boolean'||typeof p.dayVariation!=='boolean')throw new Error('Opciones de despacho inválidas');if(p.signalGreen>=p.signalCycle-3)throw new Error('Parámetro fuera de rango: signalGreen');if(!Number.isInteger(p.variant))throw new Error('Parámetro fuera de rango: variant');if(!['auto','peak','offpeak'].includes(p.mode))throw new Error('Demanda inválida');return p;}
+ physical:true,headwayTime:1.2,jamGap:2.5,signalCycle:90,signalGreen:52,dwellBase:13,boardingRate:.9,dayVariation:true,dispatchJitter:60,variant:0,fleet:2252,odDemand:true,supply:1,events:[]});
+export function parameters(input={}){const p={...DEFAULTS,...input};for(const [k,min,max] of [['peakHeadway',120,1200],['offpeakHeadway',180,1800],['demand',.25,3],['cruiseKmh',25,75],['streetKmh',20,60],['acceleration',.4,1.4],['braking',.5,1.8],['turnaround',60,900],['headwayTime',.6,3],['jamGap',1,8],['signalCycle',50,180],['signalGreen',15,150],['dwellBase',5,40],['boardingRate',.3,2],['dispatchJitter',0,300],['variant',0,999],['fleet',200,8000],['supply',.25,5]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw new Error('Parámetro fuera de rango: '+k);if(typeof p.variableDispatch!=='boolean'||typeof p.reinforcements!=='boolean'||typeof p.signals!=='boolean'||typeof p.beyondValidity!=='boolean'||typeof p.programmedDispatch!=='boolean'||typeof p.programmedRunning!=='boolean'||typeof p.observedRunning!=='boolean'||typeof p.physical!=='boolean'||typeof p.dayVariation!=='boolean')throw new Error('Opciones de despacho inválidas');if(p.signalGreen>=p.signalCycle-3)throw new Error('Parámetro fuera de rango: signalGreen');if(!Number.isInteger(p.variant))throw new Error('Parámetro fuera de rango: variant');if(!['auto','peak','offpeak'].includes(p.mode))throw new Error('Demanda inválida');if(!Array.isArray(p.events)||p.events.length>20||p.events.some(e=>!Array.isArray(e?.xy)||e.xy.length!==2||!e.xy.every(Number.isFinite)||!Number.isFinite(e.start)||!Number.isFinite(e.end)||e.end<=e.start))throw new Error('Eventos inválidos');return p;}
 /** Oferta multiplicada: por cada salida del plan, `supply` salidas repartidas en el intervalo hasta
  * la siguiente del mismo servicio (×2 pone una en medio; ×0,5 deja una de cada dos). Las añadidas
  * llevan `added` y no son del horario publicado. Determinista: el mismo plan da las mismas salidas. */

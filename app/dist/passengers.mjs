@@ -1,5 +1,5 @@
 /** Aggregate, deterministic synthetic passenger demand. Not an OD survey. */
-import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260930.10';
+import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260930.12';
 export const DEMAND_BASELINE=2.25; // User-calibrated reference; 1× means this scenario baseline.
 // Con la matriz origen-destino medida, cada entrada es un viaje entero: 1× son las entradas
 // registradas. Quien transborda baja en la estación de cambio y vuelve a esperar allí (transferRate),

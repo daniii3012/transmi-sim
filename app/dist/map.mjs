@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.10';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.10';
+import {MetricPath} from './simulation.mjs?v=20260930.12';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.12';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.10';
+import {pieceShape} from './wagons.mjs?v=20260930.12';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -351,6 +351,8 @@ export class NetworkMap {
     });
   }
   pick(point){
+    // Colocar un evento: el siguiente toque en el mapa da su punto en vez de seleccionar.
+    if(this.pickHook){const hook=this.pickHook;this.pickHook=null;hook(this.screenToWorld(point));return;}
     const distanceTo=item=>{const p=this.worldToScreen(item.xy);return Math.hypot(point[0]-p[0],point[1]-p[1]);};
     let chosen=null,limit=14;
     for(const [kind,items] of [['bus',this.busSamples],['station',this.data.stations]])for(const item of items){const d=distanceTo(item);if(d<limit){chosen={kind,id:item.id};limit=d;}}
@@ -455,6 +457,18 @@ export class NetworkMap {
     add(main,'asphalt',.25);add(berth,'berth',.26);this.laneMarks=add(marks,'laneMark',.27,true);if(extra.length)add(extra,'asphalt',.24);
     if(walls.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(walls,3));g.computeVertexNormals();const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:this.palette.bridge,side:THREE.DoubleSide}));m.renderOrder=4.5;m.userData.key='bridge';this.guidewayGroup.add(m);}
     if(structure.length)this.guidewayGroup.add(this.structureMesh(structure));
+    this.updateCamera();
+  }
+  /** Cierres de vía del escenario: un aro rojo con una barra en cada punto, del tamaño de la vía. */
+  setEvents(events=[]){
+    if(!this.eventGroup){this.eventGroup=new THREE.Group();this.eventGroup.renderOrder=9;this.scene.add(this.eventGroup);}
+    for(const m of this.eventGroup.children)m.geometry.dispose();this.eventGroup.clear();
+    const material=this.eventMaterial||=new THREE.MeshBasicMaterial({color:'#e23a3a',depthTest:false,transparent:true,opacity:.9,side:THREE.DoubleSide});
+    for(const e of events){
+      const ring=new THREE.Mesh(new THREE.RingGeometry(22,30,40),material);ring.position.set(e.xy[0],e.xy[1],1);ring.renderOrder=9;
+      const bar=new THREE.Mesh(new THREE.PlaneGeometry(44,9),material);bar.position.set(e.xy[0],e.xy[1],1);bar.rotation.z=Math.PI/4;bar.renderOrder=9;
+      this.eventGroup.add(ring,bar);
+    }
     this.updateCamera();
   }
   /** Altura de la calzada bajo un punto del recorrido de un servicio, en metros (0 sin puente). */
