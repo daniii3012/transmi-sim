@@ -1,13 +1,13 @@
-import {mountShell} from './shell.mjs?v=20260930.16';
-import {NetworkMap} from './map.mjs?v=20260930.16';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.16';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260930.16';
-import {STATES} from './traffic.mjs?v=20260930.16';
-import {applyFieldCorrections} from './signals.mjs?v=20260930.16';
-import {registerSimulationTools} from './webmcp.mjs?v=20260930.16';
+import {mountShell} from './shell.mjs?v=20260930.17';
+import {NetworkMap} from './map.mjs?v=20260930.17';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.17';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260930.17';
+import {STATES} from './traffic.mjs?v=20260930.17';
+import {applyFieldCorrections} from './signals.mjs?v=20260930.17';
+import {registerSimulationTools} from './webmcp.mjs?v=20260930.17';
 // Aplicación instalable: el service worker guarda código y datos por versión (sw.js). Solo en el sitio
 // publicado: en local se edita y se recarga, y una caché estorbaría.
-if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.16').catch(()=>{});
+if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.17').catch(()=>{});
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -49,11 +49,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260930.16',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260930.17',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.16',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.17',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -126,6 +126,7 @@ try{
   {key:'demand',type:'range',label:'Pasajeros',unit:'×',min:.25,max:3,step:.25,help:'Sobre la demanda medida en las validaciones de 17 días.'},
   {key:'dwellBase',type:'number',label:'Atención mínima',unit:'s',min:5,max:40,step:1,help:'Abrir y cerrar puertas, antes de subir y bajar gente.'},
   {key:'boardingRate',type:'number',label:'Embarque por puerta',unit:'pas/s',min:.3,max:2,step:.1,help:'Articulado 4 puertas, biarticulado 5, padrón dual 2.'},
+  {key:'abandonMinutes',type:'number',label:'Espera antes de desistir',unit:'min',min:5,max:600,step:5,help:'Media. Cada pasajero es alguien que validó y se subió a algún bus: casi nadie se va, así que se espera el segundo o el tercero si vienen llenos.'},
   {key:'odDemand',type:'check',label:'Sentido y descenso medidos',help:'Hacia dónde sale la gente de cada estación y cuánta se baja en cada una, medido en 17 días de validaciones (datos abiertos). Apagado vuelve a los supuestos anteriores.'},
   {group:'Variación entre días',intro:'Sin variación, todos los martes son iguales; con ella, cada fecha tiene su día y se repite igual.'},
   {key:'dayVariation',type:'check',label:'Variación entre días'},

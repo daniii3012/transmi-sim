@@ -57,6 +57,19 @@
   descuenta ahora cada tramo de 15 min con el abandono (`ABANDON_S`). Dos pruebas que dependían del
   fallo se ajustaron a la regla nueva.
 
+### Pasajeros: cada bus se lleva a quienes les sirve (30 sep.)
+
+- Diagnóstico con Daniel en la calle: en la mañana hacia el centro los buses ya llegaban llenos a
+  Mandalay (bien), pero en la tarde hacia los portales iban a medias y en estaciones con servicios a
+  sitios distintos en el mismo sentido (Museo Nacional: F51 a las Américas, G47 al sur) la fila se
+  repartía parejo. `od_profiles.json` trae por estación y franja los conjuntos de servicios que le
+  sirven a cada viaje (`accept`); `routeAcceptance` da la parte de la fila que se lleva cada bus.
+  Comapan 17–18:30: el 5 hacia el occidente llega al 81 % (antes 47 %), hacia el oriente al 71 %.
+- Espera antes de desistir: parámetro `abandonMinutes`, 90 min por omisión (antes 30 fijos).
+- Sondas: `work/probe_llegadas.mjs <estación> <desde> <hasta>`, `probe_perfil_ruta.mjs`,
+  `probe_ocupacion.mjs`, `probe_balance.mjs`.
+- La demanda está completa: el archivo troncal incluye las entradas desde alimentadores.
+
 ### Andenes de OSM que vuelven (30 sep.)
 
 - Desde el 28 sep. toda estación con vagones alineados dejaba su geometría de OSM (salvo portales),

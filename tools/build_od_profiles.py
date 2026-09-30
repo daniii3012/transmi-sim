@@ -116,6 +116,7 @@ def main() -> None:
         return sum(1 for rid in serving[a] if b in reach[a, rid])
 
     served = defaultdict(lambda: [[0.0, 0.0] for _ in range(SECTORS)])  # (estación, tipo, franja) → [viajes, viajes·servicios]
+    accept = defaultdict(lambda: defaultdict(float))                      # (estación, tipo, franja) → {servicios que sirven: viajes}
 
     def note_leg(a: str, nxt: str, end: str, kind: str, period: str, trips: float) -> None:
         (xa, ya), (xb, yb) = xy[a], xy[nxt]
@@ -123,6 +124,9 @@ def main() -> None:
         cell = served[a, kind, period][k]
         cell[0] += trips
         cell[1] += trips * max(1, options(a, end))
+        ids = tuple(sorted(rid for rid in serving[a] if end in reach[a, rid]))
+        if ids:
+            accept[a, kind, period][ids] += trips
 
     by_origin = defaultdict(list)
     for o, d, kind, period, trips in matrix["od"]:
@@ -195,6 +199,15 @@ def main() -> None:
         # Por sector, viajes y servicios promedio que les sirven (una décima).
         entry.setdefault("options", {})[period] = [[round(c[0], 1), round(c[1] / c[0], 1) if c[0] else 0] for c in cells]
 
+    # Qué servicios le sirven a quien espera: conjuntos de servicios aceptables y los viajes al día que
+    # los tienen. El motor saca de aquí qué parte de la fila de un andén se lleva cada bus que llega.
+    for (s, kind, period), sets in sorted(accept.items()):
+        total = sum(sets.values())
+        if total < 20:
+            continue
+        entry = stations.setdefault(s, {}).setdefault(kind, {"sectors": {}, "alight": {}})
+        entry.setdefault("accept", {})[period] = [[round(w, 1), list(ids)] for ids, w in sorted(sets.items(), key=lambda x: -x[1]) if w >= 1]
+
     result = {
         "schema_version": 2,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -210,6 +223,7 @@ def main() -> None:
             "paths": f"camino más corto sobre las paradas de los servicios utilizables; cada parada intermedia suma {STOP_PENALTY_M} m y cada transbordo {TRANSFER_PENALTY_M} m",
             "alight": "viajes que terminan en la estación o transbordan en ella, sobre los que llegan a ella en un bus que para ahí",
             "transfer": "viajes por día que cambian de servicio en la estación en cada franja, llevados a todas las entradas; transfer_sectors, hacia dónde sale su segundo tramo",
+            "accept": "por franja, [viajes al día, servicios que van directo hasta donde se baja o transborda]: la fila de cada andén por servicio",
             "options": "por sector del sentido de salida: [viajes, servicios que en promedio van directo hasta donde ese viaje se baja o transborda]",
             "transfer_scale": {k: round(v, 3) for k, v in scale.items()},
         },

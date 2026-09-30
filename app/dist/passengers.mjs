@@ -1,5 +1,5 @@
 /** Aggregate, deterministic synthetic passenger demand. Not an OD survey. */
-import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260930.16';
+import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260930.17';
 export const DEMAND_BASELINE=2.25; // User-calibrated reference; 1× means this scenario baseline.
 // Con la matriz origen-destino medida, cada entrada es un viaje entero: 1× son las entradas
 // registradas. Quien transborda baja en la estación de cambio y vuelve a esperar allí (transferRate),
@@ -52,6 +52,18 @@ export function routeOptions(station,angle,time,date,fallback){
  for(let k=0;k<cells.length;k++){const [n,o]=cells[k];if(!n)continue;const cos=Math.cos((k+.5)/cells.length*2*Math.PI-angle),w=cos>1e-9?n:cos<-1e-9?0:n/2;trips+=w;weighted+=w*o;}
  return trips>=10?Math.max(1,weighted/trips):fallback;
 }
+/** Qué parte de la fila de un andén acepta el servicio `routeId`: la de los viajes para los que ese
+ * servicio va directo hasta donde se bajan o transbordan (od_profiles.json, `accept`), sobre los que
+ * esperan en ese andén (los que aceptan alguno de los servicios de `group`). Null sin dato: entonces
+ * rige el promedio de servicios que sirven. En una estación donde en el mismo sentido salen servicios
+ * hacia sitios distintos —el F51 a las Américas y el G47 al sur desde Museo Nacional—, cada bus se
+ * lleva a los suyos y no un reparto parejo. */
+export function routeAcceptance(station,group,routeId,time,date){
+ const sets=station.od_profile?.[dayType(date)]?.accept?.[odPeriod(time)];if(!sets)return null;
+ let waiting=0,mine=0;
+ for(const [w,ids] of sets){let here=false,ok=false;for(const id of ids){if(group.has(id))here=true;if(id===routeId)ok=true;}if(here){waiting+=w;if(ok)mine+=w;}}
+ return waiting>=10?mine/waiting:null;
+}
 export function arrivalRate(station,angle,time,date,params){
  const hour=((time%DAY)+DAY)%DAY/3600;if(hour<4||hour>=23.5)return 0;
  if(station.demand_profile){
@@ -68,14 +80,18 @@ export function arrivalRate(station,angle,time,date,params){
  // Station-direction passengers/second. Reference magnitude is configurable, not measured ridership.
  return demandBase(params)*(.035*(peak?2.3:.85)*weight*landUse*directionalFactor(station,angle,time))*params.demand;
 }
-// Media de la espera antes de desistir, en segundos: la misma para lo acumulado y para lo que llega.
+// Media de la espera antes de desistir, en segundos (parámetro `abandonMinutes`): la misma para lo
+// acumulado y para lo que llega. Cada pasajero es una validación, alguien que pagó y se subió a algún
+// bus: casi nadie se va. Con 30 min desistía el 28 % de quien esperaba 10, y en las estaciones centrales
+// de la tarde, con filas largas, se perdía justo la gente que llena los buses hacia los portales.
 export const ABANDON_S=1800;
+export const abandonSeconds=params=>(params?.abandonMinutes>0?params.abandonMinutes*60:ABANDON_S);
 /** Pasajeros que llegan a la estación entre `start` y `end` y que siguen esperando en `end`: cada
  * tramo de 15 min se descuenta con el abandono desde su mitad. Sin ese descuento, en una parada que
  * se queda sin buses lo que llegó hasta el cierre seguía esperando toda la madrugada, y el primer bus
  * del día siguiente se lo llevaba. */
 export function generatedPassengers(station,angle,start,end,baseDate,params){
- let sum=0;for(let t=start;t<end;){const next=Math.min(end,(Math.floor(t/900)+1)*900),mid=(t+next)/2,date=addDays(baseDate,Math.floor(mid/DAY));sum+=(next-t)*arrivalRate(station,angle,mid,date,params)*Math.exp(-(end-mid)/ABANDON_S);t=next;}return sum;
+ let sum=0;for(let t=start;t<end;){const next=Math.min(end,(Math.floor(t/900)+1)*900),mid=(t+next)/2,date=addDays(baseDate,Math.floor(mid/DAY));sum+=(next-t)*arrivalRate(station,angle,mid,date,params)*Math.exp(-(end-mid)/abandonSeconds(params));t=next;}return sum;
 }
 /** Qué parte de los que llegan en un bus que para aquí se baja. Medida donde hay matriz
  * origen-destino —viajes que terminan en la estación sobre los que llegan a ella—, salvo en las

@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.16';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.16';
-import {generatedPassengers,alightFraction,routeOptions} from './passengers.mjs?v=20260930.16';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.16';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.16';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.17';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260930.17';
+import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.17';
+import {hash,programmedSpeed} from './operation.mjs?v=20260930.17';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.17';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -462,7 +462,7 @@ export class Traffic{
   this.t=SERVICE_START;this.nextTrip=0;this.active=[];
   const P=this.g.pointCount;this.claims=new Int32Array(P).fill(-1);this.claimLink=new Int32Array(P).fill(-1);this.claimPos=new Float64Array(P);this.lastLane=new Int8Array(P).fill(-1);this.claimed=[];
   this.tails=new Int32Array(this.g.links.length).fill(-1);this.tailEnd=new Float64Array(this.g.links.length);this.tailLane=new Uint8Array(this.g.links.length);
-  this.vehicles=[];this.parked=new Map();this.releases=new MinHeap();this.groups=new Map();this.waitingVehicle=[];
+  this.vehicles=[];this.parked=new Map();this.releases=new MinHeap();this.groups=new Map();this.waitingVehicle=[];this.acceptCache=new Map();
   this.acc={boarded:0,alighted:0,stops:0,waitSum:0,denied:0,completed:0,dispatched:0,forced:0,peak:0,entryWait:0,entries:0,deadheads:0,fleetWait:0};
   this.checkpoints.clear();this.saveCheckpoint();
  }
@@ -656,11 +656,16 @@ export class Traffic{
   if(!isLast){
    const key=info.keys[x],share=this.op.demandShares.get(key)||{all:1,selected:1,angle:r.path.sample(v.at_m).angle};
    const g=this.groups.get(key)||{time:Math.max(SERVICE_START,4*3600),count:0};
-   const retained=g.count*Math.exp(-Math.max(0,t-g.time)/1800);
+   const retained=g.count*Math.exp(-Math.max(0,t-g.time)/abandonSeconds(this.passengerParams));
    const generated=generatedPassengers(station,share.angle,g.time,t,this.date,this.passengerParams)*share.selected/share.all;
    g.count=retained+generated;g.time=t;
-   const options=this.p.odDemand?routeOptions(station,share.angle,t,addDays(this.date,Math.floor(t/DAY)),ROUTE_OPTIONS):ROUTE_OPTIONS;
-   const mine=Math.floor(g.count*Math.min(1,options/Math.max(1,share.selected)));
+   // La parte de la fila que este bus se lleva: la que acepta su servicio, medida por estación y franja;
+   // sin ese dato, el promedio de servicios que sirven sobre los que paran en ese sentido.
+   const day=addDays(this.date,Math.floor(t/DAY)),ck=key+'|'+r.id+'|'+odPeriod(t)+'|'+Math.floor(t/DAY);
+   let part=this.acceptCache.get(ck);
+   if(part===undefined){const accepted=this.p.odDemand&&share.routes?routeAcceptance(station,share.routes,r.id,t,day):null;
+    part=accepted??Math.min(1,(this.p.odDemand?routeOptions(station,share.angle,t,day,ROUTE_OPTIONS):ROUTE_OPTIONS)/Math.max(1,share.selected));this.acceptCache.set(ck,part);}
+   const mine=Math.floor(g.count*part);
    board=Math.max(0,Math.min(a.cap[i]-(a.load[i]-alight),mine));g.count-=board;this.groups.set(key,g);this.acc.denied+=mine-board;
   }
   a.load[i]+=board-alight;a.board[i]=board;a.alight[i]=alight;this.acc.boarded+=board;this.acc.alighted+=alight;this.acc.stops++;this.acc.waitSum+=wait;a.wait[i]=wait;
@@ -1023,12 +1028,12 @@ export class Traffic{
  }
  waitingAt(stationId){
   let count=0;const station=this.op.stations.get(stationId);if(!station)return 0;
-  for(const [key,g] of this.groups){if(!key.startsWith(stationId+'/'))continue;const share=this.op.demandShares.get(key);count+=g.count*Math.exp(-Math.max(0,this.t-g.time)/1800)+(share?generatedPassengers(station,share.angle,g.time,this.t,this.date,this.passengerParams)*share.selected/share.all:0);}
+  for(const [key,g] of this.groups){if(!key.startsWith(stationId+'/'))continue;const share=this.op.demandShares.get(key);count+=g.count*Math.exp(-Math.max(0,this.t-g.time)/abandonSeconds(this.passengerParams))+(share?generatedPassengers(station,share.angle,g.time,this.t,this.date,this.passengerParams)*share.selected/share.all:0);}
   return Math.round(count);
  }
  pressure(limit=6){
   const totals=new Map();
-  for(const [key,g] of this.groups){const id=key.slice(0,key.lastIndexOf('/')),station=this.op.stations.get(id),share=this.op.demandShares.get(key);if(!station||!share)continue;totals.set(id,(totals.get(id)||0)+g.count*Math.exp(-Math.max(0,this.t-g.time)/1800)+generatedPassengers(station,share.angle,g.time,this.t,this.date,this.passengerParams)*share.selected/share.all);}
+  for(const [key,g] of this.groups){const id=key.slice(0,key.lastIndexOf('/')),station=this.op.stations.get(id),share=this.op.demandShares.get(key);if(!station||!share)continue;totals.set(id,(totals.get(id)||0)+g.count*Math.exp(-Math.max(0,this.t-g.time)/abandonSeconds(this.passengerParams))+generatedPassengers(station,share.angle,g.time,this.t,this.date,this.passengerParams)*share.selected/share.all);}
   return [...totals].map(([id,waiting])=>({id,name:this.op.stations.get(id).name,kind:this.op.stations.get(id).kind,waiting:Math.round(waiting)})).filter(s=>s.waiting>0).sort((x,y)=>y.waiting-x.waiting||x.name.localeCompare(y.name,'es')).slice(0,limit);
  }
  zoneLoad(){
