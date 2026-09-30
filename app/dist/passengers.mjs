@@ -1,5 +1,5 @@
 /** Aggregate, deterministic synthetic passenger demand. Not an OD survey. */
-import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260930.8';
+import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260930.9';
 export const DEMAND_BASELINE=2.25; // User-calibrated reference; 1× means this scenario baseline.
 // Con la matriz origen-destino medida, cada entrada es un viaje entero: 1× son las entradas
 // registradas. Quien transborda baja en la estación de cambio y vuelve a esperar allí (transferRate),
@@ -68,8 +68,14 @@ export function arrivalRate(station,angle,time,date,params){
  // Station-direction passengers/second. Reference magnitude is configurable, not measured ridership.
  return demandBase(params)*(.035*(peak?2.3:.85)*weight*landUse*directionalFactor(station,angle,time))*params.demand;
 }
+// Media de la espera antes de desistir, en segundos: la misma para lo acumulado y para lo que llega.
+export const ABANDON_S=1800;
+/** Pasajeros que llegan a la estación entre `start` y `end` y que siguen esperando en `end`: cada
+ * tramo de 15 min se descuenta con el abandono desde su mitad. Sin ese descuento, en una parada que
+ * se queda sin buses lo que llegó hasta el cierre seguía esperando toda la madrugada, y el primer bus
+ * del día siguiente se lo llevaba. */
 export function generatedPassengers(station,angle,start,end,baseDate,params){
- let sum=0;for(let t=start;t<end;){const next=Math.min(end,(Math.floor(t/900)+1)*900),mid=(t+next)/2,date=addDays(baseDate,Math.floor(mid/DAY));sum+=(next-t)*arrivalRate(station,angle,mid,date,params);t=next;}return sum;
+ let sum=0;for(let t=start;t<end;){const next=Math.min(end,(Math.floor(t/900)+1)*900),mid=(t+next)/2,date=addDays(baseDate,Math.floor(mid/DAY));sum+=(next-t)*arrivalRate(station,angle,mid,date,params)*Math.exp(-(end-mid)/ABANDON_S);t=next;}return sum;
 }
 /** Qué parte de los que llegan en un bus que para aquí se baja. Medida donde hay matriz
  * origen-destino —viajes que terminan en la estación sobre los que llegan a ella—, salvo en las

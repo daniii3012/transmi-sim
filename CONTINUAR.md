@@ -50,12 +50,13 @@
   ruta propiamente dicha, si hace falta más detalle.
 - Documentación de pasajeros: solo «validaciones de datos abiertos»; el método queda en el código.
 
-### Fallo menor visto en el sitio publicado (30 sep.)
+### Espera que no decaía de madrugada (30 sep.) — corregido
 
-- De madrugada, «Estaciones con más espera» muestra paradas de calle de la Av. 68 con 40–46 personas
-  (105 sin los datos de origen-destino): la espera no decae después del último bus. Probable: el
-  motor deja de avanzar su reloj sin viajes activos y `waitingAt` usa ese reloj. No lo introdujo el
-  30 sep. Sonda: `HORAS=22:00,23:30,01:50 node work/probe_estacion.mjs 74151 2026-09-29`.
+- La espera guardada decaía con el abandono (30 min), pero lo generado desde el último bus se sumaba
+  entero: una parada sin buses desde las 21:00 acumulaba hasta el cierre y lo mostraba toda la
+  madrugada (Av. 68, 46 personas a las 01:50), y el primer bus se lo llevaba. `generatedPassengers`
+  descuenta ahora cada tramo de 15 min con el abandono (`ABANDON_S`). Dos pruebas que dependían del
+  fallo se ajustaron a la regla nueva.
 
 ### Fase 3, niveles (30 sep.) — primer paso
 
