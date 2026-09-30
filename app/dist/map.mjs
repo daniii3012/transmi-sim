@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.19';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.19';
+import {MetricPath} from './simulation.mjs?v=20260930.20';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.20';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.19';
+import {pieceShape} from './wagons.mjs?v=20260930.20';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -709,12 +709,14 @@ export class NetworkMap {
     if(decks.length)this.roadBands.add(this.structureMesh(decks));
     this.contextMeshes=[...(this.contextMeshes||[]),...this.roadBands.children];
   }
-  /** Malla semitransparente de la estructura de los puentes: se dibuja después de los buses y sin
-   *  escribir profundidad, así que deja ver lo que pasa debajo, como las cubiertas de las estaciones. */
+  /** Estructura de los puentes, opaca y dibujada antes que la calzada: el tablero se lee limpio encima
+   *  y lo que pasa debajo queda debajo, como en la calle. Semitransparente y encima de todo, sus caras
+   *  teñían el propio tablero y tres puentes cruzados se volvían una mancha gris. Para mirar debajo,
+   *  el botón «Puentes» los quita. */
   structureMesh(vertices){
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));g.computeVertexNormals();
-    const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:this.palette.bridge,transparent:true,opacity:.55,depthWrite:false,side:THREE.DoubleSide}));
-    m.renderOrder=8.2;m.userData.key='bridge';m.visible=this.bridgesEnabled!==false;(this.structureMeshes||=[]).push(m);return m;
+    const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:this.palette.bridge,side:THREE.DoubleSide}));
+    m.renderOrder=.2;m.userData.key='bridge';m.visible=this.bridgesEnabled!==false;(this.structureMeshes||=[]).push(m);return m;
   }
   /** Cruces peatonales en cebra y puentes peatonales con sus rampas (tools/build_cross_streets.py). */
   setCrossings(data){

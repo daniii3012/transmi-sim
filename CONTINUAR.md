@@ -57,6 +57,12 @@
   descuenta ahora cada tramo de 15 min con el abandono (`ABANDON_S`). Dos pruebas que dependían del
   fallo se ajustaron a la regla nueva.
 
+### Puentes opacos (30 sep.) — Fase 3
+
+- `structureMesh` pasa de semitransparente y encima de todo a opaca y antes que la calzada: el
+  tablero se lee limpio y lo de debajo queda debajo (la glorieta de la Calle 26 con la Av. 68 dejó de
+  ser una mancha gris). «Puentes» sigue quitándolos para mirar debajo.
+
 ### Lluvia y escenario por enlace (30 sep.) — Fase 4
 
 - Parámetro `rain` (Circulación → Lluvia), estimado y declarado en `RAIN` de `traffic.mjs`: crucero
