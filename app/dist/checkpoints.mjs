@@ -9,11 +9,13 @@
 // La llave de cada uno es la huella del motor (engine.json, tools/engine_fingerprint.mjs), la llave del
 // escenario (Traffic.scenarioKey) y el segundo del día de servicio. Un punto de control de otro motor
 // o de otro escenario no se usa: el motor restaurado tiene que llegar exactamente al mismo estado que
-// simulando desde cero. La huella no cambia con la interfaz ni con la cadena ?v=, así que un ajuste
+// simulando desde cero. La huella no cambia con la interfaz ni con la versión de caché, así que un ajuste
 // de estilos no obliga a volver a simular el día desde las 03:00.
 const VERSION=new URL(import.meta.url).searchParams.get('v')||'dev';
 let ENGINE=null;
-const engine=()=>ENGINE||=fetch(new URL(`./engine.json?v=${VERSION}`,import.meta.url)).then(r=>r.ok?r.json():null).then(j=>j?.engine||VERSION).catch(()=>VERSION);
+// La versión de caché va como parámetro aparte: el workflow de Pages exige una sola cadena de versión.
+const engineUrl=()=>{const u=new URL('./engine.json',import.meta.url);u.searchParams.set('v',VERSION);return u;};
+const engine=()=>ENGINE||=fetch(engineUrl()).then(r=>r.ok?r.json():null).then(j=>j?.engine||VERSION).catch(()=>VERSION);
 const DB='transmi-sim',KEEP=8,MAGIC=[0x1f,0x8b];
 let db=null,published=null;
 const known=new Map();// llave del escenario → Map(segundo → 'pub'|'idb')

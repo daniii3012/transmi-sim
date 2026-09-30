@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.3';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.3';
-import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260930.3';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.3';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.3';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.4';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260930.4';
+import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260930.4';
+import {hash,programmedSpeed} from './operation.mjs?v=20260930.4';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.4';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes

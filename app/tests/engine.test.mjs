@@ -20,3 +20,9 @@ test('la huella del motor no cambia con la cadena ?v=', ()=>{
  assert.notEqual(fingerprint(new URL(`file://${tmp}`)),before);
  fs.rmSync(tmp,{recursive:true,force:true});
 });
+
+test('una sola cadena de versión en app/dist, como exige el workflow de Pages', ()=>{
+ const files=fs.readdirSync(dist).filter(f=>f.endsWith('.mjs')||f==='index.html');
+ const found=new Set(files.flatMap(f=>fs.readFileSync(new URL(f,dist),'utf8').match(/\?v=[0-9.]*/g)||[]));
+ assert.equal(found.size,1,`Versiones encontradas: ${[...found].join(', ')}`);
+});

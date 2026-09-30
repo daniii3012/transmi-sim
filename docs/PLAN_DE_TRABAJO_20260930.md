@@ -122,6 +122,10 @@ Hito: validación del día con la nueva velocidad (mediana y p90 frente a lo obs
    abierta de IDECA, con vagones, paradas y calzada superpuestos; estado por estación («confirmada»,
    «corregida», «sin evidencia») guardado en un JSON con fecha y fuente. Primero las 42 sin
    geometría OSM, luego las que pisan calzada o tienen paradas fuera del vagón.
+4. **Buses en los patios.** Hoy se acomodan en filas por área del polígono de IDECA y algunos pisan
+   vías internas y estructuras. Se recortan del polígono las vías (OSM `service`, calzadas) y las
+   construcciones de Catastro, y las filas se orientan por el eje largo de cada zona libre, revisado
+   contra ortofoto. La posición sigue siendo estimada: no hay dato abierto de puestos.
 
 Hito: 151 estaciones con estado; mapa sin solapes en Banderas, Calle 26/Caracas, NQS/26 y Ricaurte.
 
@@ -190,6 +194,20 @@ principal.
 4. Integraciones con troncales de TransMilenio donde el metro las cruza, solo como referencia visual.
 
 Hito: la Línea 1 corre un día completo con su operación estimada y cada cifra con su fuente.
+
+### 7b — Troncal Av. 68 (proyecto, en la misma vista de proyectos)
+
+La troncal está en obra y lo público es parcial: trazado del contrato, algunas estaciones y
+calzadas ya construidas, ninguna ruta. Se incluye como capa opcional «Proyectos», nunca en la
+simulación principal:
+
+1. Investigación con fuente y fecha: trazado, estaciones y su estado de obra por grupo de contrato,
+   conexiones con troncales existentes y fecha estimada de entrada.
+2. Geometría: calzada y estaciones donde haya plano o imagen reciente; lo demás, sobre el eje de la
+   avenida y rotulado como estimado.
+3. Operación **ilustrativa**, claramente marcada: servicios hipotéticos armados con la lógica de la
+   red actual (un corriente y un par de expresos con sus conexiones), frecuencias estimadas. Se
+   retira en cuanto TransMilenio publique las rutas reales.
 
 ## Fase 8 — Juego de observación (después)
 
