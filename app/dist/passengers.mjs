@@ -1,5 +1,5 @@
 /** Aggregate, deterministic synthetic passenger demand. Not an OD survey. */
-import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260930.4';
+import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260930.5';
 export const DEMAND_BASELINE=2.25; // User-calibrated reference; 1× means this scenario baseline.
 // Con la matriz origen-destino medida, cada entrada es un viaje entero: 1× son las entradas
 // registradas. Quien transborda baja en la estación de cambio y vuelve a esperar allí (transferRate),
@@ -41,6 +41,16 @@ export function transferRate(station,angle,time,date){
  const od=station.od_profile?.[dayType(date)],period=odPeriod(time),n=od?.transfer?.[period];if(!n)return 0;
  const [,a,b]=OD_PERIODS.find(p=>p[0]===period);
  return n/((b-a)*3600)*sectorShare(od.transfer_sectors?.[period]||[],angle);
+}
+/** Cuántos de los servicios que paran en la estación le sirven, en promedio, a quien espera en el
+ * sentido `angle`: los que van directo hasta donde se baja o transborda (od_profiles.json,
+ * `options`). Sin dato, `fallback`. Con uno o dos que sirven, cada bus se lleva poca gente de la
+ * espera y el andén se llena, como en la calle. */
+export function routeOptions(station,angle,time,date,fallback){
+ const cells=station.od_profile?.[dayType(date)]?.options?.[odPeriod(time)];if(!cells)return fallback;
+ let trips=0,weighted=0;
+ for(let k=0;k<cells.length;k++){const [n,o]=cells[k];if(!n)continue;const cos=Math.cos((k+.5)/cells.length*2*Math.PI-angle),w=cos>1e-9?n:cos<-1e-9?0:n/2;trips+=w;weighted+=w*o;}
+ return trips>=10?Math.max(1,weighted/trips):fallback;
 }
 export function arrivalRate(station,angle,time,date,params){
  const hour=((time%DAY)+DAY)%DAY/3600;if(hour<4||hour>=23.5)return 0;

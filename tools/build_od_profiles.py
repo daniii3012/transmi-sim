@@ -19,6 +19,10 @@ la hora y de lo céntrica que fuera la estación. La matriz estimada por encaden
   valide: el archivo solo registra la entrada. Por estación, tipo de día y franja se guarda cuántos
   viajes al día transbordan ahí y hacia dónde sale su segundo tramo, en los mismos 16 sectores. El
   conteo se lleva a todas las entradas, no solo a las enlazadas, con la proporción de cada tipo de día.
+- **Servicios que sirven.** Quien espera en un andén no toma cualquier bus: toma uno de los que van
+  directo hasta donde se baja o transborda. Por estación, tipo de día y franja se guarda, en los 16
+  sectores del sentido de salida, cuántos viajes hay y cuántos servicios les sirven en promedio. El
+  simulador reparte con eso la espera entre los buses que llegan, en vez de suponer tres para todos.
 
 Salida: `app/dist/od_profiles.json` y su copia en `data/curated`.
 """
@@ -97,6 +101,29 @@ def main() -> None:
             out[node[1]] = (stations, transfers)
         return out
 
+    # Qué estaciones alcanza cada servicio desde cada parada suya, sin cambiar de bus.
+    reach = defaultdict(set)                          # (estación, servicio) → estaciones siguientes
+    serving = defaultdict(set)                        # estación → servicios que paran ahí
+    for r in services["routes"]:
+        if not r.get("ready"):
+            continue
+        seq = [s["station_id"] for s in r["stops"] if s["station_id"] in xy]
+        for i, a in enumerate(seq[:-1]):
+            reach[a, r["id"]].update(seq[i + 1:])
+            serving[a].add(r["id"])
+
+    def options(a: str, b: str) -> int:
+        return sum(1 for rid in serving[a] if b in reach[a, rid])
+
+    served = defaultdict(lambda: [[0.0, 0.0] for _ in range(SECTORS)])  # (estación, tipo, franja) → [viajes, viajes·servicios]
+
+    def note_leg(a: str, nxt: str, end: str, kind: str, period: str, trips: float) -> None:
+        (xa, ya), (xb, yb) = xy[a], xy[nxt]
+        k = int((math.atan2(yb - ya, xb - xa) % (2 * math.pi)) / (2 * math.pi) * SECTORS) % SECTORS
+        cell = served[a, kind, period][k]
+        cell[0] += trips
+        cell[1] += trips * max(1, options(a, end))
+
     by_origin = defaultdict(list)
     for o, d, kind, period, trips in matrix["od"]:
         if o in xy and d in xy:
@@ -124,6 +151,11 @@ def main() -> None:
             for s in path[1:-1]:
                 if s not in here:
                     passing[s, kind, period] += trips
+            # Cada tramo va de donde se sube a donde se baja: el siguiente transbordo o el destino.
+            ends = [t for t, _ in transfers] + [d]
+            note_leg(o, path[1], ends[0], kind, period, trips)
+            for (t, after), end in zip(transfers, ends[1:]):
+                note_leg(t, after, end, kind, period, trips)
             for t, after in transfers:
                 changing[t, kind, period] += trips
                 (xa, ya), (xb, yb) = xy[t], xy[after]
@@ -156,6 +188,13 @@ def main() -> None:
         entry.setdefault("transfer", {})[period] = round(trips, 1)
         entry.setdefault("transfer_sectors", {})[period] = [round(v, 1) for v in onward[s, kind, period]]
 
+    for (s, kind, period), cells in sorted(served.items()):
+        if sum(c[0] for c in cells) < 20:
+            continue
+        entry = stations.setdefault(s, {}).setdefault(kind, {"sectors": {}, "alight": {}})
+        # Por sector, viajes y servicios promedio que les sirven (una décima).
+        entry.setdefault("options", {})[period] = [[round(c[0], 1), round(c[1] / c[0], 1) if c[0] else 0] for c in cells]
+
     result = {
         "schema_version": 2,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -171,6 +210,7 @@ def main() -> None:
             "paths": f"camino más corto sobre las paradas de los servicios utilizables; cada parada intermedia suma {STOP_PENALTY_M} m y cada transbordo {TRANSFER_PENALTY_M} m",
             "alight": "viajes que terminan en la estación o transbordan en ella, sobre los que llegan a ella en un bus que para ahí",
             "transfer": "viajes por día que cambian de servicio en la estación en cada franja, llevados a todas las entradas; transfer_sectors, hacia dónde sale su segundo tramo",
+            "options": "por sector del sentido de salida: [viajes, servicios que en promedio van directo hasta donde ese viaje se baja o transborda]",
             "transfer_scale": {k: round(v, 3) for k, v in scale.items()},
         },
         "coverage": {"trips_assigned": round(assigned), "trips_unassigned": round(unassigned), "stations": len(stations),

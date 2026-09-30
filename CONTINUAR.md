@@ -42,10 +42,12 @@
   descenso ya cuenta a quien baja a cambiar. `passengers.mjs` los pone a esperar en la estación de
   cambio (`transferRate`). Ricaurte 139 mil al día, Jiménez 73 mil; en la simulación, 220–250
   personas esperando en Ricaurte en horas activas. Viajes 0,90 del tiempo medido.
-- **Pendiente, causa de Las Nieves:** la espera se agrupa por estación y sentido y cada bus sube la
-  parte de 3 servicios (`ROUTE_OPTIONS`); en la calle cada quien espera su ruta. Separar la espera por
-  ruta con el primer tramo de cada viaje asignado (ya se calcula en `build_od_profiles.py`) es el
-  siguiente cambio del motor. Las Nieves tiene poco transbordo (4,8 mil al día).
+- **Las Nieves:** cada bus subía la parte de 3 servicios que sirven (`ROUTE_OPTIONS`); ahora
+  `od_profiles.json` trae por estación, franja y sector cuántos servicios van directo hasta donde cada
+  viaje se baja o transborda (`options`; Las Nieves 1,2 de noche, mediana de la red 1,8), y
+  `routeOptions` lo usa. Las Nieves pasa de 41 a 134 personas esperando a las 17:30 y de 15 a 36 a
+  las 21:30; Ricaurte hasta 420. Viajes siguen en 0,90. Queda como paso siguiente la espera por
+  ruta propiamente dicha, si hace falta más detalle.
 - Documentación de pasajeros: solo «validaciones de datos abiertos»; el método queda en el código.
 
 ## 28 sep. 2026 — estado

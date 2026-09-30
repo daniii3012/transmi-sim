@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.4';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.4';
-import {generatedPassengers,alightFraction} from './passengers.mjs?v=20260930.4';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.4';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.4';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.5';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260930.5';
+import {generatedPassengers,alightFraction,routeOptions} from './passengers.mjs?v=20260930.5';
+import {hash,programmedSpeed} from './operation.mjs?v=20260930.5';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.5';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -44,9 +44,9 @@ const MOVING=0,DWELL=1,QUEUE=2,SIGNAL=3,TRAFFIC=4;
 const FREE=0,BUS=1,STOP=2,LIGHT=3,LANE_END=4,MERGE=5;
 // Puertas del lado del andén por tipo de bus: con ellas se reparte el embarque.
 export const DOORS={biarticulated:5,articulated:4,dual_electric:4,dual:2};
-// Cuántos de los servicios que paran en un sentido le sirven, en promedio, a quien espera ahí. Sin
-// matriz origen-destino es una estimación: cada bus sube la parte de la espera que le corresponde,
-// no a todos, que es lo que hacía llenarse cada bus y alargaba la atención hasta minuto y medio.
+// Cuántos de los servicios que paran en un sentido le sirven, en promedio, a quien espera ahí, cuando
+// la estación no trae el dato medido (routeOptions en passengers.mjs): cada bus sube la parte de la
+// espera que le corresponde, no a todos, que es lo que hacía llenarse cada bus.
 export const ROUTE_OPTIONS=3;
 
 // --- Red de tramos compartidos ---------------------------------------------------------------
@@ -625,7 +625,8 @@ export class Traffic{
    const retained=g.count*Math.exp(-Math.max(0,t-g.time)/1800);
    const generated=generatedPassengers(station,share.angle,g.time,t,this.date,this.passengerParams)*share.selected/share.all;
    g.count=retained+generated;g.time=t;
-   const mine=Math.floor(g.count*Math.min(1,ROUTE_OPTIONS/Math.max(1,share.selected)));
+   const options=this.p.odDemand?routeOptions(station,share.angle,t,addDays(this.date,Math.floor(t/DAY)),ROUTE_OPTIONS):ROUTE_OPTIONS;
+   const mine=Math.floor(g.count*Math.min(1,options/Math.max(1,share.selected)));
    board=Math.max(0,Math.min(a.cap[i]-(a.load[i]-alight),mine));g.count-=board;this.groups.set(key,g);this.acc.denied+=mine-board;
   }
   a.load[i]+=board-alight;a.board[i]=board;a.alight[i]=alight;this.acc.boarded+=board;this.acc.alighted+=alight;this.acc.stops++;this.acc.waitSum+=wait;a.wait[i]=wait;
