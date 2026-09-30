@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.7';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.7';
+import {MetricPath} from './simulation.mjs?v=20260930.8';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.8';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.7';
+import {pieceShape} from './wagons.mjs?v=20260930.8';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -650,6 +650,17 @@ export class NetworkMap {
     const atGrade=f=>{let L=0;for(let i=1;i<f.points.length;i++)L+=Math.hypot(f.points[i][0]-f.points[i-1][0],f.points[i][1]-f.points[i-1][1]);if(L>60||(Number(f.layer)||1)>1)return false;
       const b=box(f.points);if(groundRoads.some(([g,gb])=>g!==f&&touch(b,gb)&&crosses(f.points,g.points,false)))return false;
       return waterBoxes.some(([w,wb])=>touch(b,wb)&&crosses(f.points,w.points,w.closed));};
+    // Una calle a nivel que cruza sobre un deprimido de la calzada es un puente corto: losa de 1,1 m y
+    // pretiles sobre el hueco, para que no quede en el aire ni se vea cortada por los muros de abajo.
+    const sunken=(this.data.busway_structures?.structures||[]).filter(t=>t.kind==='tunnel').map(t=>[t,box(t.points)]);
+    const slab=(out,a,b,W)=>{const len=Math.hypot(b[0]-a[0],b[1]-a[1]);if(!len)return;const nx=-(b[1]-a[1])/len,ny=(b[0]-a[0])/len;
+      for(const o of [-W,W]){const A=[a[0]+nx*o,a[1]+ny*o],B=[b[0]+nx*o,b[1]+ny*o];
+        out.push(A[0],A[1],.9,B[0],B[1],.9,A[0],A[1],-1.1,A[0],A[1],-1.1,B[0],B[1],.9,B[0],B[1],-1.1);}};
+    const overSunken=(P,W,out)=>{const b=box(P);for(const [t,tb] of sunken){if(!touch(b,tb))continue;const T=t.points;
+      for(let i=1;i<P.length;i++)for(let j=1;j<T.length;j++){const a0=P[i-1],a1=P[i],c=T[j-1],d=T[j],s1=side(a0,a1,c),s2=side(a0,a1,d);
+        if(!(s1*s2<0&&side(c,d,a0)*side(c,d,a1)<0))continue;
+        const u=s1/(s1-s2),x=[c[0]+(d[0]-c[0])*u,c[1]+(d[1]-c[1])*u],len=Math.hypot(a1[0]-a0[0],a1[1]-a0[1]),ex=(a1[0]-a0[0])/len,ey=(a1[1]-a0[1])/len,h=9;
+        slab(out,[x[0]-ex*h,x[1]-ey*h],[x[0]+ex*h,x[1]+ey*h],W);}}};
     for(const f of [...data.features,...streets]){
       if(f.kind!=='road'||f.closed||f.tunnel||f.points.length<2)continue;
       const W=(f.width||7.2)/2;
@@ -659,6 +670,7 @@ export class NetworkMap {
         bands.push(a[0]+nx,a[1]+ny,za,a[0]-nx,a[1]-ny,za,b[0]+nx,b[1]+ny,zb,b[0]+nx,b[1]+ny,zb,a[0]-nx,a[1]-ny,za,b[0]-nx,b[1]-ny,zb);
       }
       if(H){const N=P.map((p,j)=>{const a=P[Math.max(0,j-1)],b=P[Math.min(P.length-1,j+1)],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return [-dy/l,dx/l];});bridgeParts(decks,P,N,P.map(()=>-W),P.map(()=>W),cum.map(z));}
+      else if(sunken.length&&f.name!=='TransMilenio')overSunken(P,W,decks);
     }
     this.roadBands=new THREE.Group();this.contextGroup.add(this.roadBands);this.roadBands.visible=false;
     const bandGeometry=new THREE.BufferGeometry();bandGeometry.setAttribute('position',new THREE.Float32BufferAttribute(bands,3));const bandMesh=new THREE.Mesh(bandGeometry,new THREE.MeshBasicMaterial({color:this.palette.road,depthTest:true,depthWrite:false,side:THREE.DoubleSide}));bandMesh.renderOrder=.12;bandMesh.userData.key='road';this.roadBands.add(bandMesh);

@@ -58,8 +58,8 @@
   pasan bajo una calle (`underpass`, 5,5 m) y 28 son trinchera a cielo abierto (`cutting`, 3 m). El
   motor lee `level` (ahora Float32). En el mapa, los puentes viales de ≤ 60 m que solo cruzan agua
   tampoco suben.
-- Pendiente visual: donde una calle cruza sobre un deprimido, dibujar su losa y cortar los muros
-  bajo ella (hoy la calle queda en el aire sobre el hueco). El terreno sigue plano: el desnivel solo
+- Hecho: donde una calle cruza sobre un deprimido se dibuja su losa y sus pretiles (la calle ya no
+  queda en el aire sobre el hueco). El terreno sigue plano: el desnivel solo
   existe en la calzada.
 
 ## 28 sep. 2026 — estado
