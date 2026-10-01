@@ -1,13 +1,13 @@
-import {mountShell} from './shell.mjs?v=20260930.24';
-import {NetworkMap} from './map.mjs?v=20260930.24';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.24';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260930.24';
-import {STATES} from './traffic.mjs?v=20260930.24';
-import {applyFieldCorrections} from './signals.mjs?v=20260930.24';
-import {registerSimulationTools} from './webmcp.mjs?v=20260930.24';
+import {mountShell} from './shell.mjs?v=20260930.25';
+import {NetworkMap} from './map.mjs?v=20260930.25';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.25';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260930.25';
+import {STATES} from './traffic.mjs?v=20260930.25';
+import {applyFieldCorrections} from './signals.mjs?v=20260930.25';
+import {registerSimulationTools} from './webmcp.mjs?v=20260930.25';
 // Aplicación instalable: el service worker guarda código y datos por versión (sw.js). Solo en el sitio
 // publicado: en local se edita y se recarga, y una caché estorbaría.
-if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.24').catch(()=>{});
+if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.25').catch(()=>{});
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -51,17 +51,20 @@ try{
  let selectedZones=new Set(config.selection.zones||[]);const map=new NetworkMap($('#canvas-host'),$('#labels'),data,onSelect);
  // Con ?depurar en la dirección, el mapa queda a mano en la consola para revisar la vista.
  if(new URLSearchParams(location.search).has('depurar'))window.transmi={map,get metro(){return metro;}};
+ // Vista híbrida (Capas → Satelital, o ?satelite): la foto bajo la calzada. Se recuerda en este navegador.
+ map.onSatellite=on=>{$('#satellite-toggle')?.setAttribute('aria-pressed',on);$('#buildings-toggle')?.setAttribute('aria-pressed',map.buildingsEnabled!==false);const c=document.querySelector('.map-bottom small');if(c){c.textContent=c.textContent.replace(/ · Imagen: Esri.*$/,'');if(on)c.textContent+=' · Imagen: Esri, Maxar, Earthstar Geographics';}try{localStorage.setItem('satelite',on?'1':'0');}catch{}};
+ {let saved=null;try{saved=localStorage.getItem('satelite');}catch{}if(new URLSearchParams(location.search).has('satelite')||saved==='1')map.setSatellite(true);}
  if(contextResponse.ok){const cross=await fetch('./cross_streets.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);map.setContext(await contextResponse.json(),cross?.streets||[]);if(cross)map.setCrossings(cross);}
  // El escenario guardado se retiró; lo que quedara de él en este navegador ya no tiene dueño.
  try{localStorage.removeItem('transmi-scenario-v3');localStorage.removeItem('transmi-scenario-v2');}catch{}
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260930.24',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260930.25',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.24',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.25',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -541,6 +544,7 @@ try{
  document.addEventListener('click',e=>{if(!$('#layers-panel').hidden&&!$('#layers-panel').contains(e.target)&&e.target!==$('#layers-toggle')){$('#layers-panel').hidden=true;$('#layers-toggle').setAttribute('aria-expanded','false');}});
  $('#bridges-toggle').onclick=()=>{const on=map.bridgesEnabled===false;map.bridgesEnabled=on;$('#bridges-toggle').setAttribute('aria-pressed',on);map.updateCamera();};
  $('#buildings-toggle').onclick=()=>{const on=map.buildingsEnabled===false;map.buildingsEnabled=on;$('#buildings-toggle').setAttribute('aria-pressed',on);map.updateCamera();};
+ $('#satellite-toggle').onclick=()=>map.setSatellite(!map.satelliteOn);
  $('#crowd-toggle').onclick=()=>{const on=!map.crowdEnabled;map.crowdEnabled=on;$('#crowd-toggle').setAttribute('aria-pressed',on);if(on)requestCrowd();else map.setCrowd(null);};
  for(const b of $$('.map-actions button'))if(!b.title)b.title=b.getAttribute('aria-label')||'';
  // En escritorio las cifras del instante van a la cabeza del panel lateral, junto a «La red ahora»,
@@ -605,7 +609,7 @@ try{
  let metro=null,METRO_HEADWAY=null;const VIEW=new URLSearchParams(location.search).get('vista');
  async function setupMetro(){
   try{
-   const [{MetroLayer,METRO},data]=await Promise.all([import('./metro.mjs?v=20260930.24').then(m=>{METRO_HEADWAY=m.headwayAt;return m;}),fetch('./metro_l1.json').then(r=>r.json())]);
+   const [{MetroLayer,METRO},data]=await Promise.all([import('./metro.mjs?v=20260930.25').then(m=>{METRO_HEADWAY=m.headwayAt;return m;}),fetch('./metro_l1.json').then(r=>r.json())]);
    metro=new MetroLayer(map.scene,data);
    metro.headwayAt=METRO_HEADWAY;selection={kind:'metro'};metro.update(((clock.time%DAY)+DAY)%DAY);renderMetroLine();
   }catch(error){console.error(error);toast('No se pudo cargar el metro.');}

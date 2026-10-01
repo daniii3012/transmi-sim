@@ -112,6 +112,13 @@
 - Pendiente: los buses que terminan en Museo Nacional desaparecen al final y los que salen aparecen;
   no recorren la U (la geometría del recorrido termina en la estación).
 - Números de buses agrupados debajo de los controles del mapa.
+- **Vista satelital híbrida** (Capas → Satelital, o `?satelite`; se recuerda en el navegador): foto de
+  Esri World Imagery pedida en la proyección del mapa, en teselas de 64 m a 16 km según el zoom, bajo
+  todo (aun lo hundido); calles como líneas blancas encima, sin rellenos ni edificios. Atribución
+  «Esri, Maxar, Earthstar Geographics». **Antes de desplegarla, revisar los términos de uso de Esri**
+  (o pasar a la ortofoto abierta de IDECA).
+- Pasada satelital de estaciones con la propia app (`?depurar&satelite`): 0–49 revisadas (zonas A,
+  B, C y Calle 80) sin desajustes de corredor a esta escala.
 
 ### Metro: parada centrada, vagones rígidos, ficha, seguir un tren y patio (30 sep.) — Fase 7
 - La abscisa del horario es el **centro** del tren: para centrado en el andén (antes el frente quedaba

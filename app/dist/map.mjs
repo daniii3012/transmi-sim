@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.24';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.24';
+import {MetricPath} from './simulation.mjs?v=20260930.25';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.25';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.24';
+import {pieceShape} from './wagons.mjs?v=20260930.25';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -269,7 +269,7 @@ export class NetworkMap {
     if(this.stationGroup)this.stationGroup.visible=near<3;
     if(this.stationRoofs)this.stationRoofs.visible=near<3&&this.is3D;
     if(this.infrastructureGroup)this.infrastructureGroup.visible=near<8;
-    if(this.roadBands)this.roadBands.visible=near<3;
+    if(this.roadBands)this.roadBands.visible=near<3&&!this.satelliteOn;
     if(this.crossingGroup)this.crossingGroup.visible=near<1.6;
     if(this.footbridgeGroup)this.footbridgeGroup.visible=near<4&&this.bridgesEnabled!==false;
     for(const m of this.structureMeshes||[])m.visible=this.bridgesEnabled!==false;
@@ -278,6 +278,7 @@ export class NetworkMap {
     // 3D. El interruptor de la calzada manda en las dos vistas.
     if(this.guidewayGroup){this.guidewayGroup.visible=this.carriagewaysEnabled!==false&&near<5;if(this.laneMarks)this.laneMarks.visible=near<1.4;for(const {mesh} of this.paths)mesh.visible=!this.guidewayGroup.visible;}
     if(this.buildingGroup){this.buildingGroup.visible=this.buildingsEnabled!==false&&near<(this.is3D?14:6);this.updateBuildingTiles();}
+    if(this.satelliteOn)this.updateSatellite();
     if(this.crowdMesh&&this.crowdList&&Math.abs((this.crowdMpp||0)-near)>near*.15){this.crowdMpp=near;this.setCrowd(this.crowdList);}
     if(this.depotGroup){this.depotGroup.visible=near<10;if(this.depotBuses)this.depotBuses.visible=this.depotJoints.visible=near<4;}
     if(labels)this.updateLabels();this.positionLabels();this.updateMarker();this.updateScale();
@@ -695,6 +696,35 @@ export class NetworkMap {
       this.updateBuildingTiles();
     }catch{}
   }
+  /** Vista híbrida, como en las apps de mapas: la foto satelital (Esri World Imagery, pedida en la
+   *  misma proyección del mapa, así cae en sus metros sin reproyectar) bajo la calzada de TransMilenio,
+   *  con las calles como líneas finas encima y los nombres. Se apagan los rellenos de calles, parques y
+   *  agua, y los edificios (vuelven como estaban al quitarla). */
+  setSatellite(on){
+    on=!!on;const was=this.satelliteOn;this.satelliteOn=on;this.satGroup||=(()=>{const g=new THREE.Group();this.scene.add(g);return g;})();
+    this.satGroup.visible=on;
+    if(on&&!was){this.buildingsBefore=this.buildingsEnabled!==false;this.buildingsEnabled=false;}
+    if(!on&&was)this.buildingsEnabled=this.buildingsBefore??true;
+    for(const m of this.contextMeshes||[]){const k=m.userData.key;
+      if(['park','water','deck'].includes(k)||(k==='road'&&m.isMesh))m.visible=!on;
+      // Las calles como líneas claras sobre la foto: van después de ella.
+      if(m.isLineSegments&&(k==='road'||k==='waterLine')){m.renderOrder=on?.04:0;m.material.opacity=on?.45:(k==='road'?.75:.85);m.material.color.set(on?'#ffffff':this.palette[k]);}}
+    if(on)this.updateSatellite();this.updateCamera?.();this.onSatellite?.(on);
+  }
+  updateSatellite(){
+    const side=Math.max(64,2**Math.round(Math.log2(Math.max(64,this.mpp*600)))),cx=this.target[0],cy=this.target[1],reach=Math.ceil(Math.max(this.w,this.h)*this.mpp/side/(this.is3D?1:2))+1;
+    this.satTiles||=new Map();this.satLoader||=new THREE.TextureLoader();this.satLoader.crossOrigin='anonymous';
+    const wkt=JSON.stringify({wkt:'PROJCS["Bogota_AEQD",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-74.136],PARAMETER["Latitude_Of_Origin",4.63027],UNIT["Meter",1.0]]'});
+    const px=Math.min(1024,Math.round(side/.3)),keep=new Set();
+    for(let i=Math.floor(cx/side)-reach;i<=Math.floor(cx/side)+reach;i++)for(let j=Math.floor(cy/side)-reach;j<=Math.floor(cy/side)+reach;j++){
+      const key=side+':'+i+':'+j;keep.add(key);if(this.satTiles.has(key))continue;
+      const box=[i*side,j*side,(i+1)*side,(j+1)*side],url='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?'+new URLSearchParams({bbox:box.join(','),bboxSR:wkt,imageSR:wkt,size:px+','+px,format:'jpg',f:'image'});
+      const mesh=new THREE.Mesh(new THREE.PlaneGeometry(side,side),new THREE.MeshBasicMaterial({color:'#ffffff',depthWrite:false}));
+      mesh.position.set(box[0]+side/2,box[1]+side/2,0);mesh.renderOrder=.01+(14-Math.log2(side))*.002;mesh.visible=false;this.satGroup.add(mesh);this.satTiles.set(key,mesh);
+      this.satLoader.load(url,t=>{t.colorSpace=THREE.SRGBColorSpace;mesh.material.map=t;mesh.visible=true;mesh.material.needsUpdate=true;});
+    }
+    if(this.satTiles.size>160)for(const [key,mesh] of this.satTiles)if(!keep.has(key)){this.satGroup.remove(mesh);mesh.geometry.dispose();mesh.material.map?.dispose();mesh.material.dispose();this.satTiles.delete(key);}
+  }
   updateBuildingTiles(){
     const idx=this.buildingIndex;if(!idx||this.buildingsEnabled===false||this.mpp>=(this.is3D?14:6))return;
     const size=idx.size,[cx,cy]=this.target,reach=Math.min(this.small?2500:5000,Math.max(900,this.distance*1.6)),want=[];
@@ -806,6 +836,7 @@ export class NetworkMap {
     if(high.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(high,3));const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette.deck,depthTest:true,depthWrite:false,side:THREE.DoubleSide}));m.renderOrder=4.8;m.userData.key='deck';this.roadBands.add(m);}
     if(decks.length)this.roadBands.add(this.structureMesh(decks));
     this.contextMeshes=[...(this.contextMeshes||[]),...this.roadBands.children];
+    if(this.satelliteOn)this.setSatellite(true);
   }
   /** Estructura de los puentes (costados, fondo, vigas y pilas), semitransparente y encima de la
    *  calzada: deja ver lo que pasa debajo, que es la regla del proyecto. Más tenue que antes para que
