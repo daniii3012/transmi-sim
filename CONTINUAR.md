@@ -92,6 +92,29 @@
 - Pendiente visto: los cupos del patio De la Hoja se pintan sobre el techo del edificio de Catastro
   de la plaza.
 
+### Metro: parada centrada, vagones rígidos, ficha, seguir un tren y patio (30 sep.) — Fase 7
+- La abscisa del horario es el **centro** del tren: para centrado en el andén (antes el frente quedaba
+  en el centro y medio tren fuera).
+- Cada vagón es un cuerpo rígido entre bogies (cuerda entre dos puntos del trazado). El trazado trae
+  vértices a 20 cm y los vagones se torcían a saltos al arrancar.
+- La tarjeta suelta (`.metro-banner`) pasa a la ficha plegable del inspector: «Línea 1» (trenes en vía y
+  en patio, intervalo, estaciones, patio) y, al tocar un tren, su ficha con «Seguir este tren» y «Girar
+  con el tren». En la vista del metro, «Más → Metro L1» reabre la ficha de la línea.
+- Patio Taller El Corzo desde OSM (vía 862870047; 37 vías, 11 edificios, alturas estimadas 14/8 m) en
+  `metro_l1.json → depot`; los trenes que no están en la vía (30 publicados) duermen en sus vías.
+  Crudo: `data/raw/metro/<instantánea>/patio_taller_osm.json`.
+- Planos de estación de la EMB (16 PDF) bajados a `tm/datos/investigacion/metro-planos-2026-09-30/`
+  (fuera del repo). Página 1: vista cenital con «edificios de acceso» A/D; páginas siguientes: la
+  edificación (tres pisos: acceso, ingreso pago, plataforma). Pendiente modelarlos.
+- OSM trae los 32 andenes laterales de las 16 estaciones (crudo `estaciones_osm.json`).
+
+### Puentes compartidos (30 sep.)
+- Un puente vial pegado (<20 m) y paralelo a uno de la troncal en el 70 % de su largo es la misma
+  estructura: va a la altura del de TM y el hueco entre tableros se tapa (Américas con 68 —Calle 9—
+  y con Boyacá —Calle 6—). OSM ponía una calzada en capa 2 y la otra en 1.
+- Tablero vial elevado con color propio `deck`: blanco como la calle no se distinguía del suelo.
+- Rampas viales al 7 %, como la troncal.
+
 ### Puentes opacos (30 sep.) — Fase 3 (revertido)
 
 - `structureMesh` pasa de semitransparente y encima de todo a opaca y antes que la calzada: el

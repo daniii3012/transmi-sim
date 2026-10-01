@@ -1,13 +1,13 @@
-import {mountShell} from './shell.mjs?v=20260930.22';
-import {NetworkMap} from './map.mjs?v=20260930.22';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.22';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260930.22';
-import {STATES} from './traffic.mjs?v=20260930.22';
-import {applyFieldCorrections} from './signals.mjs?v=20260930.22';
-import {registerSimulationTools} from './webmcp.mjs?v=20260930.22';
+import {mountShell} from './shell.mjs?v=20260930.23';
+import {NetworkMap} from './map.mjs?v=20260930.23';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.23';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260930.23';
+import {STATES} from './traffic.mjs?v=20260930.23';
+import {applyFieldCorrections} from './signals.mjs?v=20260930.23';
+import {registerSimulationTools} from './webmcp.mjs?v=20260930.23';
 // Aplicación instalable: el service worker guarda código y datos por versión (sw.js). Solo en el sitio
 // publicado: en local se edita y se recarga, y una caché estorbaría.
-if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.22').catch(()=>{});
+if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.23').catch(()=>{});
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -50,18 +50,18 @@ try{
  let viewMode=config.selection.mode,scrubbing=false,sampleSequence=0,planSequence=0;
  let selectedZones=new Set(config.selection.zones||[]);const map=new NetworkMap($('#canvas-host'),$('#labels'),data,onSelect);
  // Con ?depurar en la dirección, el mapa queda a mano en la consola para revisar la vista.
- if(new URLSearchParams(location.search).has('depurar'))window.transmi={map};
+ if(new URLSearchParams(location.search).has('depurar'))window.transmi={map,get metro(){return metro;}};
  if(contextResponse.ok){const cross=await fetch('./cross_streets.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);map.setContext(await contextResponse.json(),cross?.streets||[]);if(cross)map.setCrossings(cross);}
  // El escenario guardado se retiró; lo que quedara de él en este navegador ya no tiene dueño.
  try{localStorage.removeItem('transmi-scenario-v3');localStorage.removeItem('transmi-scenario-v2');}catch{}
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260930.22',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260930.23',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.22',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.23',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -225,7 +225,39 @@ try{
   const fragment=document.createDocumentFragment();for(const r of routes){const b=el('button',undefined,'route-row'+(focusedRoute===r.id?' selected':''));b.dataset.routeId=r.id;b.setAttribute('aria-label',`${r.code} a ${r.name}, ${status(r)}`);b.append(badge(r));const text=el('div',undefined,'route-text');text.append(el('strong',r.name),el('small',status(r)));b.append(text,el('span',counts.get(r.id)||'','route-count'));b.onclick=()=>selectRoute(r.id);fragment.append(b);}$('#route-list').replaceChildren(fragment);
  }
  function selectRoute(id,{fit=true}={}){const r=routeById.get(id);if(!r)return;focusedRoute=id;following=false;selection={kind:'route',id};map.selected=null;map.updateMarker();map.setRoute(id);renderRoute(r);if(fit&&r.points.length)map.fitPoints(r.points);renderRoutes();}
- function onSelect(value){following=false;selection=value;if(value.kind==='bus')worker.postMessage({type:'select',generation,id:value.id});$('#inspector').hidden=false;map.select(value.kind,value.id,value.label);if(value.kind==='station'){requestStation();}else{const b=snap.buses.find(b=>b.id===value.id);if(b){selection.routeId=b.routeId;focusedRoute=b.routeId;map.setRoute(b.routeId,{subtle:true});}renderBus();renderRoutes();$('#inspector').scrollTop=0;}}
+ function onSelect(value){following=false;selection=value;if(value.kind==='bus')worker.postMessage({type:'select',generation,id:value.id});$('#inspector').hidden=false;map.select(value.kind,value.id,value.label);if(value.kind==='station'){requestStation();}else if(value.kind==='train'){renderTrain();$('#inspector').scrollTop=0;}else{const b=snap.buses.find(b=>b.id===value.id);if(b){selection.routeId=b.routeId;focusedRoute=b.routeId;map.setRoute(b.routeId,{subtle:true});}renderBus();renderRoutes();$('#inspector').scrollTop=0;}}
+ // Metro: la misma ficha plegable que un bus o una ruta. Sin tren elegido muestra la línea.
+ const metroBadge=()=>{const b=el('span','L1','route-code');b.style.setProperty('--route','#d4252f');return b;};
+ function renderTrain(){
+  const tr=metro?.trains.find(t=>t.id===selection?.id);
+  if(!tr){following=false;if(metro){selection={kind:'metro'};renderMetroLine();}else clearSelection();return;}
+  const d=metro.describe(tr),p=$('#selection');
+  p.replaceChildren(metroBadge(),el('span','  METRO · LÍNEA 1','eyebrow'),el('h2','Hacia '+d.toward.name),el('div',d.here?'Detenido en '+d.here.name:'En marcha hacia '+(d.next?.name||d.toward.name),'bus-state'));$('#inspector').hidden=false;
+  row('Velocidad',(tr.speed*3.6).toFixed(0)+' km/h');
+  if(!d.here&&d.next)row('Próxima estación',d.next.name);
+  row('Salió de '+d.from.name,timeText(tr.dep).slice(0,5));
+  row('Capacidad',fmt(metro.data.operation.published.capacity_per_train)+' personas, 6 vagones');
+  const why=el('details',undefined,'why');why.append(el('summary','De dónde sale'),el('p','La Línea 1 está en construcción: no hay operación que leer. La posición sale de un horario estimado (intervalo publicado de 140 s en punta, 240 s en valle y 35 s de parada, estimados) con aceleración de 1 m/s² y 80 km/h de máxima, publicados. El tren para centrado en el andén.'));p.append(why);
+  const button=el('button',following?'Dejar de seguir':'Seguir este tren','primary full');button.id='follow';button.onclick=()=>{following=!following;if(following)map.focusOn(tr.xy,1.2);else map.setChase(false);renderTrain();};p.append(button);
+  if(following){const chase=el('button',map.chase?'Volver a norte fijo':'Girar con el tren','full');chase.id='chase';chase.setAttribute('aria-pressed',String(!!map.chase));chase.onclick=()=>{map.setChase(!map.chase);if(!map.chase)map.resetNorth();renderTrain();};p.append(chase);}
+  const line=el('button','Ver la línea','full');line.onclick=()=>{following=false;map.setChase(false);selection={kind:'metro'};map.selected=null;map.updateMarker();renderMetroLine();};p.append(line);
+ }
+ function renderMetroLine(){
+  if(!metro)return;const tt=metro.timetable,data=metro.data,t=((clock.time%DAY)+DAY)%DAY,h=metro.headwayAt(t),p=$('#selection');
+  p.replaceChildren(metroBadge(),el('span','  METRO DE BOGOTÁ','eyebrow'),el('h2','Línea 1 (proyecto)'),el('div','Operación prevista desde marzo de 2028','bus-state'));$('#inspector').hidden=false;
+  row('Trenes en la vía',`${metro.trains.length} · ${metro.parked} en el patio`);
+  row('Intervalo ahora',metro.trains.length?`${Math.floor(h/60)} min ${h%60?h%60+' s ':''}· ${h===140?'punta, publicado':'valle, estimado'}`:'Fuera de servicio (04:30–23:00, estimado)');
+  row('Estaciones',`${data.stations.length} · ${(data.length_m/1000).toFixed(1)} km`);
+  row('Ida completa',`${Math.round(tt.oneWay/60)} min · ${tt.commercialKmh.toFixed(1)} km/h`);
+  p.append(el('p','Toca un tren en el mapa para ver su ficha y seguirlo.','muted'));
+  const list=el('details',undefined,'bus-route');list.open=metroListOpen;list.ontoggle=()=>{metroListOpen=list.open;};list.append(el('summary','Estaciones'));
+  const fitTo=points=>{const xs=points.map(q=>q[0]),ys=points.map(q=>q[1]);map.fit([Math.min(...xs)-60,Math.min(...ys)-60,Math.max(...xs)+60,Math.max(...ys)+60]);};
+  for(const st of data.stations){const b=el('button',`${st.number}. ${st.name}`,'full');b.onclick=()=>fitTo(st.outline);list.append(b);}
+  if(data.depot){const b=el('button','Patio taller El Corzo','full');b.onclick=()=>fitTo(data.depot.outline);list.append(b);}
+  p.append(list);
+  const why=el('details',undefined,'why');why.append(el('summary','De dónde sale'),el('p','Trazado, viaducto y estaciones: Empresa Metro de Bogotá, datos abiertos (CC BY 4.0). Patio taller, sus vías y naves: OpenStreetMap; la altura de las naves es estimada. Publicado: 30 trenes de 6 vagones y 1.800 personas, 80 km/h, 42,5 km/h comercial, intervalo inicial de 140 s. Estimado: horario 04:30–23:00, 240 s en valle y 35 s de parada.'));p.append(why);
+ }
+ let metroListOpen=false;
  function renderRoute(r){
   $('#inspector').scrollTop=0;const panel=$('#selection');panel.replaceChildren(badge(r),el('span','  SERVICIO','eyebrow'),el('h2',r.name));$('#inspector').hidden=false;
   row('Recorrido',r.length_m?(r.length_m/1000).toFixed(2)+' km':'Pendiente');row('Paradas',r.stops.length);row('Estado',status(r));
@@ -561,31 +593,26 @@ try{
   map.animateBuses(now);if(metro){const t=((clock.time%DAY)+DAY)%DAY;metro.update(t);
    // El encuadre del metro va cuando la simulación ya se asentó: antes, el de la red lo pisaba.
    if(VIEW==='metro'&&settled&&!metro.framed){metro.framed=true;map.setCorridorsFaded(true);for(const m of [map.busMesh,map.busNose,map.busJoint])if(m){m.material.transparent=true;m.material.opacity=.25;}const pts=metro.data.alignment,xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);map.fit([Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)]);map.setView('3d');}
-  if(metro.countEl&&(!metro.lastCount||now-metro.lastCount>1000)){metro.lastCount=now;metro.countEl.textContent=`${metro.trains.length} trenes en la vía · estimado`;}}if(following&&selection?.kind==='bus'){const b=(map.visualBuses||snap.buses).find(b=>b.id===selection.id);if(b){map.follow(b.xy,dt,b.angle);}}else if(map.chase)map.setChase(false);
+  map.trainSamples=metro.samples;}if(following&&selection?.kind==='bus'){const b=(map.visualBuses||snap.buses).find(b=>b.id===selection.id);if(b){map.follow(b.xy,dt,b.angle);}}else if(following&&selection?.kind==='train'){const tr=metro?.trains.find(t=>t.id===selection.id);if(tr)map.follow(tr.xy,dt,tr.angle);}else if(map.chase)map.setChase(false);
   map.render();if(now-lastUI>200){updateUI();renderNow();lastUI=now;}if(map.crowdEnabled&&now-crowdAt>2000)requestCrowd();if(now-lastList>5000){if(activePanel==='routes'&&!$('#route-list').contains(document.activeElement))renderRoutes();if(activePanel==='depots'&&ready)worker.postMessage({type:'depots',generation});lastList=now;}
-  if(timeline&&now-(timeline.at||0)>250){timeline.at=now;updateTimeline();}if(now-lastInspect>1000){if(selection?.kind==='bus'){const focus=document.activeElement?.id;renderBus();if(focus==='follow')$('#follow')?.focus({preventScroll:true});}if(selection?.kind==='station'){if(ready&&!$('#inspector').contains(document.activeElement))worker.postMessage({type:'station',generation,id:selection.id});}lastInspect=now;}}
+  if(timeline&&now-(timeline.at||0)>250){timeline.at=now;updateTimeline();}if(now-lastInspect>1000){if(selection?.kind==='bus'||selection?.kind==='train'){const focus=document.activeElement?.id;selection.kind==='bus'?renderBus():renderTrain();if(focus==='follow'||focus==='chase')$('#'+focus)?.focus({preventScroll:true});}if(selection?.kind==='metro'&&!$('#inspector').contains(document.activeElement))renderMetroLine();if(selection?.kind==='station'){if(ready&&!$('#inspector').contains(document.activeElement))worker.postMessage({type:'station',generation,id:selection.id});}lastInspect=now;}}
  }
  const dispose=registerSimulationTools(document.modelContext,{read:()=>({...snap.stats,date:config.date,paused:clock.paused,speed:clock.speed,selected:selection}),control:input=>{if('paused'in input)clock.paused=input.paused;if('speed'in input)clock.speed=input.speed;syncControls();}});
  window.addEventListener('pagehide',()=>{worker.terminate();dispose?.();},{once:true});
  document.addEventListener('keydown',e=>{if(e.code==='Space'&&!['INPUT','SELECT','BUTTON','TEXTAREA'].includes(e.target.tagName)){e.preventDefault();clock.paused=!clock.paused;syncControls();}});
  // Vista del metro (?vista=metro): la Línea 1 en proyecto, con su viaducto, estaciones y trenes con la
  // operación estimada, sobre el mismo mapa y el mismo reloj. Se abre aparte desde «Más».
- let metro=null;const VIEW=new URLSearchParams(location.search).get('vista');
+ let metro=null,METRO_HEADWAY=null;const VIEW=new URLSearchParams(location.search).get('vista');
  async function setupMetro(){
   try{
-   const [{MetroLayer,METRO},data]=await Promise.all([import('./metro.mjs?v=20260930.22'),fetch('./metro_l1.json').then(r=>r.json())]);
+   const [{MetroLayer,METRO},data]=await Promise.all([import('./metro.mjs?v=20260930.23').then(m=>{METRO_HEADWAY=m.headwayAt;return m;}),fetch('./metro_l1.json').then(r=>r.json())]);
    metro=new MetroLayer(map.scene,data);
-   const tt=metro.timetable,banner=el('div',undefined,'metro-banner');banner.id='metro-banner';
-   const count=el('b','—');
-   banner.append(el('strong','Metro de Bogotá · Línea 1 (proyecto)'),el('span',`${data.stations.length} estaciones · ${(data.length_m/1000).toFixed(1)} km · operación prevista desde marzo de 2028`),count,
-    el('small',`Trazado, viaducto y estaciones: Empresa Metro de Bogotá, datos abiertos. Estimado: horario 04:30–23:00, intervalo ${METRO.peak} s en punta (el publicado) y ${METRO.offpeak} s en valle, parada de ${METRO.dwell} s. Ida ${Math.round(tt.oneWay/60)} min, ${tt.peakTrains} trenes en punta de 30.`));
-   document.querySelector('main').append(banner);
-   metro.countEl=count;
+   metro.headwayAt=METRO_HEADWAY;selection={kind:'metro'};metro.update(((clock.time%DAY)+DAY)%DAY);renderMetroLine();
   }catch(error){console.error(error);toast('No se pudo cargar el metro.');}
  }
  if(VIEW==='metro')setupMetro();
  if(sharedScenario===false)toast('El enlace del escenario no se pudo leer: se abre el escenario de siempre.');
  else if(sharedScenario)toast('Escenario del enlace: fecha, hora, parámetros y eventos compartidos.');
- {const link=el('button','Metro L1 (proyecto) ↗');link.type='button';link.onclick=()=>window.open('./?vista=metro','_blank','noopener');document.querySelector('.more-options')?.append(link);}
+ {const link=el('button','Metro L1 (proyecto) ↗');link.type='button';link.onclick=()=>{if(metro){following=false;selection={kind:'metro'};renderMetroLine();}else window.open('./?vista=metro','_blank','noopener');};document.querySelector('.more-options')?.append(link);}
  rebuild();requestAnimationFrame(frame);
 }catch(error){$('#loading').hidden=true;$('#error').hidden=false;$('#error').textContent='No fue posible abrir el simulador. '+error.message;console.error(error);}

@@ -144,6 +144,3 @@ details.bus-route .stop-list{margin:4px 0 12px 12px}
 .event-row button{padding:4px 10px;min-height:32px}
 /* Vista del metro: una tarjeta compacta en la esquina superior derecha, junto a los controles del
    mapa, que dice qué es proyecto y qué es estimado sin tapar el centro del mapa. */
-.metro-banner{position:absolute;top:84px;right:76px;z-index:9;display:grid;gap:2px;width:min(300px,calc(100% - 110px));padding:9px 12px;border-radius:12px;background:var(--surface,#fff);border:1px solid var(--edge,#0001);box-shadow:0 4px 16px #10233514;font-size:.74rem}
-.metro-banner strong{color:#d4252f}.metro-banner small{color:var(--muted,#697687);line-height:1.3;font-size:.68rem}
-@media(max-width:800px){.metro-banner{top:auto;right:12px;bottom:calc(var(--peek,156px) + 12px);width:min(280px,calc(100% - 24px))}}

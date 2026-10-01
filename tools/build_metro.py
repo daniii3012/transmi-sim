@@ -8,8 +8,12 @@ lo que necesita una operación simulada. Los nombres de las estaciones son los e
 de 2026 (la 7, en la Av. 68, sigue sin nombre). Lo que no publica nadie —horario, intervalos fuera
 del inicial, tiempos de parada— va en `operation` rotulado como estimado.
 
-Entrada: `data/raw/metro/<instantánea>/*.geojson` (descarga fuera del repositorio). Salida:
-`data/curated/metro_l1.json`.
+El patio taller de El Corzo (Bosa) no está en esa capa: sale de OpenStreetMap (ODbL), con su
+contorno, sus vías de patio y sus edificios. Sus alturas no están publicadas y van estimadas: 14 m
+una nave con cubierta (`building=roof`), 8 m un edificio.
+
+Entrada: `data/raw/metro/<instantánea>/*.geojson` y `patio_taller_osm.json` (descargas fuera del
+repositorio). Salida: `data/curated/metro_l1.json`.
 """
 from __future__ import annotations
 
@@ -56,6 +60,19 @@ def main() -> None:
         for s in stations:
             s["at_m"] = round(line.project(Point(*s["xy"])), 1)
     viaduct = [transform(to_xy, shape(f["geometry"])) for f in read("viaducto_l1")]
+    depot = None
+    if (folder / "patio_taller_osm.json").exists():
+        osm = json.loads((folder / "patio_taller_osm.json").read_text())
+        pts = lambda e: [[round(v, 1) for v in to_xy(g["lon"], g["lat"])] for g in e["geometry"]]
+        area = next(e for e in osm["elements"] if e["tags"].get("name") == "Patio Taller El Corzo")
+        depot = {"name": "Patio Taller El Corzo", "osm_way_id": area["id"],
+                 "source": "OpenStreetMap, ODbL 1.0", "retrieved_at": osm.get("osm3s", {}).get("timestamp_osm_base"),
+                 "outline": pts(area),
+                 "tracks": [{"osm_way_id": e["id"], "points": pts(e)} for e in osm["elements"]
+                            if e["tags"].get("railway") == "subway" and e["tags"].get("service") in ("yard", "crossover")],
+                 "buildings": [{"osm_way_id": e["id"], "name": e["tags"].get("name"), "roof": e["tags"]["building"] == "roof",
+                                "height_m": 14 if e["tags"]["building"] == "roof" else 8, "height": "estimada",
+                                "outline": pts(e)} for e in osm["elements"] if e["tags"].get("building")]}
     result = {
         "schema_version": 1,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -66,6 +83,7 @@ def main() -> None:
         "alignment": [[round(x, 1), round(y, 1)] for x, y in line.coords],
         "viaduct_area_m2": round(sum(v.area for v in viaduct)),
         "stations": stations,
+        "depot": depot,
         "operation": {
             "published": {"trains": 30, "cars_per_train": 6, "train_length_m": 135, "capacity_per_train": 1800,
                           "commercial_speed_kmh": 42.5, "max_speed_kmh": 80, "initial_headway_s": 140,
@@ -78,6 +96,8 @@ def main() -> None:
     (ROOT / "data/curated/metro_l1.json").write_text(text)
     print(f"trazado {line.length/1000:.2f} km · {len(stations)} estaciones · viaducto {result['viaduct_area_m2']} m²",
           hashlib.sha256(text.encode()).hexdigest()[:12])
+    if depot:
+        print(f"  patio: {len(depot['tracks'])} vías, {len(depot['buildings'])} edificios")
     for s in stations:
         print(f"  {s['number']:2} {s['name']:28} {s['at_m']/1000:6.2f} km")
 
