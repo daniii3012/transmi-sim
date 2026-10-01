@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.30';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.30';
+import {MetricPath} from './simulation.mjs?v=20260930.31';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.31';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.30';
+import {pieceShape} from './wagons.mjs?v=20260930.31';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -57,6 +57,19 @@ function fillet(P,reach=15){
 // barandas New Jersey a los dos lados, columnas con viga cabezal cada `span` metros donde el tablero
 // va alto y, donde va bajo (las rampas), muro de contención hasta el suelo. P son los puntos, N la
 // normal a la derecha, L y R los bordes (metros sobre N) y Z la altura de la calzada en cada punto.
+/** Corre y ajusta de lado un andén (centro, rumbo, largo, ancho) para que su borde quede al ras del
+ *  costado de los buses que paran en él: a 5 m del carril de paso de cada parada que cae a lo largo. */
+function snapPlatform(xy,angle,length,width,stops=[]){
+  // Borde a 4,8 m del carril de paso: el bus acomodado (3,4 m más cerca, 1,28 m de medio ancho) queda
+  // a 10 cm. Si los dos sentidos van tan juntos que no cabe la isla (en el motor van más juntos que en
+  // la calle), se angosta hasta 3 m y el bus queda montado como mucho 75 cm.
+  const E=4.8,u=[Math.cos(angle),Math.sin(angle)],v=[-u[1],u[0]];let pos=Infinity,neg=Infinity;
+  for(const q of stops){const dx=q[0]-xy[0],dy=q[1]-xy[1],a=dx*u[0]+dy*u[1],b=dx*v[0]+dy*v[1];if(Math.abs(a)>length/2+5||Math.abs(b)>16)continue;if(b>=0)pos=Math.min(pos,b-E);else neg=Math.min(neg,-b-E);}
+  let lo=-width/2,hi=width/2;
+  if(Number.isFinite(pos)&&Number.isFinite(neg)){hi=pos;lo=-neg;if(hi-lo<3){const c=(lo+hi)/2;lo=c-1.5;hi=c+1.5;}}
+  else if(Number.isFinite(pos)){hi=pos;lo=pos-width;}else if(Number.isFinite(neg)){lo=-neg;hi=-neg+width;}
+  const c=(lo+hi)/2;return {xy:[xy[0]+v[0]*c,xy[1]+v[1]*c],width:hi-lo};
+}
 function bridgeParts(out,P,N,L,R,Z,{deck=1.1,parapet=.9,span=24}={}){
   const tri=(...v)=>out.push(...v);
   const quad=(a,b,c,d)=>tri(...a,...b,...c,...c,...b,...d);
@@ -564,6 +577,7 @@ export class NetworkMap {
    *  el rumbo de su carril, que en la estación se abre, y no se monta sobre él en un extremo. */
   setPlatforms(mods){
     if(!mods?.length)return;
+    this.platformMods=mods;
     const byStation=new Map();for(const m of mods){if(!byStation.has(m.station))byStation.set(m.station,[]);byStation.get(m.station).push(m);}
     const out=[];
     for(const [station,list] of byStation){
@@ -583,6 +597,44 @@ export class NetworkMap {
       for(const side of parts)for(const r of side)out.push({station,r,width:5});
       for(const p of out.filter(p=>p.station===station&&!p.xy)){const m=(p.r.a0+p.r.a1)/2;p.xy=[o[0]+u[0]*m+v[0]*p.r.b,o[1]+u[1]*m+v[1]*p.r.b];p.angle=p.r.angle??ang;p.length=p.r.a1-p.r.a0;delete p.r;}
     }
+    // Estaciones trazadas sobre la foto (station_traces.json): el inicio y el fin de cada cubierta vienen
+    // de ahí. El lado y el ancho siguen saliendo de donde paran los buses, salvo que el trazado los fije.
+    const traces=this.data.station_traces?.stations||{};
+    for(const [id,t] of Object.entries(traces)){
+      if(t.status!=='trazada')continue;
+      const mine=out.filter(p=>p.station===id);if(!mine.length)continue;
+      const u=[Math.cos(t.ang),Math.sin(t.ang)],v=[-u[1],u[0]],rel=p=>[(p.xy[0]-t.c[0])*u[0]+(p.xy[1]-t.c[1])*u[1],(p.xy[0]-t.c[0])*v[0]+(p.xy[1]-t.c[1])*v[1]];
+      // Por cuerpo trazado, los andenes del motor que se le solapan a lo largo dan sus lados: uno por cada
+      // franja lateral ocupada (un hueco de más de 3 m separa los dos sentidos, como en Américas–Boyacá).
+      const lane=this.platformMods?.filter(x=>x.station===id).map(x=>{const L=-(3.4*1.5+2.3),q=[x.xy[0]-Math.sin(x.angle)*L,x.xy[1]+Math.cos(x.angle)*L];return rel({xy:q});})||[];
+      const fresh=[];
+      for(const b of t.bodies){const [a0,a1]=b.a,mid=(a0+a1)/2,make=(lat,w)=>fresh.push({station:id,xy:[t.c[0]+u[0]*mid+v[0]*lat,t.c[1]+u[1]*mid+v[1]*lat],angle:t.ang,length:a1-a0,width:w,traced:true});
+        if(b.b!=null){make(b.b,b.w||4);continue;}
+        let over=mine.map(p=>{const [pa,pb]=rel(p);return {pa,pb,w:p.width,L:p.length};}).filter(q=>Math.abs(q.pa-mid)<(q.L+a1-a0)/2+5);
+        if(!over.length)over=[mine.map(p=>{const [pa,pb]=rel(p);return {pa,pb,w:p.width,d:Math.abs(pa-mid)};}).sort((x,y)=>x.d-y.d)[0]];
+        const bands=over.map(q=>[q.pb-q.w/2,q.pb+q.w/2]).sort((x,y)=>x[0]-y[0]),groups=[];
+        for(const r of bands){const g=groups.at(-1);if(g&&r[0]-g[1]<3)g[1]=Math.max(g[1],r[1]);else groups.push([...r]);}
+        for(const [lo,hi] of groups){
+          make((lo+hi)/2,Math.max(2.5,hi-lo));}
+      }
+      for(const p of mine)out.splice(out.indexOf(p),1);out.push(...fresh);
+    }
+    // Cada andén al ras de los buses que paran en él. El punto de parada va sobre el carril que sigue de
+    // largo; el bus se acomoda en el del andén, 3,4 m más cerca, y su costado queda a 1,3 m de su eje.
+    // Así el borde que da a cada bus va a 5 m del carril de paso: ni montado sobre el bus ni lejos de
+    // él. Una isla toma los dos bordes de sus dos carriles; un andén de un lado conserva su ancho.
+    const stops=new Map();for(const x of mods){const L=-(3.4*1.5+2.3);if(!stops.has(x.station))stops.set(x.station,[]);stops.get(x.station).push([x.xy[0]-Math.sin(x.angle)*L,x.xy[1]+Math.cos(x.angle)*L]);}
+    this.platformStops=stops;
+    for(const p of out){const fit=snapPlatform(p.xy,p.angle,p.length,p.width,stops.get(p.station));p.xy=fit.xy;p.width=fit.width;}
+    this.islandCache=null;
+    // Andenes de OSM que no cubren todas las paradas (Paloquemao, Toberín, Terreros…): las que quedan
+    // fuera conservan su andén estimado, dibujado junto a los de OSM.
+    for(const L of this.data.station_layouts?.stations||[]){
+      if(L.platforms.some(q=>q.closed))continue;const isl=this.islandAreas(L);if(!isl.length)continue;
+      const inside=q=>isl.some(a=>{const P=a.points,c=[(P[0][0]+P[2][0])/2,(P[0][1]+P[2][1])/2],ux=P[1][0]-P[0][0],uy=P[1][1]-P[0][1],l=Math.hypot(ux,uy);return Math.abs(((q[0]-c[0])*ux+(q[1]-c[1])*uy)/l)<=l/2+5&&Math.abs((-(q[0]-c[0])*uy+(q[1]-c[1])*ux)/l)<16;});
+      const loose=(stops.get(L.station_id)||[]).filter(q=>!inside(q));if(!loose.length)continue;
+      for(const p of out.filter(p=>p.station===L.station_id)){const u=[Math.cos(p.angle),Math.sin(p.angle)];if(loose.some(q=>Math.abs((q[0]-p.xy[0])*u[0]+(q[1]-p.xy[1])*u[1])<=p.length/2+3))p.extra=true;}
+    }
     this.alignedPlatforms=out;
     for(const o of [this.stationGroup,this.stationRoofs]){if(!o)continue;this.scene.remove(o);o.traverse(x=>{x.geometry?.dispose();x.material?.dispose?.();});}
     this.buildStationGeometry();
@@ -596,7 +648,7 @@ export class NetworkMap {
   islandAreas(layout){
     if(layout.platforms.some(p=>p.closed))return [];
     // Largo y angosto: un andén. Las cúpulas sobre los retornos en U de Museo Nacional (25 × 11 m) no.
-    return layout.areas.filter(a=>a.closed&&a.role==='station_area'&&a.length_m>=20&&a.width_m>=1.5&&a.width_m<=12&&a.length_m>=3*a.width_m).map(a=>this.fitIsland(a)).filter(Boolean);
+    return layout.areas.filter(a=>a.closed&&a.role==='station_area'&&a.length_m>=20&&a.width_m>=1.5&&a.width_m<=12&&a.length_m>=3*a.width_m).map(a=>this.fitIsland({...a,stationId:layout.station_id})).filter(Boolean);
   }
   fitIsland(area){
     if(!this.guideLinks||!area.axis)return null;
@@ -626,7 +678,9 @@ export class NetworkMap {
     if(!shifts.length)return null;
     const med=a=>[...a].sort((x,y)=>x-y)[a.length>>1],shift=med(shifts),width=med(widths);if(width<1.5||Math.abs(shift)>8)return null;
     const c=[mid[0]+v[0]*shift,mid[1]+v[1]*shift],h=width/2,corner=(su,sv)=>[c[0]+u[0]*half*su+v[0]*h*sv,c[1]+u[1]*half*su+v[1]*h*sv];
-    return {...area,points:[corner(-1,-1),corner(1,-1),corner(1,1),corner(-1,1),corner(-1,-1)],fitted:true,width_m:width};
+    let cc=c,ww=width;const st=this.platformStops?.get(area.stationId);if(st){const f=snapPlatform(c,Math.atan2(u[1],u[0]),area.length_m,width,st);cc=f.xy;ww=f.width;}
+    const hh=ww/2,corner2=(su,sv)=>[cc[0]+u[0]*half*su+v[0]*hh*sv,cc[1]+u[1]*half*su+v[1]*hh*sv];
+    return {...area,points:[corner2(-1,-1),corner2(1,-1),corner2(1,1),corner2(-1,1),corner2(-1,-1)],fitted:true,width_m:ww};
   }
   osmPlatformsFit(layout){
     const own=layout.platforms.filter(p=>p.closed&&p.points.length>3).map(p=>p.points),polys=own.length?own:this.islandAreas(layout).map(a=>a.points);if(!own.length&&polys.length)return true;if(!polys.length||!this.guideLinks)return false;
@@ -686,7 +740,7 @@ export class NetworkMap {
     // Sin geometría de OSM, los vagones van donde el GTFS pone sus paradas: cada letra en su lugar, en
     // una o dos filas según las puertas de cada lado. Si tampoco hay eso, módulos cada 64 m.
     const gtfs=this.data.wagon_stops?.stations||{};
-    for(const p of this.alignedPlatforms||[]){if(this.layoutIds.has(p.station))continue;wagons.push({xy:p.xy,angle:p.angle,length:p.length,width:p.width});}
+    for(const p of this.alignedPlatforms||[]){if(this.layoutIds.has(p.station)&&!p.extra)continue;wagons.push({xy:p.xy,angle:p.angle,length:p.length,width:p.width});}
     for(const s of this.data.stations){
       if(s.kind==='street'||s.status==='En obras'||this.layoutIds.has(s.id)||aligned.has(s.id))continue;
       const sum=this.axes.get(s.id)||[1,0],angle=Math.atan2(sum[1],sum[0])/2,u=[Math.cos(angle),Math.sin(angle)],v=[-u[1],u[0]];

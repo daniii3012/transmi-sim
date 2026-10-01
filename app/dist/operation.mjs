@@ -1,11 +1,11 @@
-import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260930.30';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.30';
-import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections,turningOnly} from './signals.mjs?v=20260930.30';
-import {travelTimeAtDistance} from './travel.mjs?v=20260930.30';
-import {generatedPassengers,alightFraction,demandBase} from './passengers.mjs?v=20260930.30';
-import {placeVisit} from './station-layouts.mjs?v=20260930.30';
-import {visitWagons} from './wagons.mjs?v=20260930.30';
-import {MetricPath} from './simulation.mjs?v=20260930.30';
+import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260930.31';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.31';
+import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections,turningOnly} from './signals.mjs?v=20260930.31';
+import {travelTimeAtDistance} from './travel.mjs?v=20260930.31';
+import {generatedPassengers,alightFraction,demandBase} from './passengers.mjs?v=20260930.31';
+import {placeVisit} from './station-layouts.mjs?v=20260930.31';
+import {visitWagons} from './wagons.mjs?v=20260930.31';
+import {MetricPath} from './simulation.mjs?v=20260930.31';
 export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1,mode:'auto',cruiseKmh:60,streetKmh:50,acceleration:.6,cruiseFrom:'local',braking:1.1,turnaround:240,variableDispatch:true,reinforcements:true,signals:true,beyondValidity:true,programmedDispatch:true,programmedRunning:true,observedRunning:true,
  // Espacio físico (traffic.mjs). Separación en marcha y parado, ciclo semafórico y atención son
  // decisiones de modelo, rotuladas como estimación; la variación diaria cambia de una fecha a otra

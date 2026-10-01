@@ -92,6 +92,24 @@
 - Pendiente visto: los cupos del patio De la Hoja se pintan sobre el techo del edificio de Catastro
   de la plaza.
 
+### Las 73 estaciones sin andenes en OSM (30 sep.)
+- Franjas enderezadas sobre la foto (`work/franjas_estaciones.py`, salidas en `work/satelite/franjas/`):
+  eje de la estación, marcas cada 10 m a lo largo y 5 m a lo ancho, recorridos del motor y andenes
+  actuales encima. Resultado en `data/curated/station_traces.json` (copia en `app/dist`), dato curado a
+  mano con fuente y fecha de la foto: 41 trazadas (inicio y fin de cada cubierta; casi todas eran 10–20
+  m más largas que los módulos, sobre todo en Suba, NQS sur y Caracas sur), 18 coinciden, 14 quedan
+  estimadas: las 6 de la Caracas modificadas por el metro (Calle 22 a Calle 72; Daniel: ahí manda el
+  GTFS, no la foto), 4 nuevas posteriores a la foto (Suba Calle 100, Danubio, Laureles, Islandia) y 4
+  ilegibles o complejas (Boyacá, Biblioteca, Av. Rojas, San Diego) más Granja (isla con carriles a 20 m).
+- **Andén al ras del bus** (`snapPlatform`, todos los andenes alineados y los de OSM): el punto de
+  parada va sobre el carril de paso y el bus se acomoda 3,4 m más cerca; el borde que da a cada bus va
+  a 4,8 m del carril de paso. Con los dos sentidos tan juntos que no cabe (en el motor van ~11–12 m,
+  en la calle ~15), la isla se angosta hasta 3 m y el bus queda montado como mucho 75 cm–1,8 m.
+  Paradas que ningún andén de OSM cubre conservan su andén estimado (`extra`).
+- Prueba en vivo (buses en `dwell` contra el andén más cercano, 40 s de muestreo): 126 de 143 al ras
+  (±0,8 m), 17 montados 0,9–1,8 m. **Pendiente de fondo:** separar en el motor las trayectorias de
+  los dos sentidos en las estaciones para que quepa la isla real de 5 m.
+
 ### Museo Nacional y revisión satelital (30 sep.) — en curso
 - Herramienta `work/revision_satelital.py nombre x y [lado] [px]`: foto de Esri en la proyección del
   mapa con recorridos, estructuras, áreas/andenes de OSM, paradas por vagón del GTFS y cuadrícula de

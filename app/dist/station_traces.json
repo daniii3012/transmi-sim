@@ -1,0 +1,924 @@
+{
+ "schema_version": 1,
+ "generated_at": "2026-09-30",
+ "source": {
+  "imagery": "Esri World Imagery (Maxar/Vantor WV03, 31 cm), captura 29/01/2024 en la mayoría de la red",
+  "method": "lectura manual de franjas enderezadas sobre el eje de cada estación (work/franjas_estaciones.py)"
+ },
+ "verification": "estimación visual; inicio y fin de cada cubierta a ±5 m. Solo para estaciones sin andenes en OpenStreetMap",
+ "frame": "a: metros a lo largo del eje desde c con rumbo ang (rad); b: metros a la izquierda del eje",
+ "stations": {
+  "2102": {
+   "name": "Calle 161",
+   "c": [
+    9764.612238493724,
+    12354.270606694561
+   ],
+   "ang": 1.4085464447308316,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -185,
+      -80
+     ]
+    },
+    {
+     "a": [
+      75,
+      175
+     ]
+    }
+   ]
+  },
+  "3014": {
+   "name": "San Martín",
+   "c": [
+    7637.4,
+    5106.6
+   ],
+   "ang": 1.0197,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -62,
+      82
+     ]
+    }
+   ]
+  },
+  "3013": {
+   "name": "Rionegro",
+   "c": [
+    7899.7,
+    5544.4
+   ],
+   "ang": 0.9987,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -72,
+      73
+     ]
+    }
+   ]
+  },
+  "3012": {
+   "name": "Suba - Calle 95",
+   "c": [
+    8074.9,
+    6021.7
+   ],
+   "ang": -1.0964,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -70,
+      75
+     ]
+    }
+   ]
+  },
+  "3010": {
+   "name": "Puentelargo",
+   "c": [
+    7627.0,
+    6991.7
+   ],
+   "ang": -1.0334,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -48,
+      80
+     ]
+    }
+   ]
+  },
+  "3009": {
+   "name": "Av. Suba - Calle 116",
+   "c": [
+    7340.9,
+    7623.2
+   ],
+   "ang": -1.2862,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -77,
+      70
+     ]
+    }
+   ]
+  },
+  "3007": {
+   "name": "Humedal Córdoba",
+   "c": [
+    7192.5,
+    8451.6
+   ],
+   "ang": -1.3577,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -75,
+      73
+     ]
+    }
+   ]
+  },
+  "3006": {
+   "name": "Niza - Calle 127",
+   "c": [
+    7068.0,
+    9036.3
+   ],
+   "ang": -1.356,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -95,
+      70
+     ]
+    }
+   ]
+  },
+  "3005": {
+   "name": "Suba - Av. Boyacá",
+   "c": [
+    6798.5,
+    10062.4
+   ],
+   "ang": -1.5467,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -80,
+      55
+     ]
+    }
+   ]
+  },
+  "3004": {
+   "name": "Gratamira",
+   "c": [
+    6796.0,
+    10753.2
+   ],
+   "ang": 1.5316,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -85,
+      58
+     ]
+    }
+   ]
+  },
+  "3003": {
+   "name": "21 Ángeles",
+   "c": [
+    6099.0,
+    11641.9
+   ],
+   "ang": -0.5893,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -60,
+      77
+     ]
+    }
+   ]
+  },
+  "4004": {
+   "name": "Granja - cra 77",
+   "status": "estimada",
+   "note": "isla larga entre carriles a 20 m: el trazado no casa con las paradas del motor; quedan los andenes de las paradas"
+  },
+  "7107": {
+   "name": "Universidad Nacional",
+   "c": [
+    6285.837012658229,
+    750.6084050632911
+   ],
+   "ang": 1.5060693408417563,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -160,
+      -50
+     ]
+    },
+    {
+     "a": [
+      -35,
+      18
+     ]
+    },
+    {
+     "a": [
+      40,
+      120
+     ]
+    }
+   ]
+  },
+  "7108": {
+   "name": "Av. Eldorado",
+   "c": [
+    6220.6,
+    -4.7
+   ],
+   "ang": 1.4045,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -70,
+      82
+     ]
+    }
+   ]
+  },
+  "7109": {
+   "name": "CAD",
+   "c": [
+    5746.3,
+    -764.0
+   ],
+   "ang": 0.8769,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -110,
+      80
+     ]
+    }
+   ]
+  },
+  "14001": {
+   "name": "De La Sabana",
+   "c": [
+    6005.1,
+    -2747.5
+   ],
+   "ang": -0.7056,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -75,
+      80
+     ]
+    }
+   ]
+  },
+  "12004": {
+   "name": "San Facon Carrera 22",
+   "c": [
+    5474.7,
+    -2280.5
+   ],
+   "ang": -0.7139,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -88,
+      80
+     ]
+    }
+   ]
+  },
+  "12002": {
+   "name": "CDS Carrera 32",
+   "c": [
+    4669.9,
+    -1566.6
+   ],
+   "ang": -0.7268,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -100,
+      65
+     ]
+    }
+   ]
+  },
+  "12007": {
+   "name": "Zona Industrial",
+   "c": [
+    4138.1,
+    -1096.2
+   ],
+   "ang": -0.7232,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -100,
+      60
+     ]
+    }
+   ]
+  },
+  "5102": {
+   "name": "Av Américas - Av. Boyacá",
+   "c": [
+    203.625,
+    -18.9
+   ],
+   "ang": -0.09827453403798365,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -85,
+      -15
+     ]
+    },
+    {
+     "a": [
+      15,
+      60
+     ]
+    }
+   ]
+  },
+  "5002": {
+   "name": "Biblioteca Tintal",
+   "c": [
+    -2545.7,
+    882.4
+   ],
+   "ang": 0.7286,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -105,
+      105
+     ]
+    }
+   ]
+  },
+  "5001": {
+   "name": "Patio Bonito",
+   "c": [
+    -3210.5762711864404,
+    291.7340523882897
+   ],
+   "ang": 0.7101094442081644,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -115,
+      -60
+     ]
+    },
+    {
+     "a": [
+      -50,
+      185
+     ]
+    }
+   ]
+  },
+  "7113": {
+   "name": "Santa Isabel",
+   "c": [
+    3678.2,
+    -3179.9
+   ],
+   "ang": 0.6768,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -95,
+      95
+     ]
+    }
+   ]
+  },
+  "7007": {
+   "name": "CL 38A Sur - Centro Mayor",
+   "c": [
+    1359.0,
+    -4029.6
+   ],
+   "ang": 0.09740000000000001,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -72,
+      80
+     ]
+    }
+   ]
+  },
+  "7001": {
+   "name": "Perdomo",
+   "c": [
+    -3219.6,
+    -3811.9
+   ],
+   "ang": 0.0133,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -70,
+      75
+     ]
+    }
+   ]
+  },
+  "7506": {
+   "name": "La Despensa",
+   "c": [
+    -5795.2,
+    -3947.6
+   ],
+   "ang": 0.4652,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -60,
+      73
+     ]
+    }
+   ]
+  },
+  "7505": {
+   "name": "León XIII",
+   "c": [
+    -6337.8,
+    -4208.5
+   ],
+   "ang": 0.4563,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -82,
+      98
+     ]
+    }
+   ]
+  },
+  "9106": {
+   "name": "Nariño",
+   "c": [
+    4670.5,
+    -4858.9
+   ],
+   "ang": 0.8344,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -70,
+      75
+     ]
+    }
+   ]
+  },
+  "9105": {
+   "name": "Fucha",
+   "c": [
+    4046.1,
+    -5237.8
+   ],
+   "ang": 0.5277,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -55,
+      80
+     ]
+    }
+   ]
+  },
+  "9104": {
+   "name": "Restrepo",
+   "c": [
+    3830.3,
+    -5357.1
+   ],
+   "ang": 0.504,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -80,
+      90
+     ]
+    }
+   ]
+  },
+  "9101": {
+   "name": "Quiroga",
+   "c": [
+    2402.3,
+    -5909.7
+   ],
+   "ang": 0.22170000000000004,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -70,
+      70
+     ]
+    }
+   ]
+  },
+  "9003": {
+   "name": "Socorro",
+   "c": [
+    1154.1,
+    -7252.8
+   ],
+   "ang": -1.0426,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -62,
+      65
+     ]
+    }
+   ]
+  },
+  "9002": {
+   "name": "Consuelo",
+   "c": [
+    1352.0,
+    -7759.3
+   ],
+   "ang": -1.13,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -67,
+      70
+     ]
+    }
+   ]
+  },
+  "14004": {
+   "name": "Museo Del Oro",
+   "c": [
+    6997.599999999999,
+    -3215.9
+   ],
+   "ang": -0.551,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -42,
+      45
+     ]
+    }
+   ],
+   "note": "el lado sale del carril del motor, que va unos 3 m corrido de la foto"
+  },
+  "6109": {
+   "name": "Centro Memoria",
+   "c": [
+    6618.1,
+    -1074.8
+   ],
+   "ang": -0.9621,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -85,
+      90
+     ]
+    }
+   ]
+  },
+  "6104": {
+   "name": "Gobernacion",
+   "c": [
+    4368.894767137624,
+    1405.4111459968601
+   ],
+   "ang": -0.9994006840227774,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -72,
+      52
+     ],
+     "b": 6,
+     "w": 4
+    },
+    {
+     "a": [
+      -72,
+      52
+     ],
+     "b": -7,
+     "w": 4
+    }
+   ]
+  },
+  "6002": {
+   "name": "Normandia",
+   "c": [
+    2525.6,
+    4276.025
+   ],
+   "ang": -0.9995997803948773,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -78,
+      -18
+     ],
+     "b": 6.5,
+     "w": 4
+    },
+    {
+     "a": [
+      -78,
+      -18
+     ],
+     "b": -6.5,
+     "w": 4
+    },
+    {
+     "a": [
+      15,
+      75
+     ],
+     "b": 6.5,
+     "w": 4
+    },
+    {
+     "a": [
+      15,
+      75
+     ],
+     "b": -6.5,
+     "w": 4
+    }
+   ]
+  },
+  "10004": {
+   "name": "Policarpa",
+   "c": [
+    5440.5,
+    -4871.2
+   ],
+   "ang": 0.9693,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -83,
+      78
+     ]
+    }
+   ]
+  },
+  "10002": {
+   "name": "Av. Primero de Mayo",
+   "c": [
+    4689.9,
+    -5900.6
+   ],
+   "ang": 0.9332,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -120,
+      112
+     ]
+    }
+   ]
+  },
+  "10001": {
+   "name": "Country Sur",
+   "c": [
+    4144.5,
+    -6507.7
+   ],
+   "ang": 0.8499,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -80,
+      82
+     ]
+    }
+   ]
+  },
+  "7010": {
+   "name": "Bosa",
+   "c": [
+    -5022.9,
+    -3690.6
+   ],
+   "ang": 0.0273,
+   "status": "trazada",
+   "bodies": [
+    {
+     "a": [
+      -78,
+      88
+     ]
+    }
+   ]
+  },
+  "2303": {
+   "name": "Calle 85 - Gato Dumas",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "2302": {
+   "name": "Virrey - Cendiatra",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "2300": {
+   "name": "Calle 100 - Marketmedios",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "2204": {
+   "name": "Pepe Sierra - Utel Universidad",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "2202": {
+   "name": "Calle 127",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "2201": {
+   "name": "Prado",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "2200": {
+   "name": "Alcalá - Colegio S. Tomás Dominicos",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "4107": {
+   "name": "Escuela Militar",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "4106": {
+   "name": "Carrera 47",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "4105": {
+   "name": "Carrera 53",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "4103": {
+   "name": "Ferias",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "4101": {
+   "name": "Minuto De Dios",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "4003": {
+   "name": "Avenida Cali",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "4002": {
+   "name": "Carrera 90",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "4001": {
+   "name": "Quirigua",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "7106": {
+   "name": "Campin - UAN",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "9107": {
+   "name": "Hortúa",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "10007": {
+   "name": "Las Nieves",
+   "status": "coincide",
+   "note": "los andenes del motor coinciden con la foto"
+  },
+  "9122": {
+   "name": "Calle 72 - Areandina",
+   "status": "estimada",
+   "note": "Caracas: modificada por las obras del metro"
+  },
+  "9121": {
+   "name": "Flores",
+   "status": "estimada",
+   "note": "Caracas: obras del metro"
+  },
+  "9119": {
+   "name": "Calle 57",
+   "status": "estimada",
+   "note": "Caracas: obras del metro"
+  },
+  "9118": {
+   "name": "Marly",
+   "status": "estimada",
+   "note": "Caracas: obras del metro"
+  },
+  "9116": {
+   "name": "Av. 39",
+   "status": "estimada",
+   "note": "Caracas: obras del metro"
+  },
+  "9113": {
+   "name": "Calle 22",
+   "status": "estimada",
+   "note": "Caracas: obras del metro"
+  },
+  "90007": {
+   "name": "Suba Calle 100",
+   "status": "estimada",
+   "note": "estación nueva, posterior a la foto"
+  },
+  "90008": {
+   "name": "Danubio",
+   "status": "estimada",
+   "note": "estación nueva, posterior a la foto"
+  },
+  "90010": {
+   "name": "Laureles",
+   "status": "estimada",
+   "note": "estación nueva, posterior a la foto"
+  },
+  "90011": {
+   "name": "Islandia",
+   "status": "estimada",
+   "note": "estación nueva, posterior a la foto"
+  },
+  "4102": {
+   "name": "Boyacá",
+   "status": "estimada",
+   "note": "la foto no se lee con claridad"
+  },
+  "8002": {
+   "name": "Biblioteca",
+   "status": "estimada",
+   "note": "la foto no se lee con claridad"
+  },
+  "6100": {
+   "name": "Av. Rojas - UNISALESIANA",
+   "status": "estimada",
+   "note": "estación compleja"
+  },
+  "10008": {
+   "name": "San Diego",
+   "status": "estimada",
+   "note": "sombras de edificios"
+  }
+ }
+}

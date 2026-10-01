@@ -1,13 +1,13 @@
-import {mountShell} from './shell.mjs?v=20260930.30';
-import {NetworkMap} from './map.mjs?v=20260930.30';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.30';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260930.30';
-import {STATES} from './traffic.mjs?v=20260930.30';
-import {applyFieldCorrections} from './signals.mjs?v=20260930.30';
-import {registerSimulationTools} from './webmcp.mjs?v=20260930.30';
+import {mountShell} from './shell.mjs?v=20260930.31';
+import {NetworkMap} from './map.mjs?v=20260930.31';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.31';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260930.31';
+import {STATES} from './traffic.mjs?v=20260930.31';
+import {applyFieldCorrections} from './signals.mjs?v=20260930.31';
+import {registerSimulationTools} from './webmcp.mjs?v=20260930.31';
 // Aplicación instalable: el service worker guarda código y datos por versión (sw.js). Solo en el sitio
 // publicado: en local se edita y se recarga, y una caché estorbaría.
-if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.30').catch(()=>{});
+if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.31').catch(()=>{});
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -24,9 +24,9 @@ let toastTimer;
 function toast(message){$('#toast').textContent=message;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,4500);}
 const shell=mountShell();
 try{
- const [response,contextResponse,demandResponse,layoutsResponse,signalsResponse,lanesResponse,wagonsResponse,scheduleResponse,speedResponse,geometryResponse,wagonStopsResponse,correctionsResponse,odResponse,structuresResponse,contextWaysResponse,depotsResponse]=await Promise.all([fetch('./services.json',{cache:'no-store'}),fetch('./context.json',{cache:'no-store'}),fetch('./demand.json',{cache:'no-store'}),fetch('./station_layouts.json',{cache:'no-store'}),fetch('./busway_signals.json',{cache:'no-store'}),fetch('./busway_lanes.json',{cache:'no-store'}),fetch('./station_wagons.json',{cache:'no-store'}),fetch('./schedule.json',{cache:'no-store'}),fetch('./speed_profiles.json',{cache:'no-store'}),fetch('./busway_geometry.json',{cache:'no-store'}),fetch('./wagon_stops.json',{cache:'no-store'}),fetch('./field_corrections.json',{cache:'no-store'}),fetch('./od_profiles.json',{cache:'no-store'}),fetch('./busway_structures.json',{cache:'no-store'}),fetch('./busway_context.json',{cache:'no-store'}),fetch('./depots.json',{cache:'no-store'})]);
+ const [response,contextResponse,demandResponse,layoutsResponse,signalsResponse,lanesResponse,wagonsResponse,scheduleResponse,speedResponse,geometryResponse,wagonStopsResponse,correctionsResponse,odResponse,structuresResponse,contextWaysResponse,depotsResponse,tracesResponse]=await Promise.all([fetch('./services.json',{cache:'no-store'}),fetch('./context.json',{cache:'no-store'}),fetch('./demand.json',{cache:'no-store'}),fetch('./station_layouts.json',{cache:'no-store'}),fetch('./busway_signals.json',{cache:'no-store'}),fetch('./busway_lanes.json',{cache:'no-store'}),fetch('./station_wagons.json',{cache:'no-store'}),fetch('./schedule.json',{cache:'no-store'}),fetch('./speed_profiles.json',{cache:'no-store'}),fetch('./busway_geometry.json',{cache:'no-store'}),fetch('./wagon_stops.json',{cache:'no-store'}),fetch('./field_corrections.json',{cache:'no-store'}),fetch('./od_profiles.json',{cache:'no-store'}),fetch('./busway_structures.json',{cache:'no-store'}),fetch('./busway_context.json',{cache:'no-store'}),fetch('./depots.json',{cache:'no-store'}),fetch('./station_traces.json',{cache:'no-store'})]);
  if(!response.ok)throw new Error('No se pudieron cargar los servicios locales.');
- const data=await response.json();if(scheduleResponse.ok)data.schedule=await scheduleResponse.json();if(speedResponse.ok)data.speed_profiles=await speedResponse.json();if(geometryResponse.ok)data.busway_geometry=await geometryResponse.json();if(wagonStopsResponse.ok)data.wagon_stops=await wagonStopsResponse.json();if(correctionsResponse.ok)data.field_corrections=await correctionsResponse.json();if(odResponse.ok)data.od_profiles=await odResponse.json();if(structuresResponse.ok)data.busway_structures=await structuresResponse.json();if(contextWaysResponse.ok)data.busway_context=await contextWaysResponse.json();if(depotsResponse.ok)data.depots=await depotsResponse.json();if(signalsResponse.ok)data.busway_signals=await signalsResponse.json();if(lanesResponse.ok)data.busway_lanes=await lanesResponse.json();if(layoutsResponse.ok)data.station_layouts=await layoutsResponse.json();if(wagonsResponse.ok)data.station_wagons=await wagonsResponse.json();if(demandResponse.ok){data.demand=await demandResponse.json();const profiles=new Map(data.demand.profiles.map(p=>[p.station_id,p]));for(const s of data.stations){const p=profiles.get(s.id);if(p)s.demand_profile=p;}}applyFieldCorrections(data);const routeById=new Map(data.routes.map(r=>[r.id,r]));
+ const data=await response.json();if(scheduleResponse.ok)data.schedule=await scheduleResponse.json();if(speedResponse.ok)data.speed_profiles=await speedResponse.json();if(geometryResponse.ok)data.busway_geometry=await geometryResponse.json();if(wagonStopsResponse.ok)data.wagon_stops=await wagonStopsResponse.json();if(correctionsResponse.ok)data.field_corrections=await correctionsResponse.json();if(tracesResponse.ok)data.station_traces=await tracesResponse.json();if(odResponse.ok)data.od_profiles=await odResponse.json();if(structuresResponse.ok)data.busway_structures=await structuresResponse.json();if(contextWaysResponse.ok)data.busway_context=await contextWaysResponse.json();if(depotsResponse.ok)data.depots=await depotsResponse.json();if(signalsResponse.ok)data.busway_signals=await signalsResponse.json();if(lanesResponse.ok)data.busway_lanes=await lanesResponse.json();if(layoutsResponse.ok)data.station_layouts=await layoutsResponse.json();if(wagonsResponse.ok)data.station_wagons=await wagonsResponse.json();if(demandResponse.ok){data.demand=await demandResponse.json();const profiles=new Map(data.demand.profiles.map(p=>[p.station_id,p]));for(const s of data.stations){const p=profiles.get(s.id);if(p)s.demand_profile=p;}}applyFieldCorrections(data);const routeById=new Map(data.routes.map(r=>[r.id,r]));
  // Hora civil de Bogotá, independiente del huso del equipo.
  function bogotaNow(){
   const parts=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Bogota',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
@@ -61,11 +61,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260930.30',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260930.31',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.30',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.31',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -610,7 +610,7 @@ try{
  let metro=null,METRO_HEADWAY=null;const VIEW=new URLSearchParams(location.search).get('vista');
  async function setupMetro(){
   try{
-   const [{MetroLayer,METRO},data]=await Promise.all([import('./metro.mjs?v=20260930.30').then(m=>{METRO_HEADWAY=m.headwayAt;return m;}),fetch('./metro_l1.json').then(r=>r.json())]);
+   const [{MetroLayer,METRO},data]=await Promise.all([import('./metro.mjs?v=20260930.31').then(m=>{METRO_HEADWAY=m.headwayAt;return m;}),fetch('./metro_l1.json').then(r=>r.json())]);
    metro=new MetroLayer(map.scene,data);
    metro.headwayAt=METRO_HEADWAY;selection={kind:'metro'};metro.update(((clock.time%DAY)+DAY)%DAY);renderMetroLine();
   }catch(error){console.error(error);toast('No se pudo cargar el metro.');}
