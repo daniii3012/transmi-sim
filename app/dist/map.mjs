@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.27';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.27';
+import {MetricPath} from './simulation.mjs?v=20260930.28';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.28';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.27';
+import {pieceShape} from './wagons.mjs?v=20260930.28';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -555,8 +555,8 @@ export class NetworkMap {
   }
   /** Andenes alineados con la calzada, desde el punto donde atiende cada servicio (worker). Los
    *  puntos de un mismo lado que se tocan o se separan menos de 15 m son un solo andén (San Façon, que
-   *  salía en dos piezas corridas); un hueco mayor separa cuerpos. Dos lados a menos de 16 m son una
-   *  isla entre las dos calzadas. En un separador ancho, cada sentido tiene sus andenes junto a su
+   *  salía en dos piezas corridas); un hueco mayor separa cuerpos. Dos lados que casi se tocan (< 5,5
+   *  m) son una isla. Solo para estaciones sin andenes en OSM. En un separador ancho, cada sentido tiene sus andenes junto a su
    *  carril y van enfrentados de a pares (Mandalay: dos por lado con la plaza en medio); cada uno toma
    *  el rumbo de su carril, que en la estación se abre, y no se monta sobre él en un extremo. */
   setPlatforms(mods){
@@ -573,7 +573,7 @@ export class NetworkMap {
       let parts=sides.map(bodies);
       // Dos lados cercanos: una isla. Va de un lado al otro y cubre lo de ambos a lo largo.
       if(parts.length===2){const b1=parts[0].reduce((s,r)=>s+r.b,0)/parts[0].length,b2=parts[1].reduce((s,r)=>s+r.b,0)/parts[1].length;
-        if(Math.abs(b2-b1)<16){const all=bodies([...sides[0],...sides[1]].map(it=>({...it,b:(b1+b2)/2})));for(const r of all)out.push({station,r:{...r,angle:ang},width:Math.abs(b2-b1)+5});parts=[];}}
+        if(Math.abs(b2-b1)<5.5){const all=bodies([...sides[0],...sides[1]].map(it=>({...it,b:(b1+b2)/2})));for(const r of all)out.push({station,r:{...r,angle:ang},width:Math.abs(b2-b1)+5});parts=[];}}
       // Un andén por sentido en un separador ancho: van enfrentados, como en Mandalay. Cada servicio
       // para donde le toca y eso los corría; se alinean al centro común con el largo del mayor.
       if(parts.length===2&&parts[0].length===parts[1].length)parts[0].forEach((p,k)=>{const q=parts[1][k],c=(p.a0+p.a1+q.a0+q.a1)/4,h=Math.max(p.a1-p.a0,q.a1-q.a0)/2;for(const r of [p,q]){r.a0=c-h;r.a1=c+h;}});
@@ -586,37 +586,42 @@ export class NetworkMap {
   }
   /** ¿Los andenes de OSM de la estación sirven tal cual? Polígonos cerrados de al menos 150 m², a menos
    *  de 250 m de la estación, con menos del 10 % de su superficie sobre la calzada del motor. */
-  /** Sin andenes mapeados, un área de la estación larga y angosta es la isla entre los dos sentidos
-   *  (Museo Nacional: 167 × 8 m entre sus dos retornos en U). Las demás áreas abarcan los carriles. */
+  /** Sin andenes mapeados, las áreas largas y angostas de la estación en OSM son sus andenes: Marsella
+   *  trae seis de 28–48 × 4,6 m, Mandalay cuatro de 46 × 3,8 m, Museo Nacional su isla de 167 × 8 m.
+   *  Se dibujan con su forma, su largo y su rumbo; solo se corren de lado para quedar junto a la
+   *  calzada del motor, cuyos recorridos van a 2–3 m de las vías de OSM. */
   islandAreas(layout){
     if(layout.platforms.some(p=>p.closed))return [];
-    return layout.areas.filter(a=>a.closed&&a.role==='station_area'&&a.length_m>=40&&a.width_m<=14).map(a=>this.fitIsland(a)).filter(Boolean);
+    // Largo y angosto: un andén. Las cúpulas sobre los retornos en U de Museo Nacional (25 × 11 m) no.
+    return layout.areas.filter(a=>a.closed&&a.role==='station_area'&&a.length_m>=20&&a.width_m>=1.5&&a.width_m<=12&&a.length_m>=3*a.width_m).map(a=>this.fitIsland(a)).filter(Boolean);
   }
-  /** La isla con el eje y el largo de OSM, centrada entre las dos calzadas del motor y con el ancho que
-   *  dejan libre sus carriles (el de paso más el del andén). Los recorridos van a 2–3 m de las vías de
-   *  OSM y la isla publicada se montaba en el carril del andén. Sin calzada a los dos lados, no es isla. */
   fitIsland(area){
     if(!this.guideLinks||!area.axis)return null;
     if(this.islandCache?.links!==this.guideLinks)this.islandCache={links:this.guideLinks,map:new Map()};
     if(!this.islandCache.map.has(area.id))this.islandCache.map.set(area.id,this.fitIslandNow(area));
     return this.islandCache.map.get(area.id);
   }
+  /** Entre dos calzadas cercanas, el andén va centrado y con el ancho libre (una isla); junto a una
+   *  sola, su borde toca el del carril del andén. Sin calzada a menos de 15 m, no es un andén troncal. */
   fitIslandNow(area){
-    const [A,B]=area.axis,len=Math.hypot(B[0]-A[0],B[1]-A[1]);if(len<10)return null;
-    const u=[(B[0]-A[0])/len,(B[1]-A[1])/len],v=[-u[1],u[0]],mid=[(A[0]+B[0])/2,(A[1]+B[1])/2],half=area.length_m/2;
-    const shifts=[],gaps=[];
-    for(let t=-half+10;t<=half-10;t+=10){
+    const [A,B]=area.axis,len=Math.hypot(B[0]-A[0],B[1]-A[1]);if(len<5)return null;
+    const u=[(B[0]-A[0])/len,(B[1]-A[1])/len],v=[-u[1],u[0]],mid=[(A[0]+B[0])/2,(A[1]+B[1])/2],half=area.length_m/2,h0=area.width_m/2;
+    const shifts=[],widths=[];
+    for(let t=-half+4;t<=half-4+1e-6;t+=Math.max(4,(area.length_m-8)/6)){
       const p=[mid[0]+u[0]*t,mid[1]+u[1]*t];let left=Infinity,right=-Infinity;
       for(const l of this.guideLinks){if(l.street)continue;const P=l.points;let at=0;
-        for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],ex=b[0]-a[0],ey=b[1]-a[1],L2=ex*ex+ey*ey,sl=Math.sqrt(L2);if(!L2){continue;}
-          if(Math.min(Math.hypot(a[0]-p[0],a[1]-p[1]),Math.hypot(b[0]-p[0],b[1]-p[1]))>sl+25){at+=sl;continue;}
+        for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],ex=b[0]-a[0],ey=b[1]-a[1],L2=ex*ex+ey*ey,sl=Math.sqrt(L2);if(!L2)continue;
+          if(Math.min(Math.hypot(a[0]-p[0],a[1]-p[1]),Math.hypot(b[0]-p[0],b[1]-p[1]))>sl+20){at+=sl;continue;}
           const w=Math.max(0,Math.min(1,((p[0]-a[0])*ex+(p[1]-a[1])*ey)/L2)),q=[a[0]+w*ex,a[1]+w*ey],d=(q[0]-p[0])*v[0]+(q[1]-p[1])*v[1],along=Math.abs((q[0]-p[0])*u[0]+(q[1]-p[1])*u[1]);
-          if(along<3&&Math.abs(d)<20){const c=Math.min(l.lanes.length-1,Math.floor((at+w*sl)/CELL_M)),band=LANE/2+(l.lanes[c]===2?LANE:0);if(d>0)left=Math.min(left,d-band);else right=Math.max(right,d+band);}
+          if(along<3&&Math.abs(d)<15){const c=Math.min(l.lanes.length-1,Math.floor((at+w*sl)/CELL_M)),band=LANE/2+(l.lanes[c]===2?LANE:0);if(d>0)left=Math.min(left,d-band);else right=Math.max(right,d+band);}
           at+=sl;}}
-      if(Number.isFinite(left)&&Number.isFinite(right)){shifts.push((left+right)/2);gaps.push(left-right);}
+      const hasL=Number.isFinite(left),hasR=Number.isFinite(right);
+      if(hasL&&hasR&&left-right<area.width_m+6){shifts.push((left+right)/2);widths.push(Math.min(area.width_m,left-right-.4));}
+      else if(hasL&&(!hasR||left<-right)){shifts.push(left-h0-.3);widths.push(area.width_m);}
+      else if(hasR){shifts.push(right+h0+.3);widths.push(area.width_m);}
     }
-    if(shifts.length<2)return null;
-    const med=a=>[...a].sort((x,y)=>x-y)[a.length>>1],shift=med(shifts),width=Math.min(area.width_m,med(gaps)-.4);if(width<3)return null;
+    if(!shifts.length)return null;
+    const med=a=>[...a].sort((x,y)=>x-y)[a.length>>1],shift=med(shifts),width=med(widths);if(width<1.5||Math.abs(shift)>8)return null;
     const c=[mid[0]+v[0]*shift,mid[1]+v[1]*shift],h=width/2,corner=(su,sv)=>[c[0]+u[0]*half*su+v[0]*h*sv,c[1]+u[1]*half*su+v[1]*h*sv];
     return {...area,points:[corner(-1,-1),corner(1,-1),corner(1,1),corner(-1,1),corner(-1,-1)],fitted:true,width_m:width};
   }

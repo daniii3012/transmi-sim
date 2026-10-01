@@ -124,6 +124,12 @@
   sentido en separador ancho va enfrentado al otro de a pares (centro común, largo del mayor), cada
   uno con el rumbo de su carril, que se abre en la estación. Red: 100
   estaciones de una estructura, 8 con andén por sentido, ninguna pieza < 40 m.
+- **Andenes de OSM ajustados** (`islandAreas`/`fitIslandNow`): en 91 estaciones OSM trae los andenes
+  como «station_area» angostas (Marsella 6 de 28–48 × 4,6 m, Mandalay 4 de 46 × 3,8). Toda área de
+  ≥ 20 m de largo, 1,5–12 m de ancho y largo ≥ 3 × ancho se dibuja como andén con su forma y rumbo,
+  corrida de lado para tocar el carril del andén del motor (o centrada entre dos calzadas cercanas).
+  53 estaciones con módulos pasan a estos andenes; los módulos quedan para las que no tienen datos, y
+  su isla exige lados a < 5,5 m.
 - Híbrida: calzada y andenes al 55 % de su opacidad; sin el relleno de los patios.
 - Pasada satelital de estaciones con la propia app (`?depurar&satelite`): 0–49 revisadas (zonas A,
   B, C y Calle 80) sin desajustes de corredor a esta escala.
