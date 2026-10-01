@@ -20,7 +20,8 @@ Con los deprimidos pasa lo contrario. OSM marca `tunnel` en todo el tramo hundid
 que pasa bajo una calle necesita el gálibo completo; el resto es trinchera a cielo abierto, más baja
 que la calle sin ser un túnel (el conector de la Caracas a la Calle 26 por el lote de la Carrera 14).
 Un deprimido que cruza bajo una calle es `underpass`, a 5,5 m por nivel; uno que no, `cutting`, a
-TRINCHERA_M. El motor lee la altura de `level`.
+TRINCHERA_M, salvo que sea un tramo corto que une dos `underpass` (un retorno bajo cubierta). El
+motor lee la altura de `level`.
 
 Entrada: `data/raw/busway_structures/<instantánea>/overpass.json` (la descarga va fuera del
 repositorio, como las demás). Salida: `data/curated/busway_structures.json` y su copia en `app/dist`.
@@ -42,6 +43,7 @@ AGUA_MAX_M = 60      # un puente de nivel 1 que solo cruza agua y no pasa de est
 CORTO_MAX_M = 30     # uno sin nada debajo y no más largo que esto, también
 NIVEL_M = 5.5        # altura de un nivel de OSM en el motor
 TRINCHERA_M = 3.0    # profundidad de un deprimido a cielo abierto
+ENLACE_MAX_M = 40    # un tramo «a cielo abierto» entre dos pasos inferiores, hasta esto, es túnel
 
 
 def _segs(pts, closed=False):
@@ -118,6 +120,19 @@ def classify(structures, context, streets=(), crossings=()):
             counts["underpass" if under else "cutting"] = counts.get("underpass" if under else "cutting", 0) + 1
         else:
             s["level"] = s["layer"]
+    # Un tramo corto «sin calle encima» que une por sus dos extremos dos pasos inferiores es parte del
+    # túnel: los retornos en U de Museo Nacional van bajo las cúpulas de vidrio, al nivel de la
+    # estación, no en una trinchera de 3 m entre dos túneles de 5,5.
+    ends = lambda t: (t["points"][0], t["points"][-1])
+    under = [t for t in structures if t.get("grade") == "underpass"]
+    for s in structures:
+        if s.get("grade") != "cutting" or sum(math.dist(a, b) for a, b in _segs(s["points"])) > ENLACE_MAX_M:
+            continue
+        joined = [any(min(math.dist(p, q) for q in ends(t)) < 2 for t in under if t is not s) for p in ends(s)]
+        if all(joined):
+            s["grade"], s["grade_reason"], s["level"] = "underpass", "tramo corto entre dos pasos inferiores: parte del túnel", s["layer"]
+            counts["cutting"] -= 1
+            counts["underpass"] = counts.get("underpass", 0) + 1
     return counts
 
 

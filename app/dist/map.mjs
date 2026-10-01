@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.23';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.23';
+import {MetricPath} from './simulation.mjs?v=20260930.24';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.24';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.23';
+import {pieceShape} from './wagons.mjs?v=20260930.24';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -102,7 +102,9 @@ export class NetworkMap {
     this.streetGroup=new THREE.Group();this.scene.add(this.streetGroup);
     for(const points of data.street_context||[]){const geometry=new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(...p,0)));const line=new THREE.Line(geometry,new THREE.LineDashedMaterial({color:'#8d9aa5',dashSize:18,gapSize:12,transparent:true,opacity:.65,depthTest:true,depthWrite:false}));line.computeLineDistances();line.renderOrder=.8;this.streetGroup.add(line);}
     this.highlight=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial({color:'#dc253b',depthTest:true,depthWrite:false,transparent:true,opacity:.95}));this.highlight.renderOrder=2;this.scene.add(this.highlight);
-    this.clusterLayer=document.createElement('div');this.clusterLayer.className='clusters';host.parentElement.append(this.clusterLayer);this.clusterLayer.setAttribute('aria-hidden','true');this.clusterLayer.style.cssText='position:absolute;inset:0;pointer-events:none;overflow:hidden';
+    // Los números de buses agrupados van justo encima de los nombres y debajo de los controles: al
+    // final del contenedor quedaban sobre los botones del mapa.
+    this.clusterLayer=document.createElement('div');this.clusterLayer.className='clusters';(labels||host).after(this.clusterLayer);this.clusterLayer.setAttribute('aria-hidden','true');this.clusterLayer.style.cssText='position:absolute;inset:0;pointer-events:none;overflow:hidden';
     for(const c of data.corridors.filter(c=>c.kind!=='street')){
       const mesh=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial({color:c.color,transparent:true,opacity:c.zone==='Z'?.25:.88,depthTest:true,depthWrite:false}));
       mesh.renderOrder=1;this.scene.add(mesh);this.paths.push({c,mesh});
@@ -561,8 +563,42 @@ export class NetworkMap {
   }
   /** ¿Los andenes de OSM de la estación sirven tal cual? Polígonos cerrados de al menos 150 m², a menos
    *  de 250 m de la estación, con menos del 10 % de su superficie sobre la calzada del motor. */
+  /** Sin andenes mapeados, un área de la estación larga y angosta es la isla entre los dos sentidos
+   *  (Museo Nacional: 167 × 8 m entre sus dos retornos en U). Las demás áreas abarcan los carriles. */
+  islandAreas(layout){
+    if(layout.platforms.some(p=>p.closed))return [];
+    return layout.areas.filter(a=>a.closed&&a.role==='station_area'&&a.length_m>=40&&a.width_m<=14).map(a=>this.fitIsland(a)).filter(Boolean);
+  }
+  /** La isla con el eje y el largo de OSM, centrada entre las dos calzadas del motor y con el ancho que
+   *  dejan libre sus carriles (el de paso más el del andén). Los recorridos van a 2–3 m de las vías de
+   *  OSM y la isla publicada se montaba en el carril del andén. Sin calzada a los dos lados, no es isla. */
+  fitIsland(area){
+    if(!this.guideLinks||!area.axis)return null;
+    if(this.islandCache?.links!==this.guideLinks)this.islandCache={links:this.guideLinks,map:new Map()};
+    if(!this.islandCache.map.has(area.id))this.islandCache.map.set(area.id,this.fitIslandNow(area));
+    return this.islandCache.map.get(area.id);
+  }
+  fitIslandNow(area){
+    const [A,B]=area.axis,len=Math.hypot(B[0]-A[0],B[1]-A[1]);if(len<10)return null;
+    const u=[(B[0]-A[0])/len,(B[1]-A[1])/len],v=[-u[1],u[0]],mid=[(A[0]+B[0])/2,(A[1]+B[1])/2],half=area.length_m/2;
+    const shifts=[],gaps=[];
+    for(let t=-half+10;t<=half-10;t+=10){
+      const p=[mid[0]+u[0]*t,mid[1]+u[1]*t];let left=Infinity,right=-Infinity;
+      for(const l of this.guideLinks){if(l.street)continue;const P=l.points;let at=0;
+        for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],ex=b[0]-a[0],ey=b[1]-a[1],L2=ex*ex+ey*ey,sl=Math.sqrt(L2);if(!L2){continue;}
+          if(Math.min(Math.hypot(a[0]-p[0],a[1]-p[1]),Math.hypot(b[0]-p[0],b[1]-p[1]))>sl+25){at+=sl;continue;}
+          const w=Math.max(0,Math.min(1,((p[0]-a[0])*ex+(p[1]-a[1])*ey)/L2)),q=[a[0]+w*ex,a[1]+w*ey],d=(q[0]-p[0])*v[0]+(q[1]-p[1])*v[1],along=Math.abs((q[0]-p[0])*u[0]+(q[1]-p[1])*u[1]);
+          if(along<3&&Math.abs(d)<20){const c=Math.min(l.lanes.length-1,Math.floor((at+w*sl)/CELL_M)),band=LANE/2+(l.lanes[c]===2?LANE:0);if(d>0)left=Math.min(left,d-band);else right=Math.max(right,d+band);}
+          at+=sl;}}
+      if(Number.isFinite(left)&&Number.isFinite(right)){shifts.push((left+right)/2);gaps.push(left-right);}
+    }
+    if(shifts.length<2)return null;
+    const med=a=>[...a].sort((x,y)=>x-y)[a.length>>1],shift=med(shifts),width=Math.min(area.width_m,med(gaps)-.4);if(width<3)return null;
+    const c=[mid[0]+v[0]*shift,mid[1]+v[1]*shift],h=width/2,corner=(su,sv)=>[c[0]+u[0]*half*su+v[0]*h*sv,c[1]+u[1]*half*su+v[1]*h*sv];
+    return {...area,points:[corner(-1,-1),corner(1,-1),corner(1,1),corner(-1,1),corner(-1,-1)],fitted:true,width_m:width};
+  }
   osmPlatformsFit(layout){
-    const polys=layout.platforms.filter(p=>p.closed&&p.points.length>3).map(p=>p.points);if(!polys.length||!this.guideLinks)return false;
+    const own=layout.platforms.filter(p=>p.closed&&p.points.length>3).map(p=>p.points),polys=own.length?own:this.islandAreas(layout).map(a=>a.points);if(!own.length&&polys.length)return true;if(!polys.length||!this.guideLinks)return false;
     const station=this.data.stations.find(s=>s.id===layout.station_id);if(!station)return false;
     const area=q=>Math.abs(q.reduce((a,p,i)=>{const n=q[(i+1)%q.length];return a+p[0]*n[1]-n[0]*p[1];},0))/2;
     if(polys.reduce((a,q)=>a+area(q),0)<150)return false;
@@ -574,6 +610,16 @@ export class NetworkMap {
     let total=0,over=0;
     for(const q of polys){const xs=q.map(p=>p[0]),ys=q.map(p=>p[1]);for(let x=Math.min(...xs);x<=Math.max(...xs);x+=1.5)for(let y=Math.min(...ys);y<=Math.max(...ys);y+=1.5)if(inside(x,y,q)){total++;if(onLane(x,y))over++;}}
     return total>0&&over/total<.1;
+  }
+  /** Cota media de la calzada del motor a menos de 15 m de unos puntos; 0 sin calzada a la vista. */
+  groundAt(points){
+    if(!this.guideLinks||!points.length)return 0;let sum=0,n=0;
+    const boxes=this.linkBoxes?.links===this.guideLinks?this.linkBoxes.boxes:(this.linkBoxes={links:this.guideLinks,boxes:this.guideLinks.map(l=>{let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;for(const [x,y] of l.points){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}return [x0,y0,x1,y1];})}).boxes;
+    const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]),bx=[Math.min(...xs)-15,Math.min(...ys)-15,Math.max(...xs)+15,Math.max(...ys)+15];
+    for(const [k,l] of this.guideLinks.entries()){const b=boxes[k];if(!l.z||b[2]<bx[0]||b[0]>bx[2]||b[3]<bx[1]||b[1]>bx[3])continue;const P=l.points;
+      let at=0;for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],len=Math.hypot(b[0]-a[0],b[1]-a[1]);
+        for(let t=0;t<len;t+=5){const x=a[0]+(b[0]-a[0])*t/len,y=a[1]+(b[1]-a[1])*t/len;if(points.some(p=>Math.hypot(p[0]-x,p[1]-y)<15)){sum+=l.z[Math.min(l.z.length-1,Math.floor((at+t)/5))];n++;}}at+=len;}}
+    return n?sum/n:0;
   }
   buildStationGeometry(){
     // Plataformas y cubiertas de OSM en relieve bajo; de arriba se leen como antes, inclinado se ve
@@ -593,13 +639,16 @@ export class NetworkMap {
       // polígonos de andén de verdad, junto a la estación y casi sin pisar la calzada (Banderas, con sus
       // andenes en diagonal). El contorno del recinto solo, que siempre abarca los carriles, no basta.
       if(aligned.has(layout.station_id)&&!/^portal/i.test(layout.name||'')&&!this.osmPlatformsFit(layout))continue;
-      const areas=layout.areas.filter(a=>a.closed&&a.role==='station_area'),platforms=layout.platforms.filter(p=>p.points.length>1);
+      const islands=aligned.has(layout.station_id)?this.islandAreas(layout):[];
+      const areas=islands.length?islands:layout.areas.filter(a=>a.closed&&a.role==='station_area'),platforms=layout.platforms.filter(p=>p.points.length>1);
       if(!areas.length&&!platforms.length)continue;
       this.layoutIds.add(layout.station_id);
-      for(const area of areas)solid(area.points,.35,4.2,'roof',.28);
+      // A la cota de la calzada vecina: una estación subterránea queda abajo, sin cubierta en la calle.
+      const z=this.groundAt([...areas,...platforms].flatMap(a=>a.points)),under=z<-1;
+      if(!under)for(const area of areas)solid(area.points,.35,z+4.2,'roof',.28);
       // Sin andenes mapeados aparte, el contorno de la estación es el andén: la estructura con su cubierta.
-      if(!platforms.some(p=>p.closed&&p.role==='platform_trunk'))for(const area of areas)solid(area.points,.9,0,'platform');
-      for(const p of platforms){if(p.closed)solid(p.points,.9,0,'platform');else line(p.points,'platformEdge',3.6);}
+      if(!platforms.some(p=>p.closed&&p.role==='platform_trunk'))for(const area of areas)solid(area.points,.9,z,'platform');
+      for(const p of platforms){if(p.closed)solid(p.points,.9,z,'platform');else line(p.points,'platformEdge',3.6);}
     }
     // Vagones esquemáticos donde no hay geometría: un andén de 58 m por vagón a lo largo del eje.
     const wagons=[];

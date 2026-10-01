@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.23';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.23';
-import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.23';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.23';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.23';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.24';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260930.24';
+import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.24';
+import {hash,programmedSpeed} from './operation.mjs?v=20260930.24';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.24';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -215,10 +215,13 @@ export class Guideway{
   if(structures?.structures?.length){
    const S=structures.structures,sgrid=new Map(),SG=40;
    S.forEach((w,wi)=>{for(let i=1;i<w.points.length;i++){const a=w.points[i-1],b=w.points[i],steps=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/SG));for(let q=0;q<=steps;q++){const x=a[0]+(b[0]-a[0])*q/steps,y=a[1]+(b[1]-a[1])*q/steps,key=Math.floor(x/SG)+':'+Math.floor(y/SG),list=sgrid.get(key)||[];if(!list.some(e=>e[0]===wi&&e[1]===i))list.push([wi,i]);sgrid.set(key,list);}}});
+   // Un tramo que el motor trata como calle —el que sale de Museo Nacional hacia la primera parada de
+   // la Séptima— puede ir todavía dentro del túnel de la troncal: toma su nivel si va a menos de 4 m
+   // de la vía de OSM, sin tocar sus carriles. Antes quedaba a nivel en medio del túnel y lo frenaban
+   // los semáforos de la calle de arriba.
    for(const link of this.links){
-    if(link.street)continue;
     for(let c=0;c<link.lanes.length;c++){
-     const {xy,angle}=this.sampleLink(link,Math.min(link.length,c*CELL+CELL/2)),gx=Math.floor(xy[0]/SG),gy=Math.floor(xy[1]/SG);let best=null,bestD=7;
+     const {xy,angle}=this.sampleLink(link,Math.min(link.length,c*CELL+CELL/2)),gx=Math.floor(xy[0]/SG),gy=Math.floor(xy[1]/SG);let best=null,bestD=link.street?4:7;
      for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(const [wi,i] of sgrid.get((gx+dx)+':'+(gy+dy))||[]){
       const w=S[wi],a=w.points[i-1],b=w.points[i],ex=b[0]-a[0],ey=b[1]-a[1],l2=ex*ex+ey*ey;if(!l2)continue;
       const u=((xy[0]-a[0])*ex+(xy[1]-a[1])*ey)/l2;if(u<-.02||u>1.02)continue;
@@ -229,6 +232,7 @@ export class Guideway{
      if(!best)continue;
      // `level`: niveles de 5,5 m; una trinchera a cielo abierto queda más somera que un paso inferior.
      link.level[c]=best.level??best.layer;
+     if(link.street)continue;
      const per=best.lanes?(best.oneway?best.lanes:Math.max(1,Math.floor(best.lanes/2))):null;
      if(best.kind==='bridge')link.lanes[c]=Math.min(2,per||1);else if(per)link.lanes[c]=Math.min(2,per);
     }

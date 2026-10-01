@@ -92,6 +92,27 @@
 - Pendiente visto: los cupos del patio De la Hoja se pintan sobre el techo del edificio de Catastro
   de la plaza.
 
+### Museo Nacional y revisión satelital (30 sep.) — en curso
+- Herramienta `work/revision_satelital.py nombre x y [lado] [px]`: foto de Esri en la proyección del
+  mapa con recorridos, estructuras, áreas/andenes de OSM, paradas por vagón del GTFS y cuadrícula de
+  50 m. Esri no entrega más fino que ~0,3 m/px. Salidas en `work/satelite/`.
+- Museo Nacional (subterránea): isla de 167 m entre los dos sentidos, retornos en U bajo las cúpulas
+  de vidrio a cada extremo. Ahora: las U (`508879574/575`) son túnel y no trinchera (regla nueva en
+  `build_busway_structures.py`: tramo ≤ 40 m que une dos pasos inferiores); el tramo hacia la Séptima,
+  que el motor trata como calle, toma el nivel del túnel (< 4 m de la vía de OSM, sin tocar carriles);
+  la isla se dibuja con eje y largo de OSM, centrada entre las calzadas del motor (`fitIsland`) y a la
+  cota de la calzada (−5,5 m), sin cubierta en la calle. Los recorridos van 2–3 m corridos de OSM.
+- La misma regla de isla aplica a 19 estaciones más que usaban módulos (Ricaurte, Av. Jiménez,
+  Toberín, Héroes, Bicentenario, Calle 142/146, General Santander, Calle 26, 7 de Agosto, Mazurén,
+  Corferias, Terreros, San Victorino, Calle 106, Tygua, Distrito Grafiti, Calle 45, Tercer Milenio):
+  revisar en la pasada satelital.
+- La regla de túnel también unió el anillo de nivel −2 bajo la glorieta de la Caracas con Calle 1
+  (Bicentenario) y una pieza junto a la Plaza de la Hoja. El M85 sube al conector elevado Av. 68–
+  Calle 26 (real).
+- Pendiente: los buses que terminan en Museo Nacional desaparecen al final y los que salen aparecen;
+  no recorren la U (la geometría del recorrido termina en la estación).
+- Números de buses agrupados debajo de los controles del mapa.
+
 ### Metro: parada centrada, vagones rígidos, ficha, seguir un tren y patio (30 sep.) — Fase 7
 - La abscisa del horario es el **centro** del tren: para centrado en el andén (antes el frente quedaba
   en el centro y medio tren fuera).
