@@ -1,12 +1,15 @@
-import {MetricPath} from './simulation.mjs?v=20260930.28';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.28';
+import {MetricPath} from './simulation.mjs?v=20260930.29';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.29';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.28';
+import {pieceShape} from './wagons.mjs?v=20260930.29';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
 // cámara es el punto que mira, la distancia, la inclinación desde la vertical y el rumbo.
 const FOV=35,TAN=Math.tan(FOV/2*Math.PI/180),TILT_3D=56*Math.PI/180,MAX_TILT=72*Math.PI/180;
+// De metros del mapa (aeqd con origen en -74.136, 4.63027) a lon/lat, para consultar la fecha de la
+// foto satelital. A escala de la ciudad basta la aproximación local: error de centímetros.
+const ORIGIN=[-74.136,4.63027],aeqdToLonLat=(x,y)=>{const R=6378137,e2=.00669438,phi=ORIGIN[1]*Math.PI/180,s=Math.sin(phi),M=R*(1-e2)/(1-e2*s*s)**1.5,N=R/Math.sqrt(1-e2*s*s);return [ORIGIN[0]+x/(N*Math.cos(phi))*180/Math.PI,ORIGIN[1]+y/M*180/Math.PI];};
 const LANE=3.4,BUS_WIDTH=2.55,BUS_HEIGHT=3.25,CELL_M=5;
 // Cuerpos de cada tipo de bus, del frente hacia atrás: el articulado dobla en una rótula y el
 // biarticulado en dos. Así los volúmenes siguen la curva en vez de atravesarla.
@@ -759,6 +762,11 @@ export class NetworkMap {
       mesh.position.set(box[0]+side/2,box[1]+side/2,0);mesh.renderOrder=.01+(14-Math.log2(side))*.002;mesh.visible=false;this.satGroup.add(mesh);this.satTiles.set(key,mesh);
       this.satLoader.load(url,t=>{t.colorSpace=THREE.SRGBColorSpace;mesh.material.map=t;mesh.visible=true;mesh.material.needsUpdate=true;});
     }
+    // La fecha de captura de la foto en el centro de la vista: puede ser anterior a los datos de OSM e
+    // IDECA, y entonces lo nuevo (una troncal, una obra) no sale en ella.
+    const [cx0,cy0]=this.target;if(!this.satDateAt||Math.hypot(cx0-this.satDateAt[0],cy0-this.satDateAt[1])>400){this.satDateAt=[cx0,cy0];const ll=aeqdToLonLat(cx0,cy0);
+      fetch('https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/identify?'+new URLSearchParams({geometry:ll.join(','),geometryType:'esriGeometryPoint',sr:'4326',layers:'all',tolerance:'1',mapExtent:[ll[0]-.01,ll[1]-.01,ll[0]+.01,ll[1]+.01].join(','),imageDisplay:'400,400,96',returnGeometry:'false',f:'json'}))
+        .then(r=>r.json()).then(d=>{const v=(d.results||[]).map(r=>r.attributes?.['DATE (YYYYMMDD)']||r.attributes?.SRC_DATE).find(x=>/^\d{8}$/.test(x||''));this.satDate=v?`${v.slice(6)}/${v.slice(4,6)}/${v.slice(0,4)}`:null;this.onSatellite?.(this.satelliteOn);}).catch(()=>{});}
     if(this.satTiles.size>160)for(const [key,mesh] of this.satTiles)if(!keep.has(key)){this.satGroup.remove(mesh);mesh.geometry.dispose();mesh.material.map?.dispose();mesh.material.dispose();this.satTiles.delete(key);}
   }
   updateBuildingTiles(){

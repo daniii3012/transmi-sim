@@ -130,6 +130,12 @@
   corrida de lado para tocar el carril del andén del motor (o centrada entre dos calzadas cercanas).
   53 estaciones con módulos pasan a estos andenes; los módulos quedan para las que no tienen datos, y
   su isla exige lados a < 5,5 m.
+- Fecha de la foto: la atribución dice la fecha de captura de Esri en el centro de la vista (identify
+  de World_Imagery; Mandalay y Av. 68: 29/01/2024, 31 cm). OSM e IDECA son de sep. 2026: la foto vale
+  para estaciones que no cambiaron (casi toda la Américas) y no para las nuevas o temporales.
+- **Pendiente: 73 estaciones siguen con módulos** (sin andenes en OSM; Catastro no trae sus
+  cubiertas): Caracas, Autopista, Suba, Calle 80, NQS sur, centro, Av. Boyacá… Opciones: trazarlas
+  sobre la foto de 2024 donde no hayan cambiado, declarado como estimación.
 - Híbrida: calzada y andenes al 55 % de su opacidad; sin el relleno de los patios.
 - Pasada satelital de estaciones con la propia app (`?depurar&satelite`): 0–49 revisadas (zonas A,
   B, C y Calle 80) sin desajustes de corredor a esta escala.
