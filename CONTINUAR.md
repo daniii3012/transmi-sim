@@ -92,6 +92,18 @@
 - Pendiente visto: los cupos del patio De la Hoja se pintan sobre el techo del edificio de Catastro
   de la plaza.
 
+### Carril del andén: seguir derecho (30 sep.)
+- Daniel: al salir del andén el bus se pasaba de una vez al de paso aunque no hubiera nadie delante, y
+  quien llegaba por el del andén salía al de paso y volvía antes de su vagón. Causa: la regla que
+  vacía el carril del andén en la estación tomaba a todo bus sin `dock`; al cerrar puertas ya no lo
+  tenía, y al entrar a la zona todavía no (se asignaba más abajo en la misma ronda).
+- Ahora quien tiene su vagón más adelante en la estación se queda y toma `dock`; quien ya atendió o
+  no para ahí sale solo para rebasar a uno detenido o lento a < 40 m, o donde el carril se acaba.
+- `work/probe_carril_estacion.mjs [traffic.mjs]` (07–08): salir al de paso tras atender 17 249 → 5 256;
+  vaivén sin motivo junto a la parada (< 120 m) 208 → 12; detenidos > 3 min 110 → 41. Tiempos de
+  viaje igual (mediana 0,90 del medido). Banderas sin cambio (12 esperas cortas detrás de uno que
+  atiende, ya conocidas). Nueva huella del motor.
+
 ### Metro: edificios de acceso y estaciones en tres pisos (30 sep.)
 - Planos de ubicación de la EMB (16 PDF, página 1) en `data/raw/metro/<instantánea>/planos/`. Son
   vectoriales con el norte arriba: el rectángulo azul de la estación casa con su contorno publicado

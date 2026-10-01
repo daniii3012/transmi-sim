@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.32';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.32';
-import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.32';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.32';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.32';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.33';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260930.33';
+import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.33';
+import {hash,programmedSpeed} from './operation.mjs?v=20260930.33';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.33';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -774,11 +774,17 @@ export class Traffic{
   // El dueño del cierre que viene por el de paso se pasa al de atención al llegar: los de atención
   // lo esperan en la línea, así que solo necesita que el de delante haya dejado sitio.
   for(const [i,two] of owners)if(two<8)this.changeLane(i,0,true,true);
-  // Con hueco en el carril de paso no hace falta esperar turno: se incorpora de una vez. En una
-  // estación, el carril del andén es para acomodarse y atender; quien ya atendió o no para ahí lo
-  // deja en cuanto puede, para no quedarse delante de un vagón que otro está esperando.
+  // Por el carril del andén dentro de una estación: quien tiene su vagón más adelante en ella sigue
+  // por ahí hasta acomodarse (antes salía un momento al de paso y volvía). Quien ya atendió o no para
+  // ahí sigue derecho mientras nadie le tape: solo sale al de paso para rebasar a uno detenido o lento
+  // delante, o donde el carril del andén se acaba. A un vagón que otro espera desde el de paso le
+  // cede el puesto la cortesía de `move`.
   for(const i of this.active){if(a.lane[i]!==1||a.offnet[i]||a.state[i]===DWELL||a.dock[i]>0||!this.twoHere[i])continue;const two=this.reD[i],zid=this.mergeTarget(i),dz=zid>=0?this.mt-a.sR[i]:Infinity;
-   const link=g.links[this.linkOf(i)],inZone=link.station[Math.min(link.station.length-1,(off[i]/CELL)|0)];if(inZone||Math.min(two,dz)<25)this.changeLane(i,0,false);}
+   if(Math.min(two,dz)<25){this.changeLane(i,0,false);continue;}
+   const link=g.links[this.linkOf(i)],inZone=link.station[Math.min(link.station.length-1,(off[i]/CELL)|0)];if(!inZone)continue;
+   const info=this.info[a.route[i]],d=info.stopFront[a.stop[i]]-a.sR[i];
+   if(a.stop[i]<info.last&&d>-.5&&d<250){const z=this.zoneAhead(info,a.sR[i]);if(z>=0&&info.stopFront[a.stop[i]]<=info.zEnd[z]+1){a.dock[i]=info.stopFront[a.stop[i]];continue;}}
+   const j=this.leader(i,1);if(j>=0&&this.lg<40&&(a.state[j]===DWELL||a.v[j]<Math.min(1.5,.5*a.v[i]+.5)))this.changeLane(i,0,false);}
   // Acomodarse en el vagón y, al salir, rebasar por fuera al que atiende en el vagón siguiente.
   for(const i of this.active){
    if(a.offnet[i]||a.state[i]===DWELL)continue;
