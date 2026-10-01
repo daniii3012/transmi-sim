@@ -1,8 +1,8 @@
-import {Operation} from './operation.mjs?v=20260930.25';
-import {JourneyPlanner} from './planner.mjs?v=20260930.25';
-import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260930.25';
-import {DAY,addDays} from './calendar.mjs?v=20260930.25';
-import * as stored from './checkpoints.mjs?v=20260930.25';
+import {Operation} from './operation.mjs?v=20260930.26';
+import {JourneyPlanner} from './planner.mjs?v=20260930.26';
+import {Guideway,Traffic,SERVICE_START} from './traffic.mjs?v=20260930.26';
+import {DAY,addDays} from './calendar.mjs?v=20260930.26';
+import * as stored from './checkpoints.mjs?v=20260930.26';
 // El motor de espacio físico corre aquí. La página pide un instante —fecha y segundos desde la
 // medianoche anterior más un día, como hasta ahora— y el worker lo traduce a su día de servicio,
 // que va de las 03:00 a las 03:00: pasar la medianoche no reinicia nada, y cambiar de fecha solo

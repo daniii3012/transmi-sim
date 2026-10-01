@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.25';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.25';
+import {MetricPath} from './simulation.mjs?v=20260930.26';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.26';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.25';
+import {pieceShape} from './wagons.mjs?v=20260930.26';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -480,6 +480,7 @@ export class NetworkMap {
     // Color plano de concreto: con luz, la cara que mira a la trinchera quedaba en sombra, casi negra.
     if(walls.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(walls,3));g.computeVertexNormals();const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette.trench,side:THREE.FrontSide}));m.renderOrder=.09;m.userData.key='trench';this.guidewayGroup.add(m);}
     if(structure.length)this.guidewayGroup.add(this.structureMesh(structure));
+    if(this.satelliteOn)this.fadeForSatellite();
     this.updateCamera();
   }
   /** Cierres de vía del escenario: un aro rojo con una barra en cada punto, del tamaño de la vía. */
@@ -519,7 +520,7 @@ export class NetworkMap {
         if([[-1.6,-9.5],[1.6,-9.5],[-1.6,9.5],[1.6,9.5]].every(([da,db])=>inside(pts,x+u[0]*da+v[0]*db,y+u[1]*da+v[1]*db)))slots.push([x,y,ang]);}
       this.depotSlots.push({depot:d,slots:d.slots?.length?d.slots:slots});
     }
-    if(fill.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(fill,3));const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette.depot,depthTest:true,depthWrite:false}));m.renderOrder=.15;m.userData.key='depot';this.depotGroup.add(m);}
+    if(fill.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(fill,3));const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:this.palette.depot,depthTest:true,depthWrite:false}));m.renderOrder=.15;m.userData.key='depot';m.visible=!this.satelliteOn;this.depotGroup.add(m);this.depotFill=m;}
     const capacity=this.depotSlots.reduce((s,d)=>s+d.slots.length,0),box=new THREE.BoxGeometry(1,1,1);box.translate(0,0,.5);
     this.depotBuses=new THREE.InstancedMesh(box,new THREE.MeshLambertMaterial({color:this.palette.parked}),Math.max(1,capacity));this.depotBuses.count=0;this.depotBuses.frustumCulled=false;this.depotBuses.userData.key='parked';this.depotBuses.renderOrder=5;this.depotGroup.add(this.depotBuses);
     this.depotJoints=new THREE.InstancedMesh(box.clone(),new THREE.MeshLambertMaterial({color:'#2a3138'}),Math.max(1,capacity));this.depotJoints.count=0;this.depotJoints.frustumCulled=false;this.depotJoints.renderOrder=5;this.depotGroup.add(this.depotJoints);
@@ -552,13 +553,34 @@ export class NetworkMap {
     }
     this.depotBuses.count=i;this.depotBuses.instanceMatrix.needsUpdate=true;this.depotJoints.count=i;this.depotJoints.instanceMatrix.needsUpdate=true;
   }
-  /** Vagones alineados con la calzada, desde el punto donde atiende cada servicio (worker). Los de
-   * un mismo vagón y lado se juntan; su largo es el de la pieza de OSM o 45 m. */
+  /** Andenes alineados con la calzada, desde el punto donde atiende cada servicio (worker). Una
+   *  estación es una estructura continua, no una pieza por servicio: los puntos de un mismo lado se
+   *  unen en un andén que los cubre a todos (salvo un hueco de más de 60 m, que sí separa cuerpos), y
+   *  si los dos lados quedan a menos de 16 m, son una sola isla entre las dos calzadas (San Façon). En
+   *  un separador ancho cada sentido conserva su andén junto a su carril (Mandalay). Antes salían
+   *  piezas de 28–62 m sueltas y corridas entre sí. */
   setPlatforms(mods){
     if(!mods?.length)return;
-    const groups=[];
-    for(const m of mods){let g=groups.find(g=>g.station===m.station&&Math.hypot(g.x/g.n-m.xy[0],g.y/g.n-m.xy[1])<14);if(!g){g={station:m.station,x:0,y:0,n:0,c:0,s:0,length:0};groups.push(g);}g.x+=m.xy[0];g.y+=m.xy[1];g.n++;g.c+=Math.cos(2*m.angle);g.s+=Math.sin(2*m.angle);g.length=Math.max(g.length,m.length||0);}
-    this.alignedPlatforms=groups.map(g=>({station:g.station,xy:[g.x/g.n,g.y/g.n],angle:Math.atan2(g.s,g.c)/2,length:Math.max(28,Math.min(62,g.length||45))}));
+    const byStation=new Map();for(const m of mods){if(!byStation.has(m.station))byStation.set(m.station,[]);byStation.get(m.station).push(m);}
+    const out=[];
+    for(const [station,list] of byStation){
+      let c=0,sn=0,x=0,y=0;for(const m of list){c+=Math.cos(2*m.angle);sn+=Math.sin(2*m.angle);x+=m.xy[0];y+=m.xy[1];}
+      const ang=Math.atan2(sn,c)/2,u=[Math.cos(ang),Math.sin(ang)],v=[-u[1],u[0]],o=[x/list.length,y/list.length];
+      const items=list.map(m=>{const dx=m.xy[0]-o[0],dy=m.xy[1]-o[1],L=Math.max(28,Math.min(62,m.length||45));return {a:dx*u[0]+dy*u[1],b:dx*v[0]+dy*v[1],L};}).sort((p,q)=>p.b-q.b);
+      const sides=[];for(const it of items){const g=sides.at(-1);if(g&&it.b-g.at(-1).b<6)g.push(it);else sides.push([it]);}
+      const bodies=side=>{const sorted=[...side].sort((p,q)=>p.a-q.a),res=[];for(const it of sorted){const r=res.at(-1),a0=it.a-it.L/2,a1=it.a+it.L/2;if(r&&a0-r.a1<60){r.a1=Math.max(r.a1,a1);r.bs.push(it.b);}else res.push({a0,a1,bs:[it.b]});}
+        return res.map(r=>({a0:r.a0,a1:r.a1,b:[...r.bs].sort((p,q)=>p-q)[r.bs.length>>1]}));};
+      let parts=sides.map(bodies);
+      // Dos lados cercanos: una isla. Va de un lado al otro y cubre lo de ambos a lo largo.
+      if(parts.length===2){const b1=parts[0].reduce((s,r)=>s+r.b,0)/parts[0].length,b2=parts[1].reduce((s,r)=>s+r.b,0)/parts[1].length;
+        if(Math.abs(b2-b1)<16){const all=bodies([...sides[0],...sides[1]].map(it=>({...it,b:(b1+b2)/2})));for(const r of all)out.push({station,r,width:Math.abs(b2-b1)+5});parts=[];}}
+      // Un andén por sentido en un separador ancho: van enfrentados, como en Mandalay. Cada servicio
+      // para donde le toca y eso los corría; se alinean al centro común con el largo del mayor.
+      if(parts.length===2&&parts.every(p=>p.length===1)){const [p,q]=[parts[0][0],parts[1][0]],c=(p.a0+p.a1+q.a0+q.a1)/4,h=Math.max(p.a1-p.a0,q.a1-q.a0)/2;for(const r of [p,q]){r.a0=c-h;r.a1=c+h;}}
+      for(const side of parts)for(const r of side)out.push({station,r,width:5});
+      for(const p of out.filter(p=>p.station===station&&!p.xy)){const m=(p.r.a0+p.r.a1)/2;p.xy=[o[0]+u[0]*m+v[0]*p.r.b,o[1]+u[1]*m+v[1]*p.r.b];p.angle=ang;p.length=p.r.a1-p.r.a0;delete p.r;}
+    }
+    this.alignedPlatforms=out;
     for(const o of [this.stationGroup,this.stationRoofs]){if(!o)continue;this.scene.remove(o);o.traverse(x=>{x.geometry?.dispose();x.material?.dispose?.();});}
     this.buildStationGeometry();
   }
@@ -656,7 +678,7 @@ export class NetworkMap {
     // Sin geometría de OSM, los vagones van donde el GTFS pone sus paradas: cada letra en su lugar, en
     // una o dos filas según las puertas de cada lado. Si tampoco hay eso, módulos cada 64 m.
     const gtfs=this.data.wagon_stops?.stations||{};
-    for(const p of this.alignedPlatforms||[]){if(this.layoutIds.has(p.station))continue;wagons.push({xy:p.xy,angle:p.angle,length:p.length});}
+    for(const p of this.alignedPlatforms||[]){if(this.layoutIds.has(p.station))continue;wagons.push({xy:p.xy,angle:p.angle,length:p.length,width:p.width});}
     for(const s of this.data.stations){
       if(s.kind==='street'||s.status==='En obras'||this.layoutIds.has(s.id)||aligned.has(s.id))continue;
       const sum=this.axes.get(s.id)||[1,0],angle=Math.atan2(sum[1],sum[0])/2,u=[Math.cos(angle),Math.sin(angle)],v=[-u[1],u[0]];
@@ -676,8 +698,9 @@ export class NetworkMap {
     const box=new THREE.BoxGeometry(1,1,1);box.translate(0,0,.5);
     this.wagonMesh=new THREE.InstancedMesh(box,new THREE.MeshLambertMaterial({color:this.palette.platform}),Math.max(1,wagons.length));this.wagonMesh.userData.key='platform';
     this.wagonRoof=new THREE.InstancedMesh(box,new THREE.MeshLambertMaterial({color:this.palette.roof,transparent:true,opacity:.28,depthWrite:false}),Math.max(1,wagons.length));this.wagonRoof.userData.key='roof';
-    wagons.forEach((w,i)=>{this.object.position.set(w.xy[0],w.xy[1],0);this.object.rotation.set(0,0,w.angle);this.object.scale.set(w.length||58,5,.9);this.object.updateMatrix();this.wagonMesh.setMatrixAt(i,this.object.matrix);this.object.position.z=4.2;this.object.scale.set((w.length||58)+4,7,.35);this.object.updateMatrix();this.wagonRoof.setMatrixAt(i,this.object.matrix);});
+    wagons.forEach((w,i)=>{this.object.position.set(w.xy[0],w.xy[1],0);this.object.rotation.set(0,0,w.angle);this.object.scale.set(w.length||58,w.width||5,.9);this.object.updateMatrix();this.wagonMesh.setMatrixAt(i,this.object.matrix);this.object.position.z=4.2;this.object.scale.set((w.length||58)+4,(w.width||5)+2,.35);this.object.updateMatrix();this.wagonRoof.setMatrixAt(i,this.object.matrix);});
     this.wagonMesh.count=this.wagonRoof.count=wagons.length;this.wagonMesh.renderOrder=4.6;this.wagonRoof.renderOrder=8;this.stationGroup.add(this.wagonMesh);this.stationRoofs.add(this.wagonRoof);
+    if(this.satelliteOn)this.fadeForSatellite();
   }
   /** Volúmenes de la ciudad, por tesela, solo en la vista inclinada. */
   // Edificios de Catastro por teselas de 1 km (tools/build_buildings.py): todos a 350 m de las
@@ -709,7 +732,15 @@ export class NetworkMap {
       if(['park','water','deck'].includes(k)||(k==='road'&&m.isMesh))m.visible=!on;
       // Las calles como líneas claras sobre la foto: van después de ella.
       if(m.isLineSegments&&(k==='road'||k==='waterLine')){m.renderOrder=on?.04:0;m.material.opacity=on?.45:(k==='road'?.75:.85);m.material.color.set(on?'#ffffff':this.palette[k]);}}
+    if(this.depotFill)this.depotFill.visible=!on;
+    this.fadeForSatellite();
     if(on)this.updateSatellite();this.updateCamera?.();this.onSatellite?.(on);
+  }
+  /** Con la foto, la calzada de TransMilenio y los andenes se atenúan para ver lo que hay debajo. */
+  fadeForSatellite(){
+    for(const g of [this.guidewayGroup,this.stationGroup,this.stationRoofs])g?.traverse(o=>{const m=o.material;if(!m||o.isInstancedMesh&&o!==this.wagonMesh&&o!==this.wagonRoof)return;
+      if(!m.userData.base)m.userData.base={transparent:m.transparent,opacity:m.opacity};const b=m.userData.base;
+      m.transparent=this.satelliteOn||b.transparent;m.opacity=this.satelliteOn?b.opacity*.55:b.opacity;m.needsUpdate=true;});
   }
   updateSatellite(){
     const side=Math.max(64,2**Math.round(Math.log2(Math.max(64,this.mpp*600)))),cx=this.target[0],cy=this.target[1],reach=Math.ceil(Math.max(this.w,this.h)*this.mpp/side/(this.is3D?1:2))+1;
