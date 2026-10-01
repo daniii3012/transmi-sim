@@ -152,3 +152,11 @@ details.bus-route .stop-list{margin:4px 0 12px 12px}
    mapa, que dice qué es proyecto y qué es estimado sin tapar el centro del mapa. */
 
 .works-label{color:#c06a00;font-style:italic;position:absolute;left:0;top:0}
+/* Cerrar y plegar la ficha con íconos dibujados: el «×» de la fuente no cae en el centro del botón. */
+#inspector .close{font-size:0;color:var(--muted)}
+#inspector .close::before,#inspector .close::after{content:'';position:absolute;left:50%;top:50%;width:14px;height:2px;border-radius:1px;background:currentColor;transform:translate(-50%,-50%) rotate(45deg)}
+#inspector .close::after{transform:translate(-50%,-50%) rotate(-45deg)}
+#inspector-toggle:before{position:absolute;left:50%;top:50%;margin:0;transform:translate(-50%,-75%) rotate(45deg)}
+body[data-detail=closed] #inspector-toggle:before{transform:translate(-50%,-25%) rotate(225deg)}
+/* Un desplegable cerrado no deja espacio debajo de su título. */
+details.bus-route:not([open]){padding-bottom:0}

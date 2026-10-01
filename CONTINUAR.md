@@ -92,6 +92,20 @@
 
 Los pendientes se llevan fuera del repositorio (decisión de Daniel, 30 sep.).
 
+### Arreglos de fichas, estación 6 del metro y obras (30 sep.)
+- Ficha del bus armada una vez por bus; cada segundo solo cambian los datos (el recorrido desplegado
+  parpadeaba y «De dónde sale» se cerraba). «De dónde sale» va al final, en bus, tren y línea, y
+  recuerda si estaba abierto.
+- Plegar o desplegar la ficha ya no recentra el mapa (`data-detail`), igual que abrirla o cerrarla.
+- Íconos de plegar y cerrar dibujados en CSS y centrados; desplegables cerrados sin margen inferior.
+- Metro: el rectángulo de cada estación toma el eje del viaducto (el contorno de Av. Boyacá, la 6,
+  tiene 22 vértices y salía girado) y su centro real; fachadas en los cuatro lados y columnas en las
+  esquinas, para que la cubierta no parezca flotar.
+- **Obras** (`tools/build_obras.py` → `obras.json`, sustituye a `av68_obra.json`; Capas → Obras,
+  apagada por defecto): Av. 68 (34,7 km en OSM), Séptima calles 99–200 (en OSM solo 5,5 km, el
+  arranque; obras desde el 30 mar. 2026, 11,56 km, 14 estaciones) y Soacha fases II–III (15,2 km
+  entre obra y calzada ya hecha sin uso, más el Portal El Vínculo; 80 % al 14 ago. 2026).
+
 ### Colados, transbordos, incidentes, panel y Av. 68 (30 sep.)
 - **Colados** (`evasion`, ×1 por defecto): TRANSMILENIO al Concejo — 15,19 % en la troncal (2.º sem.
   2025; 13,14 % en 2024), F 34,18 %, H 27,88 %; sábado 19,25 % y domingo 24,40 % sobre el 13,14 % de

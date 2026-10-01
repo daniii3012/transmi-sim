@@ -1,13 +1,13 @@
-import {mountShell} from './shell.mjs?v=20260930.36';
-import {NetworkMap} from './map.mjs?v=20260930.36';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.36';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260930.36';
-import {STATES} from './traffic.mjs?v=20260930.36';
-import {applyFieldCorrections} from './signals.mjs?v=20260930.36';
-import {registerSimulationTools} from './webmcp.mjs?v=20260930.36';
+import {mountShell} from './shell.mjs?v=20260930.37';
+import {NetworkMap} from './map.mjs?v=20260930.37';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.37';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260930.37';
+import {STATES} from './traffic.mjs?v=20260930.37';
+import {applyFieldCorrections} from './signals.mjs?v=20260930.37';
+import {registerSimulationTools} from './webmcp.mjs?v=20260930.37';
 // Aplicación instalable: el service worker guarda código y datos por versión (sw.js). Solo en el sitio
 // publicado: en local se edita y se recarga, y una caché estorbaría.
-if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.36').catch(()=>{});
+if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.37').catch(()=>{});
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -24,7 +24,7 @@ let toastTimer;
 function toast(message){$('#toast').textContent=message;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,4500);}
 const shell=mountShell();
 try{
- const [response,contextResponse,demandResponse,layoutsResponse,signalsResponse,lanesResponse,wagonsResponse,scheduleResponse,speedResponse,geometryResponse,wagonStopsResponse,correctionsResponse,odResponse,structuresResponse,contextWaysResponse,depotsResponse,tracesResponse,worksResponse]=await Promise.all([fetch('./services.json',{cache:'no-store'}),fetch('./context.json',{cache:'no-store'}),fetch('./demand.json',{cache:'no-store'}),fetch('./station_layouts.json',{cache:'no-store'}),fetch('./busway_signals.json',{cache:'no-store'}),fetch('./busway_lanes.json',{cache:'no-store'}),fetch('./station_wagons.json',{cache:'no-store'}),fetch('./schedule.json',{cache:'no-store'}),fetch('./speed_profiles.json',{cache:'no-store'}),fetch('./busway_geometry.json',{cache:'no-store'}),fetch('./wagon_stops.json',{cache:'no-store'}),fetch('./field_corrections.json',{cache:'no-store'}),fetch('./od_profiles.json',{cache:'no-store'}),fetch('./busway_structures.json',{cache:'no-store'}),fetch('./busway_context.json',{cache:'no-store'}),fetch('./depots.json',{cache:'no-store'}),fetch('./station_traces.json',{cache:'no-store'}),fetch('./av68_obra.json',{cache:'no-store'})]);
+ const [response,contextResponse,demandResponse,layoutsResponse,signalsResponse,lanesResponse,wagonsResponse,scheduleResponse,speedResponse,geometryResponse,wagonStopsResponse,correctionsResponse,odResponse,structuresResponse,contextWaysResponse,depotsResponse,tracesResponse,worksResponse]=await Promise.all([fetch('./services.json',{cache:'no-store'}),fetch('./context.json',{cache:'no-store'}),fetch('./demand.json',{cache:'no-store'}),fetch('./station_layouts.json',{cache:'no-store'}),fetch('./busway_signals.json',{cache:'no-store'}),fetch('./busway_lanes.json',{cache:'no-store'}),fetch('./station_wagons.json',{cache:'no-store'}),fetch('./schedule.json',{cache:'no-store'}),fetch('./speed_profiles.json',{cache:'no-store'}),fetch('./busway_geometry.json',{cache:'no-store'}),fetch('./wagon_stops.json',{cache:'no-store'}),fetch('./field_corrections.json',{cache:'no-store'}),fetch('./od_profiles.json',{cache:'no-store'}),fetch('./busway_structures.json',{cache:'no-store'}),fetch('./busway_context.json',{cache:'no-store'}),fetch('./depots.json',{cache:'no-store'}),fetch('./station_traces.json',{cache:'no-store'}),fetch('./obras.json',{cache:'no-store'})]);
  if(!response.ok)throw new Error('No se pudieron cargar los servicios locales.');
  const data=await response.json();if(scheduleResponse.ok)data.schedule=await scheduleResponse.json();if(speedResponse.ok)data.speed_profiles=await speedResponse.json();if(geometryResponse.ok)data.busway_geometry=await geometryResponse.json();if(wagonStopsResponse.ok)data.wagon_stops=await wagonStopsResponse.json();if(correctionsResponse.ok)data.field_corrections=await correctionsResponse.json();if(tracesResponse.ok)data.station_traces=await tracesResponse.json();if(worksResponse.ok)data.works=await worksResponse.json();if(odResponse.ok)data.od_profiles=await odResponse.json();if(structuresResponse.ok)data.busway_structures=await structuresResponse.json();if(contextWaysResponse.ok)data.busway_context=await contextWaysResponse.json();if(depotsResponse.ok)data.depots=await depotsResponse.json();if(signalsResponse.ok)data.busway_signals=await signalsResponse.json();if(lanesResponse.ok)data.busway_lanes=await lanesResponse.json();if(layoutsResponse.ok)data.station_layouts=await layoutsResponse.json();if(wagonsResponse.ok)data.station_wagons=await wagonsResponse.json();if(demandResponse.ok){data.demand=await demandResponse.json();const profiles=new Map(data.demand.profiles.map(p=>[p.station_id,p]));for(const s of data.stations){const p=profiles.get(s.id);if(p)s.demand_profile=p;}}applyFieldCorrections(data);const routeById=new Map(data.routes.map(r=>[r.id,r]));
  // Hora civil de Bogotá, independiente del huso del equipo.
@@ -61,11 +61,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260930.36',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260930.37',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.36',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.37',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -96,7 +96,7 @@ try{
  worker.onmessage=({data:m})=>{
   if(m.generation!==generation)return;
   if(m.type==='error'){ready=false;$('#loading').hidden=true;$('#error').hidden=false;$('#error').textContent='No se pudo preparar el escenario: '+m.message;return;}
-  if(m.type==='ready'){ready=true;routeIds=m.routeIds;map.signalOffsets=m.signalOffsets;if(m.guideway)map.setGuideway(m.guideway,m.routeLinks);if(m.platforms)map.setPlatforms(m.platforms);if(!map.depotGroup&&data.depots)map.setDepots(data.depots.depots);if(!map.worksGroup&&data.works)map.setWorks(true);if(!map.buildingIndex)map.loadBuildings('./buildings/').then(noteBuildings);pendingSample=true;$('#plan-journey').disabled=false;renderRoutes();}
+  if(m.type==='ready'){ready=true;routeIds=m.routeIds;map.signalOffsets=m.signalOffsets;if(m.guideway)map.setGuideway(m.guideway,m.routeLinks);if(m.platforms)map.setPlatforms(m.platforms);if(!map.depotGroup&&data.depots)map.setDepots(data.depots.depots);if(!map.buildingIndex)map.loadBuildings('./buildings/').then(noteBuildings);pendingSample=true;$('#plan-journey').disabled=false;renderRoutes();}
   if(m.type==='building'){$('#loading').hidden=false;$('#loading').textContent='Preparando el día de servicio…';}
   if(m.type==='progress'){showProgress(m);if(m.frame&&(!settled||m.target-m.at>1800))map.acceptSimulation(buildSnap(m),false);}
   if(m.type==='state'){if(m.requestId!==sampleSequence)return;pendingSample=false;$('#loading').hidden=true;const next=buildSnap(m);const animate=settled&&!clock.paused&&!scrubbing&&next.serviceDate===snap.serviceDate&&m.time>=snap.time&&m.time-snap.time<clock.speed*.5;if(!settled){settled=true;if(activePanel==='depots')worker.postMessage({type:'depots',generation});requestOverview();}snap=next;map.acceptSimulation(snap,animate);if(snap.stats.fleetCap)map.updateDepotBuses(Math.max(0,snap.stats.fleetCap-(snap.stats.fleet||0)-(snap.stats.layover||0)));updateUI();if(selection?.kind==='bus'&&!snap.buses.some(b=>b.id===selection.id))renderBus();}
@@ -257,10 +257,11 @@ try{
   if(!d.here&&d.next)row('Próxima estación',d.next.name);
   row('Salió de '+d.from.name,timeText(tr.dep).slice(0,5));
   row('Capacidad',fmt(metro.data.operation.published.capacity_per_train)+' personas, 6 vagones');
-  const why=el('details',undefined,'why');why.append(el('summary','De dónde sale'),el('p','La Línea 1 está en construcción: no hay operación que leer. La posición sale de un horario estimado (intervalo publicado de 140 s en punta, 240 s en valle y 35 s de parada, estimados) con aceleración de 1 m/s² y 80 km/h de máxima, publicados. El tren para centrado en el andén.'));p.append(why);
+
   const button=el('button',following?'Dejar de seguir':'Seguir este tren','primary full');button.id='follow';button.onclick=()=>{following=!following;if(following)map.focusOn(tr.xy,1.2);else map.setChase(false);renderTrain();};p.append(button);
   if(following){const chase=el('button',map.chase?'Volver a norte fijo':'Girar con el tren','full');chase.id='chase';chase.setAttribute('aria-pressed',String(!!map.chase));chase.onclick=()=>{map.setChase(!map.chase);if(!map.chase)map.resetNorth();renderTrain();};p.append(chase);}
   const line=el('button','Ver la línea','full');line.onclick=()=>{following=false;map.setChase(false);selection={kind:'metro'};map.selected=null;map.updateMarker();renderMetroLine();};p.append(line);
+  const why=el('details',undefined,'why');why.open=whyOpen;why.ontoggle=()=>{whyOpen=why.open;};why.append(el('summary','De dónde sale'),el('p','La Línea 1 está en construcción: no hay operación que leer. La posición sale de un horario estimado (intervalo publicado de 140 s en punta, 240 s en valle y 35 s de parada, estimados) con aceleración de 1 m/s² y 80 km/h de máxima, publicados. El tren para centrado en el andén.'));p.append(why);
  }
  function renderMetroLine(){
   if(!metro)return;const tt=metro.timetable,data=metro.data,t=((clock.time%DAY)+DAY)%DAY,h=metro.headwayAt(t),p=$('#selection');
@@ -275,7 +276,7 @@ try{
   for(const st of data.stations){const b=el('button',`${st.number}. ${st.name}`,'full');b.onclick=()=>fitTo(st.outline);list.append(b);}
   if(data.depot){const b=el('button','Patio taller El Corzo','full');b.onclick=()=>fitTo(data.depot.outline);list.append(b);}
   p.append(list);
-  const why=el('details',undefined,'why');why.append(el('summary','De dónde sale'),el('p','Trazado, viaducto y estaciones: Empresa Metro de Bogotá, datos abiertos (CC BY 4.0). Edificios de acceso y puentes peatonales: planos de ubicación de cada estación (Empresa Metro), llevados a metros con el contorno publicado; su altura y la de los pisos de la estación son estimadas. Patio taller, sus vías y naves: OpenStreetMap; la altura de las naves es estimada. Publicado: 30 trenes de 6 vagones y 1.800 personas, 80 km/h, 42,5 km/h comercial, intervalo inicial de 140 s. Estimado: horario 04:30–23:00, 240 s en valle y 35 s de parada.'));p.append(why);
+  const why=el('details',undefined,'why');why.open=whyOpen;why.ontoggle=()=>{whyOpen=why.open;};why.append(el('summary','De dónde sale'),el('p','Trazado, viaducto y estaciones: Empresa Metro de Bogotá, datos abiertos (CC BY 4.0). Edificios de acceso y puentes peatonales: planos de ubicación de cada estación (Empresa Metro), llevados a metros con el contorno publicado; su altura y la de los pisos de la estación son estimadas. Patio taller, sus vías y naves: OpenStreetMap; la altura de las naves es estimada. Publicado: 30 trenes de 6 vagones y 1.800 personas, 80 km/h, 42,5 km/h comercial, intervalo inicial de 140 s. Estimado: horario 04:30–23:00, 240 s en valle y 35 s de parada.'));p.append(why);
  }
  let metroListOpen=false;
  function renderRoute(r){
@@ -318,29 +319,41 @@ try{
  // worker manda solo para el bus seleccionado: parada siguiente, vagón, qué lo detiene y su atraso.
  const bindingText={'bus':'el bus de delante','parada':'su punto de atención','semáforo':'el semáforo','fin de carril':'el cierre del carril de paso','empalme':'un empalme','cierre':'un cierre de vía','varado':'está varado','libre':'nada'};
  let busRouteOpen=false;
+ // La ficha del bus se arma una vez por bus y cada segundo solo cambian sus datos: rehacerla entera
+ // hacía parpadear el recorrido desplegado y cerraba «De dónde sale» mientras se leía.
+ let busCard=null;
  function renderBus(){
-  const b=snap.buses.find(b=>b.id===selection?.id);if(!b){const route=selection?.routeId||focusedRoute;if(route)selectRoute(route);else clearSelection();return;}
-  const d=snap.detail?.busId===b.id?snap.detail:null;
-  const where=b.offnet===1?'En la plataforma de salida':b.offnet===2?'Desembarcando en la terminal':d?.binding==='varado'&&b.speed<.5?'Varado: espera que lo retiren':stateNames[b.state]+(d?.street?' · calle':'');
-  const p=$('#selection');p.replaceChildren(badge(b),el('span','  '+(d?.vehicleId||''),'eyebrow'),el('h2',b.pattern),el('div',where,'bus-state'));$('#inspector').hidden=false;
-  row('Velocidad',b.speed_kmh.toFixed(0)+' km/h');
-  if(d)row('Tipo de bus',d.busType);
-  row('A bordo',`${b.load} / ${b.capacity}`);const track=el('div',undefined,'load-track'),fill=el('i');fill.style.width=Math.min(100,b.load/Math.max(1,b.capacity)*100)+'%';track.append(fill);p.append(track);
-  if(d){
-   row(['moving','signal','traffic'].includes(b.state)?'Próxima parada':'Parada',d.next_stop);row('Punto de atención',d.street?'Paradero calle':boardingPoint(d));
-   if(!b.offnet)row('Carril',d.lane?'Del andén':'De paso');
-   if(b.state!=='moving'&&b.state!=='dwell'&&d.binding!=='libre')row('Lo detiene',bindingText[d.binding]||d.binding);
-   if(b.state==='dwell')row('Puertas',`${d.dwellLeft.toFixed(0)} s más · suben ${d.board}, bajan ${d.alight}`);
-   row('Atraso sobre el horario',d.delay>60?Math.round(d.delay/60)+' min':'Al día');
+  const b=snap.buses.find(b=>b.id===selection?.id);if(!b){busCard=null;const route=selection?.routeId||focusedRoute;if(route)selectRoute(route);else clearSelection();return;}
+  const d=snap.detail?.busId===b.id?snap.detail:null,p=$('#selection');
+  const key=b.id+'/'+following+'/'+!!map.chase+'/'+!!d;
+  if(!busCard||busCard.key!==key||!busCard.head.isConnected){
+   const head=el('div'),live=el('div'),actions=el('div');
+   const button=el('button',following?'Dejar de seguir':'Seguir este bus','primary full');button.id='follow';button.onclick=()=>{following=!following;if(following)map.focusOn(b.xy,.9);else map.setChase(false);renderBus();};actions.append(button);
+   // Con la cámara detrás, la vista gira con el rumbo del bus; con norte fijo, solo lo acompaña.
+   if(following){const chase=el('button',map.chase?'Volver a norte fijo':'Girar con el bus','full');chase.id='chase';chase.setAttribute('aria-pressed',String(!!map.chase));chase.onclick=()=>{map.setChase(!map.chase);if(!map.chase)map.resetNorth();renderBus();};actions.append(chase);}
+   p.replaceChildren(head,live,actions);
+   // El recorrido del bus en la misma ficha: no hace falta dejarla para ver por dónde va.
+   const r=routeById.get(b.routeId);if(r){const box=el('details',undefined,'bus-route');box.open=busRouteOpen;box.ontoggle=()=>{busRouteOpen=box.open;if(box.open)requestAnimationFrame(updateTimeline);};box.append(el('summary','Recorrido de '+b.code+' · '+r.stops.length+' paradas'),stopTimeline(r,{busId:b.id,compact:true}));const go=el('button','Ver la ruta completa','full');go.onclick=()=>selectRoute(b.routeId);box.append(go);p.append(box);}
+   // Lo que no es esencial va al final.
+   const why=el('details',undefined,'why');why.open=whyOpen;why.ontoggle=()=>{whyOpen=why.open;};why.append(el('summary','De dónde sale'),el('p'),el('p','La posición la calcula el simulador a partir del horario y de la velocidad medida en cada trecho; no es una lectura GPS. El atraso compara con el horario publicado.'));p.append(why);
+   busCard={key,head,live,why};$('#inspector').hidden=false;
   }
-  row('Recorrido',(b.s/1000).toFixed(2)+' km');
-  if(d){const why=el('details',undefined,'why');why.append(el('summary','De dónde sale'),el('p',`${d.busType} de ${b.length_m.toFixed(1)} m y ${b.capacity} plazas. ${d.typeSource}.`),el('p','La posición la calcula el simulador a partir del horario y de la velocidad medida en cada trecho; no es una lectura GPS. El atraso compara con el horario publicado.'));p.append(why);}
-  const button=el('button',following?'Dejar de seguir':'Seguir este bus','primary full');button.id='follow';button.onclick=()=>{following=!following;if(following)map.focusOn(b.xy,.9);else map.setChase(false);renderBus();};p.append(button);
-  // Con la cámara detrás, la vista gira con el rumbo del bus; con norte fijo, solo lo acompaña.
-  if(following){const chase=el('button',map.chase?'Volver a norte fijo':'Girar con el bus','full');chase.id='chase';chase.setAttribute('aria-pressed',String(!!map.chase));chase.onclick=()=>{map.setChase(!map.chase);if(!map.chase)map.resetNorth();renderBus();};p.append(chase);}
-  // El recorrido del bus en la misma ficha: no hace falta dejarla para ver por dónde va.
-  const r=routeById.get(b.routeId);if(r){const box=el('details',undefined,'bus-route');box.open=busRouteOpen;box.ontoggle=()=>{busRouteOpen=box.open;};box.append(el('summary','Recorrido de '+b.code+' · '+r.stops.length+' paradas'),stopTimeline(r,{busId:b.id,compact:true}));const go=el('button','Ver la ruta completa','full');go.onclick=()=>selectRoute(b.routeId);box.append(go);p.append(box);}
+  busCard.head.replaceChildren(badge(b),el('span','  '+(d?.vehicleId||''),'eyebrow'),el('h2',b.pattern),el('div',b.offnet===1?'En la plataforma de salida':b.offnet===2?'Desembarcando en la terminal':d?.binding==='varado'&&b.speed<.5?'Varado: espera que lo retiren':stateNames[b.state]+(d?.street?' · calle':''),'bus-state'));
+  const live=busCard.live;live.replaceChildren();const put=(k,v)=>row(k,v,live);
+  put('Velocidad',b.speed_kmh.toFixed(0)+' km/h');
+  if(d)put('Tipo de bus',d.busType);
+  put('A bordo',`${b.load} / ${b.capacity}`);const track=el('div',undefined,'load-track'),fill=el('i');fill.style.width=Math.min(100,b.load/Math.max(1,b.capacity)*100)+'%';track.append(fill);live.append(track);
+  if(d){
+   put(['moving','signal','traffic'].includes(b.state)?'Próxima parada':'Parada',d.next_stop);put('Punto de atención',d.street?'Paradero calle':boardingPoint(d));
+   if(!b.offnet)put('Carril',d.lane?'Del andén':'De paso');
+   if(b.state!=='moving'&&b.state!=='dwell'&&d.binding!=='libre')put('Lo detiene',bindingText[d.binding]||d.binding);
+   if(b.state==='dwell')put('Puertas',`${d.dwellLeft.toFixed(0)} s más · suben ${d.board}, bajan ${d.alight}`);
+   put('Atraso sobre el horario',d.delay>60?Math.round(d.delay/60)+' min':'Al día');
+   busCard.why.children[1].textContent=`${d.busType} de ${b.length_m.toFixed(1)} m y ${b.capacity} plazas. ${d.typeSource}.`;
+  }
+  put('Recorrido',(b.s/1000).toFixed(2)+' km');
  }
+ let whyOpen=false;
  // Ficha de un bus en tiempo real. Son dos fuentes distintas y la ficha lo dice: la lectura GPS trae
  // ocupación y hora del reporte propias del bus, y la instantánea solo una posición que calcula
  // el planificador. Lo que no llega no se rellena con una estimación.
@@ -601,7 +614,7 @@ try{
   const g=data.busway_geometry?.coverage;
   if(g)$('#coverage').append(el('p',`Calzada exclusiva: ${fmt(Math.round(g.km_two_lanes))} km con dos carriles y ${fmt(Math.round(g.km_one_lane))} con uno, según el ancho de cada calzada en el Mapa de Referencia (IDECA, datos del IDU).`,'muted'));
  }
- if(data.works){const w=data.works,d=el('details');d.append(el('summary',`${w.name}: en obra (${w.progress_pct} %)`),el('p',`${w.length_km} km de calzada en obra según OpenStreetMap, en trazo naranja discontinuo (Capas → Obras). ${w.opening[0].toUpperCase()+w.opening.slice(1)}. No opera en el simulador: las rutas que hoy usan la 68 van en carril mixto.`,'muted'),el('p','Avance por tramo (IDU, sep. 2026): '+w.groups.map(g=>`${g.tramo} ${String(g.avance_pct).replace('.',',')} %`).join(' · '),'muted'),el('p',`21 estaciones planeadas: ${w.stations_planned.join(', ')}. Sin coordenadas publicadas, no se dibujan.`,'muted'));$('#coverage').append(d);}
+ for(const w of data.works?.works||[]){const d=el('details');d.append(el('summary',`${w.name}: ${w.status}${w.progress_pct?` (${w.progress_pct} %)`:''}`),el('p',`${w.length_km} km de calzada según OpenStreetMap (Capas → Obras). ${w.opening[0].toUpperCase()+w.opening.slice(1)}.${w.notes?' '+w.notes[0].toUpperCase()+w.notes.slice(1)+'.':''} No opera en el simulador.`,'muted'));if(w.groups.length)d.append(el('p','Avance por tramo: '+w.groups.map(g=>`${g.tramo} ${String(g.avance_pct).replace('.',',')} %`).join(' · '),'muted'));if(w.stations_planned.length)d.append(el('p',`Estaciones planeadas: ${w.stations_planned.join(', ')}. Sin coordenadas publicadas, no se dibujan.`,'muted'));d.append(el('p','Fuente: '+w.source+'; geometría, OpenStreetMap.','muted'));$('#coverage').append(d);}
  function noteBuildings(){const b=map.buildingIndex;if(b?.coverage)$('#coverage').append(el('p',`Edificios de la vista 3D: ${fmt(b.coverage.buildings)} construcciones de Catastro (IDECA / UAECD) a 120 m de la calzada exclusiva, con su número de pisos.`,'muted'));}
  for(const r of data.routes.filter(r=>!r.ready)){const d=el('details');d.append(el('summary',r.code+' · '+r.name),el('p',r.issues.join(' ')));$('#pending-list').append(d);}
  for(const r of data.excluded||[]){const p=el('p',r.code+' · '+r.name+': '+r.reason,'muted');$('#pending-list').append(p);}
@@ -628,7 +641,7 @@ try{
  let metro=null,METRO_HEADWAY=null;const VIEW=new URLSearchParams(location.search).get('vista');
  async function setupMetro(){
   try{
-   const [{MetroLayer,METRO},data]=await Promise.all([import('./metro.mjs?v=20260930.36').then(m=>{METRO_HEADWAY=m.headwayAt;return m;}),fetch('./metro_l1.json').then(r=>r.json())]);
+   const [{MetroLayer,METRO},data]=await Promise.all([import('./metro.mjs?v=20260930.37').then(m=>{METRO_HEADWAY=m.headwayAt;return m;}),fetch('./metro_l1.json').then(r=>r.json())]);
    metro=new MetroLayer(map.scene,data);
    metro.headwayAt=METRO_HEADWAY;selection={kind:'metro'};metro.update(((clock.time%DAY)+DAY)%DAY);renderMetroLine();
   }catch(error){console.error(error);toast('No se pudo cargar el metro.');}

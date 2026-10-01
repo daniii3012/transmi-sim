@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.36';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.36';
+import {MetricPath} from './simulation.mjs?v=20260930.37';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.37';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.36';
+import {pieceShape} from './wagons.mjs?v=20260930.37';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -142,12 +142,12 @@ export class NetworkMap {
     this.signalsEnabled=true;const signalCount=data.busway_signals?.signals.length||0;
     if(signalCount){this.signalMesh=new THREE.InstancedMesh(new THREE.CircleGeometry(1,12),new THREE.MeshBasicMaterial({depthTest:true,depthWrite:false,transparent:true}),signalCount);this.signalMesh.frustumCulled=false;this.signalMesh.renderOrder=4.5;this.scene.add(this.signalMesh);}
     this.resizeObserver=new ResizeObserver(()=>{this.resize();});this.resizeObserver.observe(host);
-    // Abrir o cerrar la ficha de un bus o una estación no mueve el mapa: el encuadre se corría hacia
-    // la izquierda y un bus elegido cerca de ese borde quedaba bajo el panel. Plegar o desplegar un
-    // panel sí recentra. La ficha abre también su detalle en el mismo momento; ese cambio tampoco.
+    // Abrir, cerrar, plegar o desplegar la ficha de un bus, una estación o un tren no mueve el mapa: el
+    // encuadre se corría y lo elegido quedaba bajo el panel. Plegar o desplegar el panel lateral sí
+    // recentra.
     new MutationObserver(records=>{
       const now=performance.now();
-      if(records.some(r=>r.attributeName==='data-inspect')){this.inspectAt=now;clearTimeout(this.refocusTimer);this.refocusFrom=null;setTimeout(()=>this.insets({fresh:true}),300);return;}
+      if(records.some(r=>r.attributeName==='data-inspect'||r.attributeName==='data-detail')){this.inspectAt=now;clearTimeout(this.refocusTimer);this.refocusFrom=null;setTimeout(()=>this.insets({fresh:true}),300);return;}
       if(now-(this.inspectAt||0)<400)return;
       this.refocus();
     }).observe(document.body,{attributes:true,attributeFilter:['data-detail','data-inspect','data-sheet','data-sheet-size','data-panel']});
@@ -784,17 +784,21 @@ export class NetworkMap {
       this.updateBuildingTiles();
     }catch{}
   }
-  /** Troncal de la Av. 68 en obra (av68_obra.json): el corredor de OSM en trazo discontinuo naranja,
-   *  con un rótulo. No opera; ninguna ruta lo usa. */
-  setWorks(on=true){
-    if(!this.worksGroup){const w=this.data.works;if(!w?.ways?.length)return;this.worksGroup=new THREE.Group();this.scene.add(this.worksGroup);
-      const mat=new THREE.LineDashedMaterial({color:'#e07000',dashSize:18,gapSize:10,depthTest:false});
-      for(const way of w.ways){const g=new THREE.BufferGeometry().setFromPoints(way.points.map(p=>new THREE.Vector3(p[0],p[1],.4)));const l=new THREE.Line(g,mat);l.computeLineDistances();l.renderOrder=3.5;this.worksGroup.add(l);}
-      const longest=w.ways.reduce((a,b)=>b.points.length>a.points.length?b:a),mid=longest.points[longest.points.length>>1];
-      const label=document.createElement('div');label.className='station-label works-label';label.textContent=`${w.name} · en obra, ${w.progress_pct} %`;this.labels.append(label);this.worksLabel={el:label,xy:mid};}
-    this.worksOn=!!on;this.worksGroup.visible=this.worksOn;this.worksLabel.el.hidden=!this.worksOn;this.positionWorksLabel?.();
+  /** Obras de TransMilenio que no operan (obras.json): la Av. 68, la Séptima y Soacha, cada una en trazo
+   *  discontinuo de su color y con un rótulo; en Soacha también el contorno del Portal El Vínculo y la
+   *  calzada ya construida, en trazo continuo. Apagadas por defecto (Capas → Obras). Ninguna ruta las usa. */
+  setWorks(on=false){
+    const list=this.data.works?.works||[];if(!list.length)return;
+    if(!this.worksGroup){this.worksGroup=new THREE.Group();this.scene.add(this.worksGroup);this.worksLabels=[];
+      const colors={av68:'#e07000',septima:'#1f9d55',soacha:'#b0369d'};
+      for(const w of list){const color=colors[w.id]||'#e07000',dashed=new THREE.LineDashedMaterial({color,dashSize:18,gapSize:10,depthTest:false}),solid=new THREE.LineBasicMaterial({color,depthTest:false});
+        for(const way of w.ways){const g=new THREE.BufferGeometry().setFromPoints(way.points.map(p=>new THREE.Vector3(p[0],p[1],.4)));const l=new THREE.Line(g,way.built?solid:dashed);if(!way.built)l.computeLineDistances();l.renderOrder=3.5;this.worksGroup.add(l);}
+        for(const a of w.areas||[]){const g=new THREE.BufferGeometry().setFromPoints(a.points.map(p=>new THREE.Vector3(p[0],p[1],.4)));const l=new THREE.Line(g,solid);l.renderOrder=3.5;this.worksGroup.add(l);}
+        if(!w.ways.length)continue;const longest=w.ways.reduce((a,b)=>b.points.length>a.points.length?b:a),mid=longest.points[longest.points.length>>1];
+        const label=document.createElement('div');label.className='station-label works-label';label.style.color=color;label.textContent=`${w.name} · ${w.status}${w.progress_pct?`, ${w.progress_pct} %`:''}`;this.labels.append(label);this.worksLabels.push({el:label,xy:mid});}}
+    this.worksOn=!!on;this.worksGroup.visible=this.worksOn;this.positionWorksLabel();
   }
-  positionWorksLabel(){if(!this.worksLabel)return;const [x,y]=this.worldToScreen(this.worksLabel.xy);const el=this.worksLabel.el;const show=this.worksOn&&this.mpp<25&&x>0&&y>0&&x<this.w&&y<this.h;el.style.display=show?'':'none';if(show)el.style.transform=`translate(${Math.round(x)}px,${Math.round(y)}px)`;}
+  positionWorksLabel(){for(const {el,xy} of this.worksLabels||[]){const [x,y]=this.worldToScreen(xy);const show=this.worksOn&&this.mpp<25&&x>0&&y>0&&x<this.w&&y<this.h;el.style.display=show?'':'none';if(show)el.style.transform=`translate(${Math.round(x)}px,${Math.round(y)}px)`;}}
   /** Vista híbrida, como en las apps de mapas: la foto satelital (Esri World Imagery, pedida en la
    *  misma proyección del mapa, así cae en sus metros sin reproyectar) bajo la calzada de TransMilenio,
    *  con las calles como líneas finas encima y los nombres. Se apagan los rellenos de calles, parques y
