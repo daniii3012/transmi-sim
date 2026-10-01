@@ -92,6 +92,17 @@
 - Pendiente visto: los cupos del patio De la Hoja se pintan sobre el techo del edificio de Catastro
   de la plaza.
 
+### Metro: edificios de acceso y estaciones en tres pisos (30 sep.)
+- Planos de ubicación de la EMB (16 PDF, página 1) en `data/raw/metro/<instantánea>/planos/`. Son
+  vectoriales con el norte arriba: el rectángulo azul de la estación casa con su contorno publicado
+  (giro ≤ 1,2°; escala a lo largo 1,8–2,5 m/pt; a lo ancho el símbolo está exagerado) y los polígonos
+  naranja pasan a metros: 91 en 12 estaciones (31 edificios, 60 puentes peatonales, < 9 m de ancho).
+  Comprobado contra la foto: caen sobre los lotes demolidos de la Caracas y Kennedy. Las estaciones
+  1, 2, 6 y 8 no tienen edificios aparte. `tools/build_metro.py` (necesita pymupdf).
+- Estación en tres pisos (página 2 del plano): ingreso a 6,5–10,5 m bajo el tablero, andenes
+  laterales de 4 m a la altura del viaducto, cubierta a 19,5 m y fachadas de vidrio. Alturas
+  estimadas, declaradas en la ficha. Pendiente: la planta baja de acceso de las estaciones 1, 2, 6 y 8.
+
 ### Las 73 estaciones sin andenes en OSM (30 sep.)
 - Franjas enderezadas sobre la foto (`work/franjas_estaciones.py`, salidas en `work/satelite/franjas/`):
   eje de la estación, marcas cada 10 m a lo largo y 5 m a lo ancho, recorridos del motor y andenes

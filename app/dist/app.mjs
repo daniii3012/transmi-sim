@@ -1,13 +1,13 @@
-import {mountShell} from './shell.mjs?v=20260930.31';
-import {NetworkMap} from './map.mjs?v=20260930.31';
-import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.31';
-import {DEFAULTS,parameters} from './operation.mjs?v=20260930.31';
-import {STATES} from './traffic.mjs?v=20260930.31';
-import {applyFieldCorrections} from './signals.mjs?v=20260930.31';
-import {registerSimulationTools} from './webmcp.mjs?v=20260930.31';
+import {mountShell} from './shell.mjs?v=20260930.32';
+import {NetworkMap} from './map.mjs?v=20260930.32';
+import {DAY,addDays,dayType,dateNumber,dateEligible,validityState,serviceWindows,demandPeriod} from './calendar.mjs?v=20260930.32';
+import {DEFAULTS,parameters} from './operation.mjs?v=20260930.32';
+import {STATES} from './traffic.mjs?v=20260930.32';
+import {applyFieldCorrections} from './signals.mjs?v=20260930.32';
+import {registerSimulationTools} from './webmcp.mjs?v=20260930.32';
 // Aplicación instalable: el service worker guarda código y datos por versión (sw.js). Solo en el sitio
 // publicado: en local se edita y se recarga, y una caché estorbaría.
-if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.31').catch(()=>{});
+if('serviceWorker' in navigator&&isSecureContext&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))navigator.serviceWorker.register('./sw.js?v=20260930.32').catch(()=>{});
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const fmt=n=>Math.round(n).toLocaleString('es-CO');
@@ -61,11 +61,11 @@ try{
  let theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';try{theme=localStorage.getItem('transmi-theme')||theme;}catch{}
  function applyTheme(){document.body.dataset.theme=theme;map.setTheme(theme);$('#theme').textContent=theme==='dark'?'☀':'☾';$('#theme').setAttribute('aria-label',theme==='dark'?'Usar modo claro':'Usar modo oscuro');}applyTheme();
  $('#theme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('transmi-theme',theme);}catch{}};
- let worker=new Worker('./worker.mjs?v=20260930.31',{type:'module'});
+ let worker=new Worker('./worker.mjs?v=20260930.32',{type:'module'});
  function badge(r){const b=el('span',r.code,'route-code');b.style.setProperty('--route',r.color);const rgb=r.color.match(/[0-9a-f]{2}/gi)?.map(s=>parseInt(s,16));if(rgb?.length===3&&rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>155)b.style.setProperty('--route-ink','#24303f');return b;}
  function row(label,value,parent=$('#selection')){const r=el('div',undefined,'metric-row');r.append(el('span',label),el('strong',value));parent.append(r);return r;}
  function rebuild({fit=false,clear=true}={}){
-  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.31',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
+  planSequence++;$('#plan-journey').disabled=true;$('#journey-results').replaceChildren(el('p','Elige origen, destino y fecha para buscar conexiones.','muted'));generation++;const messageHandler=worker.onmessage,errorHandler=worker.onerror;worker.terminate();worker=new Worker('./worker.mjs?v=20260930.32',{type:'module'});worker.onmessage=messageHandler;worker.onerror=errorHandler;ready=false;pendingSample=false;sampleSequence=0;$('#loading').hidden=false;$('#loading').textContent='Calculando despachos y estaciones…';$('#error').hidden=true;
   if(clear)clearSelection();
   map.routeSet=new Set(data.routes.filter(r=>r.ready&&(config.selection.mode==='all'||config.selection.mode==='route'&&r.id===config.selection.route||config.selection.mode==='zones'&&config.selection.zones.some(z=>r.served_zones.includes(z)||r.zone===z))).map(r=>r.id));map.rebuildHighlight();map.signalsEnabled=config.params.signals;map.signalTiming={cycle:config.params.signalCycle,green:config.params.signalGreen,amber:3};
   settled=false;worker.postMessage({type:'init',generation,data,config,date:config.date,time:clock.time});syncControls();renderRoutes();
@@ -259,7 +259,7 @@ try{
   for(const st of data.stations){const b=el('button',`${st.number}. ${st.name}`,'full');b.onclick=()=>fitTo(st.outline);list.append(b);}
   if(data.depot){const b=el('button','Patio taller El Corzo','full');b.onclick=()=>fitTo(data.depot.outline);list.append(b);}
   p.append(list);
-  const why=el('details',undefined,'why');why.append(el('summary','De dónde sale'),el('p','Trazado, viaducto y estaciones: Empresa Metro de Bogotá, datos abiertos (CC BY 4.0). Patio taller, sus vías y naves: OpenStreetMap; la altura de las naves es estimada. Publicado: 30 trenes de 6 vagones y 1.800 personas, 80 km/h, 42,5 km/h comercial, intervalo inicial de 140 s. Estimado: horario 04:30–23:00, 240 s en valle y 35 s de parada.'));p.append(why);
+  const why=el('details',undefined,'why');why.append(el('summary','De dónde sale'),el('p','Trazado, viaducto y estaciones: Empresa Metro de Bogotá, datos abiertos (CC BY 4.0). Edificios de acceso y puentes peatonales: planos de ubicación de cada estación (Empresa Metro), llevados a metros con el contorno publicado; su altura y la de los pisos de la estación son estimadas. Patio taller, sus vías y naves: OpenStreetMap; la altura de las naves es estimada. Publicado: 30 trenes de 6 vagones y 1.800 personas, 80 km/h, 42,5 km/h comercial, intervalo inicial de 140 s. Estimado: horario 04:30–23:00, 240 s en valle y 35 s de parada.'));p.append(why);
  }
  let metroListOpen=false;
  function renderRoute(r){
@@ -610,7 +610,7 @@ try{
  let metro=null,METRO_HEADWAY=null;const VIEW=new URLSearchParams(location.search).get('vista');
  async function setupMetro(){
   try{
-   const [{MetroLayer,METRO},data]=await Promise.all([import('./metro.mjs?v=20260930.31').then(m=>{METRO_HEADWAY=m.headwayAt;return m;}),fetch('./metro_l1.json').then(r=>r.json())]);
+   const [{MetroLayer,METRO},data]=await Promise.all([import('./metro.mjs?v=20260930.32').then(m=>{METRO_HEADWAY=m.headwayAt;return m;}),fetch('./metro_l1.json').then(r=>r.json())]);
    metro=new MetroLayer(map.scene,data);
    metro.headwayAt=METRO_HEADWAY;selection={kind:'metro'};metro.update(((clock.time%DAY)+DAY)%DAY);renderMetroLine();
   }catch(error){console.error(error);toast('No se pudo cargar el metro.');}

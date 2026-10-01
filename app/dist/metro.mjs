@@ -10,7 +10,7 @@
 // posición a cualquier hora se calcula directamente del horario. Es reproducible hacia atrás y hacia
 // adelante, como todo el simulador.
 import * as THREE from './vendor/three.module.js';
-import {MetricPath} from './simulation.mjs?v=20260930.31';
+import {MetricPath} from './simulation.mjs?v=20260930.32';
 
 export const METRO=Object.freeze({deck:13,accel:1,brake:1,vmax:80/3.6,dwell:35,turnaround:180,peak:140,offpeak:240,
  start:4.5*3600,end:23*3600,trainLength:135,cars:6,width:3,height:3.8,capacity:1800});
@@ -97,12 +97,28 @@ export class MetroLayer{
   const pm=new THREE.InstancedMesh(box,pier,piers.length),o=new THREE.Object3D();
   piers.forEach((p,i)=>{o.position.set(p.xy[0],p.xy[1],0);o.rotation.set(0,0,p.angle);o.scale.set(2.2,3.2,METRO.deck-1.6);o.updateMatrix();pm.setMatrixAt(i,o.matrix);});
   this.group.add(pm);
-  // Estaciones: su contorno publicado, como un volumen translúcido alrededor del tablero.
-  const stationMat=new THREE.MeshLambertMaterial({color:palette.metroStation||'#e2574c',transparent:true,opacity:.55,depthWrite:false});
+  // Estaciones en tres pisos, como en los planos de la Empresa Metro: el de ingreso (segundo piso) bajo
+  // el tablero, la plataforma con sus dos andenes laterales a la altura del viaducto y la cubierta.
+  // El contorno es el publicado; las alturas de cada piso son estimadas. Los edificios de acceso y sus
+  // puentes salen del plano de ubicación de cada estación (tools/build_metro.py).
+  const mat=(color,opacity=1,extra={})=>new THREE.MeshLambertMaterial({color,transparent:opacity<1,opacity,depthWrite:opacity>=1,...extra});
+  const concourse=mat(palette.metroConcourse||'#d9dee3',.85),roof=mat(palette.metroRoof||'#e2574c',.45,{side:THREE.DoubleSide}),glass=mat(palette.metroGlass||'#9fc3d9',.18,{side:THREE.DoubleSide});
+  const platform=mat(palette.metroPlatform||'#eef1f4'),access=mat(palette.metroAccess||'#efc58f'),bridge=mat(palette.metroBridge||'#c9ced4',.8);
+  const prism=(pts,z0,z1,material,order=4.6)=>{const shape=new THREE.Shape(pts.map(p=>new THREE.Vector2(p[0],p[1])));const g=new THREE.ExtrudeGeometry(shape,{depth:z1-z0,bevelEnabled:false});g.translate(0,0,z0);const m=new THREE.Mesh(g,material);m.renderOrder=order;this.group.add(m);return m;};
+  const ring=pts=>pts.length>1&&pts[0][0]===pts.at(-1)[0]&&pts[0][1]===pts.at(-1)[1]?pts.slice(0,-1):pts;
   for(const s of this.stations){
-   const pts=s.outline.slice(0,-1).map(p=>new THREE.Vector2(p[0],p[1]));if(pts.length<3)continue;
-   const geo=new THREE.ExtrudeGeometry(new THREE.Shape(pts),{depth:9,bevelEnabled:false});geo.translate(0,0,METRO.deck-2);
-   const mesh=new THREE.Mesh(geo,stationMat);mesh.renderOrder=8.5;this.group.add(mesh);
+   const pts=ring(s.outline);if(pts.length<3)continue;
+   // El rectángulo de la estación: eje, largo y ancho del contorno publicado.
+   let best=null;for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length],L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(!best||L>best.L)best={L,u:[(b[0]-a[0])/L,(b[1]-a[1])/L]};}
+   const u=best.u,v=[-u[1],u[0]],c=[pts.reduce((x,p)=>x+p[0],0)/pts.length,pts.reduce((x,p)=>x+p[1],0)/pts.length];
+   const proj=pts.map(p=>[(p[0]-c[0])*u[0]+(p[1]-c[1])*u[1],(p[0]-c[0])*v[0]+(p[1]-c[1])*v[1]]),L=Math.max(...proj.map(p=>p[0]))-Math.min(...proj.map(p=>p[0])),W=Math.max(...proj.map(p=>p[1]))-Math.min(...proj.map(p=>p[1]));
+   const box=(along,across,dl,dw)=>[[-1,-1],[1,-1],[1,1],[-1,1]].map(([sa,sb])=>[c[0]+u[0]*(along+sa*dl/2)+v[0]*(across+sb*dw/2),c[1]+u[1]*(along+sa*dl/2)+v[1]*(across+sb*dw/2)]);
+   prism(pts,6.5,10.5,concourse);
+   // Andenes laterales: a cada lado de las dos vías (a 1,9 m del eje), de 4 m.
+   for(const side of [-1,1])prism(box(0,side*(1.9+1.6+2),L-6,4),METRO.deck,METRO.deck+1.05,platform,4.65);
+   prism(box(0,0,L+2,W+2),19.5,20.2,roof,8.4);
+   for(const side of [-1,1])prism(box(0,side*(W/2+.9),L,.2),METRO.deck+1,19.5,glass,8.3);
+   for(const a of s.access||[]){const q=ring(a.outline);if(q.length<3)continue;prism(q,a.z0,a.z1,a.kind==='puente'?bridge:access,a.kind==='puente'?8.2:4.7);}
   }
   this.slots=this.buildDepot(data.depot,palette);
   // Trenes: un bloque por vagón, los de la vía y los guardados en el patio.

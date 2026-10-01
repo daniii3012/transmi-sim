@@ -12,8 +12,16 @@ El patio taller de El Corzo (Bosa) no está en esa capa: sale de OpenStreetMap (
 contorno, sus vías de patio y sus edificios. Sus alturas no están publicadas y van estimadas: 14 m
 una nave con cubierta (`building=roof`), 8 m un edificio.
 
-Entrada: `data/raw/metro/<instantánea>/*.geojson` y `patio_taller_osm.json` (descargas fuera del
-repositorio). Salida: `data/curated/metro_l1.json`.
+Edificios de acceso y puentes peatonales: de los planos de ubicación que la Empresa Metro publica
+por estación (metrodebogota.gov.co/linea-1/estaciones, «Estacion-N-nuevo-mapa.pdf», página 1). Son
+mapas con el norte arriba: el rectángulo azul de la estación se hace coincidir con su contorno
+publicado (escala a lo largo, giro y centro) y con esa transformación los polígonos naranja pasan a
+metros. Un polígono de menos de 9 m de ancho es un puente peatonal hacia el piso de ingreso; los
+demás, edificios. Las alturas no están publicadas: 14 m un edificio de acceso, puente a 7,5 m.
+Las estaciones 1, 2, 6 y 8 no tienen edificios aparte (el acceso va bajo la estación).
+
+Entrada: `data/raw/metro/<instantánea>/*.geojson`, `patio_taller_osm.json` y `planos/*.pdf` (descargas
+fuera del repositorio). Salida: `data/curated/metro_l1.json`.
 """
 from __future__ import annotations
 
@@ -30,6 +38,66 @@ ROOT = Path(__file__).resolve().parents[1]
 NOMBRES = {1: "Gibraltar", 2: "Portal Américas", 3: "Ciudad Kennedy", 4: "Timiza", 5: "Hospital de Kennedy",
            6: "Avenida Boyacá", 7: None, 8: "Puente Aranda", 9: "SENA", 10: "Santa Isabel", 11: "Hospital",
            12: "Avenida Jiménez", 13: "Central", 14: "Calle 45", 15: "Calle 63", 16: "Calle 72"}
+
+
+def station_access(planos: Path, stations) -> dict:
+    """Edificios de acceso y puentes de cada estación, desde la página 1 de su plano (ver arriba)."""
+    if not planos.exists():
+        return {}
+    import math
+    import fitz
+    from shapely.geometry import Polygon
+
+    def poly(d):
+        pts = []
+        for it in d["items"]:
+            if it[0] == "l": pts += [it[1], it[2]]
+            elif it[0] == "c": pts += [it[1], it[4]]
+            elif it[0] == "re": r = it[1]; pts += [r.tl, r.tr, r.br, r.bl]
+            elif it[0] == "qu": q = it[1]; pts += [q.ul, q.ur, q.lr, q.ll]
+        return [(p.x, -p.y) for p in pts]
+
+    def rect(pts):
+        g = Polygon(pts).minimum_rotated_rectangle
+        c = list(g.exterior.coords)[:4]
+        e1, e2 = (c[1][0] - c[0][0], c[1][1] - c[0][1]), (c[2][0] - c[1][0], c[2][1] - c[1][1])
+        if math.hypot(*e1) < math.hypot(*e2): e1, e2 = e2, e1
+        return g.centroid.coords[0], math.atan2(e1[1], e1[0]), math.hypot(*e1), math.hypot(*e2)
+
+    out = {}
+    for st in stations:
+        f = planos / f"Estacion-{st['number']}-nuevo-mapa.pdf"
+        if not f.exists():
+            continue
+        page = fitz.open(f)[0]
+        blue, orange = [], []
+        for d in page.get_drawings():
+            c = d.get("fill")
+            if not c: continue
+            P = poly(d)
+            if not P or max(y for _, y in P) > -150: continue  # la leyenda va arriba
+            if c[0] > .9 and .55 < c[1] < .7 and c[2] < .4: orange.append(P)
+            elif c[0] < .15 and .55 < c[1] < .72 and c[2] > .75: blue.append(P)
+        if not blue:
+            continue
+        pc, pa, pl, _ = rect(blue[0])
+        wc, wa, wl, _ = rect([tuple(q) for q in st["outline"]])
+        rot = (wa - pa + math.pi / 2) % math.pi - math.pi / 2
+        k = wl / pl
+        cs, sn = math.cos(rot), math.sin(rot)
+        to_world = lambda p: [round(wc[0] + k * (cs * (p[0] - pc[0]) - sn * (p[1] - pc[1])), 1),
+                              round(wc[1] + k * (sn * (p[0] - pc[0]) + cs * (p[1] - pc[1])), 1)]
+        items = []
+        for P in orange:
+            W = [to_world(p) for p in P]
+            g = Polygon(W)
+            if not g.is_valid or g.area < 20: continue
+            _, _, L, Wd = rect(W)
+            bridge = Wd < 9
+            items.append({"kind": "puente" if bridge else "edificio", "outline": W + [W[0]] if W[0] != W[-1] else W,
+                          "z0": 6.5 if bridge else 0, "z1": 8.5 if bridge else 14, "height": "estimada"})
+        out[st["number"]] = items
+    return out
 
 
 def main() -> None:
@@ -60,6 +128,9 @@ def main() -> None:
         for s in stations:
             s["at_m"] = round(line.project(Point(*s["xy"])), 1)
     viaduct = [transform(to_xy, shape(f["geometry"])) for f in read("viaducto_l1")]
+    access = station_access(folder / "planos", stations)
+    for st in stations:
+        st["access"] = access.get(st["number"], [])
     depot = None
     if (folder / "patio_taller_osm.json").exists():
         osm = json.loads((folder / "patio_taller_osm.json").read_text())
@@ -96,6 +167,7 @@ def main() -> None:
     (ROOT / "data/curated/metro_l1.json").write_text(text)
     print(f"trazado {line.length/1000:.2f} km · {len(stations)} estaciones · viaducto {result['viaduct_area_m2']} m²",
           hashlib.sha256(text.encode()).hexdigest()[:12])
+    print("  accesos:", sum(len(s["access"]) for s in stations), "polígonos en", sum(1 for s in stations if s["access"]), "estaciones")
     if depot:
         print(f"  patio: {len(depot['tracks'])} vías, {len(depot['buildings'])} edificios")
     for s in stations:
