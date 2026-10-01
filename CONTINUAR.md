@@ -112,7 +112,7 @@
 - Pendiente: los buses que terminan en Museo Nacional desaparecen al final y los que salen aparecen;
   no recorren la U (la geometría del recorrido termina en la estación).
 - Números de buses agrupados debajo de los controles del mapa.
-- **Vista satelital híbrida** (Capas → Satelital, o `?satelite`; se recuerda en el navegador): foto de
+- **Vista satelital híbrida** (solo con `?satelite`: oculta en la versión publicada hasta aclarar la licencia de Esri): foto de
   Esri World Imagery pedida en la proyección del mapa, en teselas de 64 m a 16 km según el zoom, bajo
   todo (aun lo hundido); calles como líneas blancas encima, sin rellenos ni edificios. Atribución
   «Esri, Maxar, Earthstar Geographics». **Antes de desplegarla, revisar los términos de uso de Esri**

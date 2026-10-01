@@ -10,7 +10,7 @@
 // posición a cualquier hora se calcula directamente del horario. Es reproducible hacia atrás y hacia
 // adelante, como todo el simulador.
 import * as THREE from './vendor/three.module.js';
-import {MetricPath} from './simulation.mjs?v=20260930.29';
+import {MetricPath} from './simulation.mjs?v=20260930.30';
 
 export const METRO=Object.freeze({deck:13,accel:1,brake:1,vmax:80/3.6,dwell:35,turnaround:180,peak:140,offpeak:240,
  start:4.5*3600,end:23*3600,trainLength:135,cars:6,width:3,height:3.8,capacity:1800});
