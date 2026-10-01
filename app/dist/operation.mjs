@@ -1,20 +1,37 @@
-import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260930.33';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.33';
-import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections,turningOnly} from './signals.mjs?v=20260930.33';
-import {travelTimeAtDistance} from './travel.mjs?v=20260930.33';
-import {generatedPassengers,alightFraction,demandBase} from './passengers.mjs?v=20260930.33';
-import {placeVisit} from './station-layouts.mjs?v=20260930.33';
-import {visitWagons} from './wagons.mjs?v=20260930.33';
-import {MetricPath} from './simulation.mjs?v=20260930.33';
+import {DAY,addDays,serviceWindows,demandPeriod,dayType,gtfsServices,programmedDepartures} from './calendar.mjs?v=20260930.36';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.36';
+import {matchSignals,signalTravel,signalTravelAt,SIGNAL_EXPECTED,applyFieldCorrections,turningOnly} from './signals.mjs?v=20260930.36';
+import {travelTimeAtDistance} from './travel.mjs?v=20260930.36';
+import {generatedPassengers,alightFraction,demandBase,EVASION} from './passengers.mjs?v=20260930.36';
+import {placeVisit} from './station-layouts.mjs?v=20260930.36';
+import {visitWagons} from './wagons.mjs?v=20260930.36';
+import {MetricPath} from './simulation.mjs?v=20260930.36';
 export const DEFAULTS=Object.freeze({peakHeadway:240,offpeakHeadway:480,demand:1,mode:'auto',cruiseKmh:60,streetKmh:50,acceleration:.6,cruiseFrom:'local',braking:1.1,turnaround:240,variableDispatch:true,reinforcements:true,signals:true,beyondValidity:true,programmedDispatch:true,programmedRunning:true,observedRunning:true,
  // Espacio físico (traffic.mjs). Separación en marcha y parado, ciclo semafórico y atención son
  // decisiones de modelo, rotuladas como estimación; la variación diaria cambia de una fecha a otra
  // sin perder la reproducibilidad: la misma fecha y la misma versión dan siempre lo mismo.
- physical:true,headwayTime:1.2,jamGap:2.5,signalCycle:90,signalGreen:52,dwellBase:13,boardingRate:.9,dayVariation:true,dispatchJitter:60,variant:0,fleet:2252,odDemand:true,supply:1,events:[],abandonMinutes:90,rain:false});
-export function parameters(input={}){const p={...DEFAULTS,...input};for(const [k,min,max] of [['peakHeadway',120,1200],['offpeakHeadway',180,1800],['demand',.25,3],['cruiseKmh',25,75],['streetKmh',20,60],['acceleration',.4,1.4],['braking',.5,1.8],['turnaround',60,900],['headwayTime',.6,3],['jamGap',1,8],['signalCycle',50,180],['signalGreen',15,150],['dwellBase',5,40],['boardingRate',.3,2],['dispatchJitter',0,300],['variant',0,999],['fleet',200,8000],['supply',.25,5],['abandonMinutes',5,600]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw new Error('Parámetro fuera de rango: '+k);if(typeof p.variableDispatch!=='boolean'||typeof p.reinforcements!=='boolean'||typeof p.signals!=='boolean'||typeof p.beyondValidity!=='boolean'||typeof p.programmedDispatch!=='boolean'||typeof p.programmedRunning!=='boolean'||typeof p.observedRunning!=='boolean'||typeof p.physical!=='boolean'||typeof p.dayVariation!=='boolean'||typeof p.rain!=='boolean')throw new Error('Opciones de despacho inválidas');if(p.signalGreen>=p.signalCycle-3)throw new Error('Parámetro fuera de rango: signalGreen');if(!Number.isInteger(p.variant))throw new Error('Parámetro fuera de rango: variant');if(!['auto','peak','offpeak'].includes(p.mode))throw new Error('Demanda inválida');if(!Array.isArray(p.events)||p.events.length>20||p.events.some(e=>!Array.isArray(e?.xy)||e.xy.length!==2||!e.xy.every(Number.isFinite)||!Number.isFinite(e.start)||!Number.isFinite(e.end)||e.end<=e.start))throw new Error('Eventos inválidos');return p;}
+ physical:true,headwayTime:1.2,jamGap:2.5,signalCycle:90,signalGreen:52,dwellBase:13,boardingRate:.9,dayVariation:true,dispatchJitter:60,variant:0,fleet:2252,odDemand:true,supply:1,events:[],abandonMinutes:90,evasion:1,holdups:.15,breakdowns:.06,rain:false});
+export function parameters(input={}){const p={...DEFAULTS,...input};for(const [k,min,max] of [['peakHeadway',120,1200],['offpeakHeadway',180,1800],['demand',.25,3],['cruiseKmh',25,75],['streetKmh',20,60],['acceleration',.4,1.4],['braking',.5,1.8],['turnaround',60,900],['headwayTime',.6,3],['jamGap',1,8],['signalCycle',50,180],['signalGreen',15,150],['dwellBase',5,40],['boardingRate',.3,2],['dispatchJitter',0,300],['variant',0,999],['fleet',200,8000],['supply',.25,5],['abandonMinutes',5,600],['evasion',0,2],['holdups',0,1],['breakdowns',0,1]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw new Error('Parámetro fuera de rango: '+k);if(typeof p.variableDispatch!=='boolean'||typeof p.reinforcements!=='boolean'||typeof p.signals!=='boolean'||typeof p.beyondValidity!=='boolean'||typeof p.programmedDispatch!=='boolean'||typeof p.programmedRunning!=='boolean'||typeof p.observedRunning!=='boolean'||typeof p.physical!=='boolean'||typeof p.dayVariation!=='boolean'||typeof p.rain!=='boolean')throw new Error('Opciones de despacho inválidas');if(p.signalGreen>=p.signalCycle-3)throw new Error('Parámetro fuera de rango: signalGreen');if(!Number.isInteger(p.variant))throw new Error('Parámetro fuera de rango: variant');if(!['auto','peak','offpeak'].includes(p.mode))throw new Error('Demanda inválida');if(!Array.isArray(p.events)||p.events.length>20||p.events.some(e=>!Array.isArray(e?.xy)||e.xy.length!==2||!e.xy.every(Number.isFinite)||!Number.isFinite(e.start)||!Number.isFinite(e.end)||e.end<=e.start))throw new Error('Eventos inválidos');return p;}
 /** Oferta multiplicada: por cada salida del plan, `supply` salidas repartidas en el intervalo hasta
  * la siguiente del mismo servicio (×2 pone una en medio; ×0,5 deja una de cada dos). Las añadidas
  * llevan `added` y no son del horario publicado. Determinista: el mismo plan da las mismas salidas. */
+/** Retenciones en cabecera: de vez en cuando una ruta deja de despachar un rato —falta un bus o un
+ * conductor, una salida se demora— y luego suelta seguidas las salidas retenidas, 45 s una de otra.
+ * Daniel lo vio el 30 sep. en el 5 hacia Mandalay: 17 min sin buses en Comapan y después cinco juntos.
+ * `holdups` es la parte de las rutas a las que les pasa una vez en el día (0,15: a cada una, más o
+ * menos una vez por semana); dura de 10 a 20 min y cae a cualquier hora de servicio. Determinista
+ * por fecha, ruta y variante: no se ve venir, pero el mismo escenario repite el mismo día. */
+export function holdDepartures(departures,share=0,tag=''){
+ if(!(share>0))return departures;
+ const byRoute=new Map();for(const d of departures){if(!byRoute.has(d.rid))byRoute.set(d.rid,[]);byRoute.get(d.rid).push(d);}
+ for(const [rid,list] of byRoute){
+  const h=hash(rid+'/retencion/'+tag);if((h%10000)/10000>=share||list.length<4)continue;
+  list.sort((a,b)=>a.time-b.time);const first=list[0].time,last=list.at(-1).time,h2=hash(rid+'/retencion2/'+tag);
+  const start=first+(last-first)*((h2%1000)/1000),end=start+600+(h2>>>10)%601;
+  let k=0;for(const d of list)if(d.time>=start&&d.time<end){d.time=end+45*k++;d.held=true;}
+ }
+ return departures;
+}
 export function scaleSupply(departures,supply=1){
  if(!(supply>0)||Math.abs(supply-1)<1e-9)return departures;
  const byRoute=new Map();for(const d of departures){const list=byRoute.get(d.rid)||[];list.push(d);byRoute.set(d.rid,list);}
@@ -157,6 +174,12 @@ export class Operation {
   // Sentido de salida y descenso medidos (od_profiles.json) viajan con cada estación; con el
   // parámetro apagado se retiran y vuelven los supuestos.
   for(const s of data.stations){const od=this.params.odDemand?data.od_profiles?.stations?.[s.id]:null;if(od)s.od_profile=od;else delete s.od_profile;}
+  // Colados de las troncales sin cifra propia: el valor que deja el promedio de toda la troncal,
+  // pesado por las entradas medidas de un día hábil, en el 15,19 % publicado.
+  {const v=new Map();for(const s of data.stations){if(s.kind==='street'||!s.demand_profile)continue;v.set(s,s.demand_profile.hourly.reduce((x,y)=>x+y,0));}
+   const riders=e=>{let paid=0,all=0;for(const [s,n] of v){const z=EVASION.zones[s.zone]??e;paid+=n;all+=n/(1-z);}return 1-paid/all;};
+   let lo=0,hi=EVASION.general;for(let k=0;k<40;k++){const m=(lo+hi)/2;if(riders(m)<EVASION.general)lo=m;else hi=m;}
+   this.evasionRest=(lo+hi)/2;for(const s of data.stations)s.evasion=s.kind==='street'?0:EVASION.zones[s.zone]??this.evasionRest;}
   const picked=r=>this.selection.mode==='route'?r.id===this.selection.route:this.selection.mode==='zones'?(this.selection.zones||[]).some(z=>r.served_zones.includes(z)||r.zone===z):true;
   const fields=data.speed_profiles?.routes||{};
   for(const r of data.routes.filter(r=>r.ready&&picked(r)))this.routes.set(r.id,{...r,typeSource:vehicleSpec(r).typeSource,path:new MetricPath(r.points),field:routeField(fields[r.id])});
@@ -189,7 +212,7 @@ export class Operation {
     }
    }
   }
-  return scaleSupply(out,this.params.supply).sort((a,b)=>a.time-b.time||(a.rid<b.rid?-1:a.rid>b.rid?1:0));
+  return holdDepartures(scaleSupply(out,this.params.supply),this.params.holdups,this.dispatchTag(date)).sort((a,b)=>a.time-b.time||(a.rid<b.rid?-1:a.rid>b.rid?1:0));
  }
  prepareDirections(){
   const allRoutes=this.data.routes.filter(r=>r.ready).map(r=>({...r,path:new MetricPath(r.points)}));const axes=new Map();for(const r of allRoutes)for(const s of r.stops){const angle=r.path.sample(Math.min(r.path.length-.1,Math.max(.1,s.at_m))).angle;const accum=axes.get(s.station_id)||[0,0];accum[0]+=Math.cos(2*angle);accum[1]+=Math.sin(2*angle);axes.set(s.station_id,accum);}

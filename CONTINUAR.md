@@ -89,8 +89,38 @@
   (`bboxSR`/`imageSR` con la aeqd), así la foto cae en metros del mapa sin reproyectar.
 - Seleccionar un bus o una estación ya no corre el mapa (Daniel: el bus quedaba bajo el panel).
   Plegar o desplegar paneles sí recentra.
-- Pendiente visto: los cupos del patio De la Hoja se pintan sobre el techo del edificio de Catastro
-  de la plaza.
+
+Los pendientes se llevan fuera del repositorio (decisión de Daniel, 30 sep.).
+
+### Colados, transbordos, incidentes, panel y Av. 68 (30 sep.)
+- **Colados** (`evasion`, ×1 por defecto): TRANSMILENIO al Concejo — 15,19 % en la troncal (2.º sem.
+  2025; 13,14 % en 2024), F 34,18 %, H 27,88 %; sábado 19,25 % y domingo 24,40 % sobre el 13,14 % de
+  2024. El resto de troncales toma el valor que deja el promedio en 15,19 % (8,8 %, pesado por
+  entradas). Cada entrada medida trae e/(1−e) que no validaron. Efecto (16 sep., hábil): +19 %
+  subidas, buses ≥ 90 % en punta 97 → 157 a las 7:00; F, G y B se llenan.
+- **Transbordos**: la cifra oficial de 18,9 % (1.er trim. 2025) cuenta solo los que validan
+  (troncal↔zonal); los de dentro de la troncal no se registran. El camino más corto usaba 1,5 km por
+  transbordo y 150 m por parada: inventaba ~100 000 transbordos diarios evitables. Ahora 4,5 km
+  (~11 min) y 300 m (~45 s): 631 176 → 534 669 por día hábil (0,29 por viaje); desde 4,5 km la cifra
+  ya no baja. `tools/build_od_profiles.py`. Sigue: los transbordos aparecen repartidos en la franja,
+  no ligados al bus que los trae.
+- **Retenciones en cabecera** (`holdups`, 15 % de las rutas al día): una ventana de 10–20 min sin
+  salidas y luego las retenidas seguidas, 45 s una de otra (Daniel, 5 en Comapan: 17 min sin buses y
+  luego cinco juntos; vio en la app que salieron así de la cabecera). `holdDepartures`.
+- **Buses varados** (`breakdowns`, 6 % de las rutas al día ≈ una vez cada 2–3 semanas por ruta): un
+  viaje de 6 a 21 h se detiene en un punto al 10–90 % del recorrido 20–40 min y ocupa su carril;
+  ficha «Varado». `work/probe_incidentes.mjs`: 9 en el día, filas de 1 a 6 buses.
+- Ambos deterministas por fecha y versión del día: el mismo escenario se repite igual; «Otra versión
+  de este día» los mueve.
+- **Panel de parámetros** en grupos plegables (Escenario abierto; Eventos; Servicio y despacho;
+  Estaciones y pasajeros; Circulación; Semáforos; Variación entre días), cuenta de cambiados por
+  grupo, valores tocados en rojo, «Aplicar» fijo abajo.
+- **Troncal Av. 68 en obra** (`tools/build_av68.py` → `av68_obra.json`): 33,5 km de calzada en
+  construcción en OSM, trazo naranja discontinuo (Capas → Obras), con avance por tramo y las 21
+  estaciones planeadas en Datos (sin coordenadas: no se dibujan). Primeros buses previstos dic. 2026.
+- Pradera y Distrito Grafiti: un andén de un lado con el otro sentido detrás se ensanchaba a isla de
+  13 m; ahora va contra el más cercano.
+- PWA: Daniel la instaló y funciona.
 
 ### Carril del andén: seguir derecho (30 sep.)
 - Daniel: al salir del andén el bus se pasaba de una vez al de paso aunque no hubiera nadie delante, y
@@ -113,7 +143,7 @@
   1, 2, 6 y 8 no tienen edificios aparte. `tools/build_metro.py` (necesita pymupdf).
 - Estación en tres pisos (página 2 del plano): ingreso a 6,5–10,5 m bajo el tablero, andenes
   laterales de 4 m a la altura del viaducto, cubierta a 19,5 m y fachadas de vidrio. Alturas
-  estimadas, declaradas en la ficha. Pendiente: la planta baja de acceso de las estaciones 1, 2, 6 y 8.
+  estimadas, declaradas en la ficha.
 
 ### Las 73 estaciones sin andenes en OSM (30 sep.)
 - Franjas enderezadas sobre la foto (`work/franjas_estaciones.py`, salidas en `work/satelite/franjas/`):
@@ -130,8 +160,8 @@
   en la calle ~15), la isla se angosta hasta 3 m y el bus queda montado como mucho 75 cm–1,8 m.
   Paradas que ningún andén de OSM cubre conservan su andén estimado (`extra`).
 - Prueba en vivo (buses en `dwell` contra el andén más cercano, 40 s de muestreo): 126 de 143 al ras
-  (±0,8 m), 17 montados 0,9–1,8 m. **Pendiente de fondo:** separar en el motor las trayectorias de
-  los dos sentidos en las estaciones para que quepa la isla real de 5 m.
+  (±0,8 m), 17 montados 0,9–1,8 m, donde en el motor los dos
+  sentidos van más juntos que en la calle.
 
 ### Museo Nacional y revisión satelital (30 sep.) — en curso
 - Herramienta `work/revision_satelital.py nombre x y [lado] [px]`: foto de Esri en la proyección del
@@ -150,8 +180,6 @@
 - La regla de túnel también unió el anillo de nivel −2 bajo la glorieta de la Caracas con Calle 1
   (Bicentenario) y una pieza junto a la Plaza de la Hoja. El M85 sube al conector elevado Av. 68–
   Calle 26 (real).
-- Pendiente: los buses que terminan en Museo Nacional desaparecen al final y los que salen aparecen;
-  no recorren la U (la geometría del recorrido termina en la estación).
 - Números de buses agrupados debajo de los controles del mapa.
 - **Vista satelital híbrida** (solo con `?satelite`: oculta en la versión publicada hasta aclarar la licencia de Esri): foto de
   Esri World Imagery pedida en la proyección del mapa, en teselas de 64 m a 16 km según el zoom, bajo
@@ -174,9 +202,7 @@
 - Fecha de la foto: la atribución dice la fecha de captura de Esri en el centro de la vista (identify
   de World_Imagery; Mandalay y Av. 68: 29/01/2024, 31 cm). OSM e IDECA son de sep. 2026: la foto vale
   para estaciones que no cambiaron (casi toda la Américas) y no para las nuevas o temporales.
-- **Pendiente: 73 estaciones siguen con módulos** (sin andenes en OSM; Catastro no trae sus
-  cubiertas): Caracas, Autopista, Suba, Calle 80, NQS sur, centro, Av. Boyacá… Opciones: trazarlas
-  sobre la foto de 2024 donde no hayan cambiado, declarado como estimación.
+- 73 estaciones sin andenes en OSM ni cubiertas en Catastro: trazadas después sobre la foto (abajo).
 - Híbrida: calzada y andenes al 55 % de su opacidad; sin el relleno de los patios.
 - Pasada satelital de estaciones con la propia app (`?depurar&satelite`): 0–49 revisadas (zonas A,
   B, C y Calle 80) sin desajustes de corredor a esta escala.
@@ -194,7 +220,7 @@
   Crudo: `data/raw/metro/<instantánea>/patio_taller_osm.json`.
 - Planos de estación de la EMB (16 PDF) bajados a `tm/datos/investigacion/metro-planos-2026-09-30/`
   (fuera del repo). Página 1: vista cenital con «edificios de acceso» A/D; páginas siguientes: la
-  edificación (tres pisos: acceso, ingreso pago, plataforma). Pendiente modelarlos.
+  edificación (tres pisos: acceso, ingreso pago, plataforma); modelados después (abajo).
 - OSM trae los 32 andenes laterales de las 16 estaciones (crudo `estaciones_osm.json`).
 
 ### Puentes compartidos (30 sep.)

@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.33';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.33';
-import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.33';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.33';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.33';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.36';
+import {signalOffset,signalClusters} from './signals.mjs?v=20260930.36';
+import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.36';
+import {hash,programmedSpeed} from './operation.mjs?v=20260930.36';
+import {vehicleSpec} from './vehicles.mjs?v=20260930.36';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -41,7 +41,7 @@ const PLATFORM_LAT=2.3;                // plataforma de terminal, en carriles ha
 // la línea recta y unos minutos para salir. Más allá de la distancia máxima se prefiere uno del patio.
 export const DEADHEAD=Object.freeze({speed:7,factor:1.35,setup:180,maxDistance:18000});
 const MOVING=0,DWELL=1,QUEUE=2,SIGNAL=3,TRAFFIC=4;
-const FREE=0,BUS=1,STOP=2,LIGHT=3,LANE_END=4,MERGE=5,BLOCK=6;
+const FREE=0,BUS=1,STOP=2,LIGHT=3,LANE_END=4,MERGE=5,BLOCK=6,BROKEN=7;
 // Puertas del lado del andén por tipo de bus: con ellas se reparte el embarque.
 export const DOORS={biarticulated:5,articulated:4,dual_electric:4,dual:2};
 // Cuántos de los servicios que paran en un sentido le sirven, en promedio, a quien espera ahí, cuando
@@ -433,11 +433,11 @@ class MinHeap{
 // Estado por viaje, en arreglos paralelos. `offnet` dice si el bus está en la vía (0), en la
 // plataforma de salida de su terminal (1) o en la de llegada (2): en un portal real embarcan y
 // desembarcan varios buses a la vez en andenes distintos, así que ahí no ocupan el carril.
-const FIELDS={route:Int16Array,k:Int16Array,lane:Uint8Array,state:Uint8Array,stop:Int16Array,sig:Int16Array,binding:Uint8Array,status:Uint8Array,offnet:Uint8Array,
+const FIELDS={brkAt:Float64Array,brkDur:Float32Array,brkUntil:Float64Array,route:Int16Array,k:Int16Array,lane:Uint8Array,state:Uint8Array,stop:Int16Array,sig:Int16Array,binding:Uint8Array,status:Uint8Array,offnet:Uint8Array,
  sR:Float64Array,v:Float64Array,prev:Float64Array,lat:Float32Array,prevLat:Float32Array,dwellEnd:Float64Array,len:Float32Array,vf:Float32Array,col:Uint8Array,
  load:Int16Array,cap:Int16Array,vehicle:Int32Array,stuck:Float32Array,force:Float32Array,queueSince:Float64Array,cool:Float32Array,
  spawned:Float64Array,leader:Int32Array,wait:Float32Array,board:Int16Array,alight:Int16Array,entered:Float64Array,runSeen:Uint8Array,finished:Float64Array,inZone:Uint8Array,zp:Int16Array,dock:Float64Array};
-const SAVED=['k','lane','state','stop','sig','binding','status','offnet','sR','v','prev','lat','prevLat','dwellEnd','col','load','vehicle','stuck','force','queueSince','cool','spawned','leader','wait','board','alight','entered','runSeen','finished','inZone','zp','dock'];
+const SAVED=['brkAt','brkUntil','k','lane','state','stop','sig','binding','status','offnet','sR','v','prev','lat','prevLat','dwellEnd','col','load','vehicle','stuck','force','queueSince','cool','spawned','leader','wait','board','alight','entered','runSeen','finished','inZone','zp','dock'];
 
 export class Traffic{
  /** `op` es una Operation preparada con `plan:true`; `guide`, la red de sus servicios. */
@@ -490,7 +490,16 @@ export class Traffic{
   this.trips.forEach((t,i)=>{t.index=i;t.id=`${serviceDate}/${t.rid}/${Math.round(t.departure)}`;});
   const n=this.trips.length;this.a={};for(const [k,T] of Object.entries(FIELDS))this.a[k]=new T(n);
   this.a.leader.fill(-1);
+  // Buses varados: raros, pero pasan. A cada ruta le toca con probabilidad `breakdowns` en el día (0,06:
+  // más o menos una vez cada dos o tres semanas); se elige uno de sus viajes de 6 a 21 h y un punto
+  // entre el 10 y el 90 % del recorrido. Ahí se detiene 20 a 40 min, hasta que lo retiran, y ocupa su
+  // carril: los de atrás lo rebasan donde hay dos o hacen fila. Determinista por fecha y versión.
+  const byRoute=new Map();for(const t of this.trips){const h=((t.time%DAY)+DAY)%DAY/3600;if(h>=6&&h<21){if(!byRoute.has(t.ri))byRoute.set(t.ri,[]);byRoute.get(t.ri).push(t);}}
+  this.breakdowns=[];
+  for(const [ri,list] of byRoute){const h=hash(this.seed+'/varado/'+this.info[ri].r.id);if((h%10000)/10000>=(p.breakdowns||0))continue;const h2=hash(this.seed+'/varado2/'+this.info[ri].r.id),t=list[h2%list.length];
+   this.breakdowns.push({index:t.index,ri,at:this.info[ri].r.path.length*(.1+.8*((h2>>>8)%1000)/1000),dur:1200+(h2>>>18)%1201});}
   for(const t of this.trips){const info=this.info[t.ri],spec=vehicleSpec(info.r,p,hash(this.seed+'/'+t.index));this.a.len[t.index]=info.len;this.a.cap[t.index]=spec.capacity;this.a.vf[t.index]=1+spec.speedOffset/60;this.a.route[t.index]=t.ri;}
+  for(const b of this.breakdowns){this.a.brkAt[b.index]=b.at;this.a.brkDur[b.index]=b.dur;}
   this.lists=Array.from({length:guide.links.length*2},()=>[]);
   this.off=new Float64Array(n);this.listPos=new Int32Array(n);this.lg=Infinity;this.reD=new Float64Array(n);this.reId=new Int32Array(n);this.twoHere=new Uint8Array(n);
   this.scratch={s:new Float64Array(4096),v:new Float64Array(4096),bind:new Uint8Array(4096),lead:new Int32Array(4096)};
@@ -930,6 +939,8 @@ export class Traffic{
     const ph=(t+info.sigOff[q])%cycle;
     if(ph>=amber||ph>=green&&d>v*v/6){const dd=d>0?d:0,s=S0+vT+v*v/sqrtAB,qq=s/Math.max(.1,dd+S0),tq=qq*qq;if(tq>term){term=tq;binding=LIGHT;}if(dd<limit)limit=dd;break;}
    }
+   // Varado: se detiene en su punto y ahí se queda hasta que lo retiran.
+   if(a.brkAt[i]>0){const d=a.brkAt[i]-sR;if(d<LOOK){const dd=d>0?d:0,s=S0+vT+v*v/sqrtAB,qq=s/Math.max(.1,dd+S0),tq=qq*qq;if(tq>term){term=tq;binding=BROKEN;}if(dd<limit)limit=dd;}}
    // Cierres de vía: mientras dure el evento, un muro en todos los carriles; el bus frena como ante un
    // obstáculo quieto y los de atrás hacen fila.
    for(let q=0;q<info.evAt.length;q++){
@@ -997,6 +1008,7 @@ export class Traffic{
     this.beginDwell(i,t,a.queueSince[i]>=0?t-a.queueSince[i]:0);continue;
    }
    const j=a.leader[i];
+   if(a.brkAt[i]>0&&a.brkAt[i]-a.sR[i]<.5&&a.v[i]<.1){if(!a.brkUntil[i])a.brkUntil[i]=t+a.brkDur[i];else if(t>=a.brkUntil[i])a.brkAt[i]=0;}
    // Estado visible y desatasco.
    const b=a.binding[i];
    if(v<.5)a.state[i]=b===LIGHT||(b===BUS&&j>=0&&a.state[j]===SIGNAL)?SIGNAL:stopD<150||(b===BUS&&j>=0&&(a.state[j]===QUEUE||a.state[j]===DWELL))?QUEUE:TRAFFIC;
@@ -1067,7 +1079,7 @@ export class Traffic{
    load:a.load[i],capacity:a.cap[i],reinforcement:!!trip.reinforcement,busType:info.spec.label,typeSource:r.typeSource,length_m:a.len[i],lane:a.lane[i],
    next_stop:next?.name||'Fin del servicio',next_station:next?.station_id,stopIndex:x,stopsServed:a.stop[i]+(a.state[i]===DWELL?0:0),wagon:next?.wagon||1,wagonLabel:next?.wagonLabel||null,wagonDoors:next?.wagonDoors||null,wagonSource:next?.wagonSource||'estimated',
    street:!!(next&&next.kind==='street'),dwellLeft:a.state[i]===DWELL?Math.max(0,a.dwellEnd[i]-this.t):0,board:a.board[i],alight:a.alight[i],lastWait:a.wait[i],
-   scheduled:trip.scheduled,dispatched:a.spawned[i],delay,tripStart:a.spawned[i],progress:center/r.path.length,binding:['libre','bus','parada','semáforo','fin de carril','empalme'][a.binding[i]]};
+   scheduled:trip.scheduled,dispatched:a.spawned[i],delay,tripStart:a.spawned[i],progress:center/r.path.length,binding:['libre','bus','parada','semáforo','fin de carril','empalme','cierre','varado'][a.binding[i]]};
  }
  // Cuánto lleva un viaje según el horario hasta una abscisa: sirve para decir si va atrasado.
  expectedElapsed(info,at){

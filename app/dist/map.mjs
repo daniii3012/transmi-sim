@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.33';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.33';
+import {MetricPath} from './simulation.mjs?v=20260930.36';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.36';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.33';
+import {pieceShape} from './wagons.mjs?v=20260930.36';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -66,6 +66,9 @@ function snapPlatform(xy,angle,length,width,stops=[]){
   const E=4.8,u=[Math.cos(angle),Math.sin(angle)],v=[-u[1],u[0]];let pos=Infinity,neg=Infinity;
   for(const q of stops){const dx=q[0]-xy[0],dy=q[1]-xy[1],a=dx*u[0]+dy*u[1],b=dx*v[0]+dy*v[1];if(Math.abs(a)>length/2+5||Math.abs(b)>16)continue;if(b>=0)pos=Math.min(pos,b-E);else neg=Math.min(neg,-b-E);}
   let lo=-width/2,hi=width/2;
+  // Paradas a los dos lados pero más separadas que el andén y tres metros: no es una isla, es un
+  // andén de un lado con el otro sentido detrás (Pradera, Distrito Grafiti); va contra el más cercano.
+  if(Number.isFinite(pos)&&Number.isFinite(neg)&&pos+neg>width+3){if(pos<neg)neg=Infinity;else pos=Infinity;}
   if(Number.isFinite(pos)&&Number.isFinite(neg)){hi=pos;lo=-neg;if(hi-lo<3){const c=(lo+hi)/2;lo=c-1.5;hi=c+1.5;}}
   else if(Number.isFinite(pos)){hi=pos;lo=pos-width;}else if(Number.isFinite(neg)){lo=-neg;hi=-neg+width;}
   const c=(lo+hi)/2;return {xy:[xy[0]+v[0]*c,xy[1]+v[1]*c],width:hi-lo};
@@ -297,7 +300,7 @@ export class NetworkMap {
     if(this.satelliteOn)this.updateSatellite();
     if(this.crowdMesh&&this.crowdList&&Math.abs((this.crowdMpp||0)-near)>near*.15){this.crowdMpp=near;this.setCrowd(this.crowdList);}
     if(this.depotGroup){this.depotGroup.visible=near<10;if(this.depotBuses)this.depotBuses.visible=this.depotJoints.visible=near<4;}
-    if(labels)this.updateLabels();this.positionLabels();this.updateMarker();this.updateScale();
+    if(labels)this.updateLabels();this.positionLabels();this.positionWorksLabel();this.updateMarker();this.updateScale();
     if(this.lastSimulation)this.updateBuses(this.lastSimulation,'all',true);
     this.updateCompass();
   }
@@ -781,6 +784,17 @@ export class NetworkMap {
       this.updateBuildingTiles();
     }catch{}
   }
+  /** Troncal de la Av. 68 en obra (av68_obra.json): el corredor de OSM en trazo discontinuo naranja,
+   *  con un rótulo. No opera; ninguna ruta lo usa. */
+  setWorks(on=true){
+    if(!this.worksGroup){const w=this.data.works;if(!w?.ways?.length)return;this.worksGroup=new THREE.Group();this.scene.add(this.worksGroup);
+      const mat=new THREE.LineDashedMaterial({color:'#e07000',dashSize:18,gapSize:10,depthTest:false});
+      for(const way of w.ways){const g=new THREE.BufferGeometry().setFromPoints(way.points.map(p=>new THREE.Vector3(p[0],p[1],.4)));const l=new THREE.Line(g,mat);l.computeLineDistances();l.renderOrder=3.5;this.worksGroup.add(l);}
+      const longest=w.ways.reduce((a,b)=>b.points.length>a.points.length?b:a),mid=longest.points[longest.points.length>>1];
+      const label=document.createElement('div');label.className='station-label works-label';label.textContent=`${w.name} · en obra, ${w.progress_pct} %`;this.labels.append(label);this.worksLabel={el:label,xy:mid};}
+    this.worksOn=!!on;this.worksGroup.visible=this.worksOn;this.worksLabel.el.hidden=!this.worksOn;this.positionWorksLabel?.();
+  }
+  positionWorksLabel(){if(!this.worksLabel)return;const [x,y]=this.worldToScreen(this.worksLabel.xy);const el=this.worksLabel.el;const show=this.worksOn&&this.mpp<25&&x>0&&y>0&&x<this.w&&y<this.h;el.style.display=show?'':'none';if(show)el.style.transform=`translate(${Math.round(x)}px,${Math.round(y)}px)`;}
   /** Vista híbrida, como en las apps de mapas: la foto satelital (Esri World Imagery, pedida en la
    *  misma proyección del mapa, así cae en sus metros sin reproyectar) bajo la calzada de TransMilenio,
    *  con las calles como líneas finas encima y los nombres. Se apagan los rellenos de calles, parques y

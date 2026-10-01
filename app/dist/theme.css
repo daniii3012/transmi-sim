@@ -63,7 +63,13 @@ details.why>p,details.why>a{margin:0 14px 12px;display:block;font-size:.76rem;li
 
 /* Parámetros agrupados. */
 .settings-group{border:1px solid var(--line);border-radius:var(--radius-card);padding:6px 14px 12px;margin:0 0 14px;background:var(--surface)}
-.settings-group>legend{font-size:.72rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 6px}
+.settings-group>summary{font-size:.72rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 0;cursor:pointer;display:flex;align-items:baseline;gap:8px;list-style:none}
+.settings-group>summary::-webkit-details-marker{display:none}
+.settings-group>summary::before{content:'▸';font-size:.8rem;transition:transform .15s}
+.settings-group[open]>summary::before{transform:rotate(90deg)}
+.settings-group>summary .changed{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:650;color:var(--accent,#dc253b)}
+.setting.modified>label,.setting.modified>label.inline{color:var(--accent,#dc253b)}
+.settings-actions{position:sticky;bottom:0;background:var(--surface,#fff);padding:4px 0 10px;box-shadow:0 -8px 12px -8px #0002}
 .settings-group>p.muted{margin:4px 0 6px;font-size:.74rem}
 .setting{margin-top:10px}
 .setting label{margin:10px 0 6px;display:flex;align-items:baseline;gap:6px}
@@ -71,7 +77,7 @@ details.why>p,details.why>a{margin:0 14px 12px;display:block;font-size:.76rem;li
 .setting label output{margin-left:auto}
 .setting.check label{margin:12px 0 4px}
 .setting p.help{margin:4px 0 0;font-size:.72rem;line-height:1.45}
-.settings-actions .full{margin:10px 0 0}
+.settings-actions .full,.settings-more .full{margin:10px 0 0}
 
 /* Leyenda del color por ocupación, dentro de la franja de métricas. */
 #load-legend{display:flex;flex-direction:column;justify-content:center;gap:5px;padding:0 12px;border-left:1px solid var(--line)}
@@ -144,3 +150,5 @@ details.bus-route .stop-list{margin:4px 0 12px 12px}
 .event-row button{padding:4px 10px;min-height:32px}
 /* Vista del metro: una tarjeta compacta en la esquina superior derecha, junto a los controles del
    mapa, que dice qué es proyecto y qué es estimado sin tapar el centro del mapa. */
+
+.works-label{color:#c06a00;font-style:italic;position:absolute;left:0;top:0}

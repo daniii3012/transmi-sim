@@ -1,5 +1,5 @@
 /** Aggregate, deterministic synthetic passenger demand. Not an OD survey. */
-import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260930.33';
+import {DAY,addDays,demandPeriod,dayType} from './calendar.mjs?v=20260930.36';
 export const DEMAND_BASELINE=2.25; // User-calibrated reference; 1× means this scenario baseline.
 // Con la matriz origen-destino medida, cada entrada es un viaje entero: 1× son las entradas
 // registradas. Quien transborda baja en la estación de cambio y vuelve a esperar allí (transferRate),
@@ -64,6 +64,20 @@ export function routeAcceptance(station,group,routeId,time,date){
  for(const [w,ids] of sets){let here=false,ok=false;for(const id of ids){if(group.has(id))here=true;if(id===routeId)ok=true;}if(here){waiting+=w;if(ok)mine+=w;}}
  return waiting>=10?mine/waiting:null;
 }
+// Colados (evasión) en el componente troncal, de TransMilenio en el Concejo de Bogotá: 15,19 % en el
+// segundo semestre de 2025 (13,14 % en el de 2024, antes del alza por las obras del metro). Por troncal
+// solo se publicaron las más altas: la F (Américas–Calle 13) 34,18 % y la H (Caracas sur) 27,88 %; el
+// resto toma el valor que deja el promedio de la troncal en el oficial (Operation.evasionRest). Por
+// día, la relación de 2024: sábados 19,25 % y domingos y festivos 24,40 % sobre el 13,14 % del año.
+// La demanda sale de las validaciones, y quien se cuela no valida: cada entrada medida trae detrás
+// e/(1−e) que no pagaron. `evasion` escala las cifras (0 las apaga, 1 son las publicadas).
+export const EVASION=Object.freeze({general:.1519,zones:{F:.3418,H:.2788},saturday:19.25/13.14,sunday:24.40/13.14});
+export function evasionShare(station,date,params){
+ const k=params?.evasion??1;if(!k)return 0;
+ const kind=dayType(date),day=kind==='saturday'?EVASION.saturday:kind==='weekday'?1:EVASION.sunday;
+ return Math.min(.6,(station.evasion??EVASION.zones[station.zone]??EVASION.general)*day*k);
+}
+export const evasionFactor=(station,date,params)=>1/(1-evasionShare(station,date,params));
 export function arrivalRate(station,angle,time,date,params){
  const hour=((time%DAY)+DAY)%DAY/3600;if(hour<4||hour>=23.5)return 0;
  if(station.demand_profile){
@@ -72,7 +86,7 @@ export function arrivalRate(station,angle,time,date,params){
   // reduction of a weekday. The estimated factors only remain for a single-day aggregate.
   const hourly=measured||profile.hourly,dayFactor=measured?1:kind==='weekday'?1:kind==='saturday'?.7:.55;
   const observed=hourly[Math.floor(hour)]/3600,override=params.mode==='peak'?1.5:params.mode==='offpeak'?.7:1;
-  return (demandBase(params)*observed*directionShare(station,angle,time,date)*dayFactor+(params.odDemand?transferRate(station,angle,time,date):0))*override*params.demand;
+  return (demandBase(params)*observed*directionShare(station,angle,time,date)*dayFactor+(params.odDemand?transferRate(station,angle,time,date):0))*override*params.demand*evasionFactor(station,date,params);
  }
  const central=centrality(station.xy),morning=hour<11,peak=demandPeriod(time,date,params.mode)==='peak';
  const landUse=peak?(morning?1.35-.6*central:.6+1.2*central):1;

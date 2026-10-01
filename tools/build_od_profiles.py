@@ -38,8 +38,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SECTORS = 16
-STOP_PENALTY_M = 150      # cada parada intermedia cuesta como 150 m: entre dos caminos parecidos, el de menos paradas
-TRANSFER_PENALTY_M = 1500  # cambiar de servicio cuesta como 1,5 km
+STOP_PENALTY_M = 300      # cada parada intermedia cuesta como 300 m: frenar, atender y arrancar, unos 45 s
+TRANSFER_PENALTY_M = 4500  # cambiar de servicio cuesta como 4,5 km, unos 11 min: bajarse, esperar otro bus y la incomodidad. Con 1,5 km el camino más corto inventaba unos 100 000 transbordos diarios que la gente evita tomando un servicio directo; desde 4,5 km la cifra ya no baja (quedan los inevitables)
 
 
 def main() -> None:
