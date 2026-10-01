@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.26';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.26';
+import {MetricPath} from './simulation.mjs?v=20260930.27';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.27';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.26';
+import {pieceShape} from './wagons.mjs?v=20260930.27';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -553,12 +553,12 @@ export class NetworkMap {
     }
     this.depotBuses.count=i;this.depotBuses.instanceMatrix.needsUpdate=true;this.depotJoints.count=i;this.depotJoints.instanceMatrix.needsUpdate=true;
   }
-  /** Andenes alineados con la calzada, desde el punto donde atiende cada servicio (worker). Una
-   *  estación es una estructura continua, no una pieza por servicio: los puntos de un mismo lado se
-   *  unen en un andén que los cubre a todos (salvo un hueco de más de 60 m, que sí separa cuerpos), y
-   *  si los dos lados quedan a menos de 16 m, son una sola isla entre las dos calzadas (San Façon). En
-   *  un separador ancho cada sentido conserva su andén junto a su carril (Mandalay). Antes salían
-   *  piezas de 28–62 m sueltas y corridas entre sí. */
+  /** Andenes alineados con la calzada, desde el punto donde atiende cada servicio (worker). Los
+   *  puntos de un mismo lado que se tocan o se separan menos de 15 m son un solo andén (San Façon, que
+   *  salía en dos piezas corridas); un hueco mayor separa cuerpos. Dos lados a menos de 16 m son una
+   *  isla entre las dos calzadas. En un separador ancho, cada sentido tiene sus andenes junto a su
+   *  carril y van enfrentados de a pares (Mandalay: dos por lado con la plaza en medio); cada uno toma
+   *  el rumbo de su carril, que en la estación se abre, y no se monta sobre él en un extremo. */
   setPlatforms(mods){
     if(!mods?.length)return;
     const byStation=new Map();for(const m of mods){if(!byStation.has(m.station))byStation.set(m.station,[]);byStation.get(m.station).push(m);}
@@ -566,19 +566,19 @@ export class NetworkMap {
     for(const [station,list] of byStation){
       let c=0,sn=0,x=0,y=0;for(const m of list){c+=Math.cos(2*m.angle);sn+=Math.sin(2*m.angle);x+=m.xy[0];y+=m.xy[1];}
       const ang=Math.atan2(sn,c)/2,u=[Math.cos(ang),Math.sin(ang)],v=[-u[1],u[0]],o=[x/list.length,y/list.length];
-      const items=list.map(m=>{const dx=m.xy[0]-o[0],dy=m.xy[1]-o[1],L=Math.max(28,Math.min(62,m.length||45));return {a:dx*u[0]+dy*u[1],b:dx*v[0]+dy*v[1],L};}).sort((p,q)=>p.b-q.b);
+      const items=list.map(m=>{const dx=m.xy[0]-o[0],dy=m.xy[1]-o[1],L=Math.max(28,Math.min(62,m.length||45));return {a:dx*u[0]+dy*u[1],b:dx*v[0]+dy*v[1],L,c:Math.cos(2*m.angle),s:Math.sin(2*m.angle)};}).sort((p,q)=>p.b-q.b);
       const sides=[];for(const it of items){const g=sides.at(-1);if(g&&it.b-g.at(-1).b<6)g.push(it);else sides.push([it]);}
-      const bodies=side=>{const sorted=[...side].sort((p,q)=>p.a-q.a),res=[];for(const it of sorted){const r=res.at(-1),a0=it.a-it.L/2,a1=it.a+it.L/2;if(r&&a0-r.a1<60){r.a1=Math.max(r.a1,a1);r.bs.push(it.b);}else res.push({a0,a1,bs:[it.b]});}
-        return res.map(r=>({a0:r.a0,a1:r.a1,b:[...r.bs].sort((p,q)=>p-q)[r.bs.length>>1]}));};
+      const bodies=side=>{const sorted=[...side].sort((p,q)=>p.a-q.a),res=[];for(const it of sorted){const r=res.at(-1),a0=it.a-it.L/2,a1=it.a+it.L/2;if(r&&a0-r.a1<15){r.a1=Math.max(r.a1,a1);r.bs.push(it.b);r.c+=it.c;r.s+=it.s;}else res.push({a0,a1,bs:[it.b],c:it.c,s:it.s});}
+        return res.map(r=>({a0:r.a0,a1:r.a1,b:[...r.bs].sort((p,q)=>p-q)[r.bs.length>>1],angle:Math.atan2(r.s,r.c)/2}));};
       let parts=sides.map(bodies);
       // Dos lados cercanos: una isla. Va de un lado al otro y cubre lo de ambos a lo largo.
       if(parts.length===2){const b1=parts[0].reduce((s,r)=>s+r.b,0)/parts[0].length,b2=parts[1].reduce((s,r)=>s+r.b,0)/parts[1].length;
-        if(Math.abs(b2-b1)<16){const all=bodies([...sides[0],...sides[1]].map(it=>({...it,b:(b1+b2)/2})));for(const r of all)out.push({station,r,width:Math.abs(b2-b1)+5});parts=[];}}
+        if(Math.abs(b2-b1)<16){const all=bodies([...sides[0],...sides[1]].map(it=>({...it,b:(b1+b2)/2})));for(const r of all)out.push({station,r:{...r,angle:ang},width:Math.abs(b2-b1)+5});parts=[];}}
       // Un andén por sentido en un separador ancho: van enfrentados, como en Mandalay. Cada servicio
       // para donde le toca y eso los corría; se alinean al centro común con el largo del mayor.
-      if(parts.length===2&&parts.every(p=>p.length===1)){const [p,q]=[parts[0][0],parts[1][0]],c=(p.a0+p.a1+q.a0+q.a1)/4,h=Math.max(p.a1-p.a0,q.a1-q.a0)/2;for(const r of [p,q]){r.a0=c-h;r.a1=c+h;}}
+      if(parts.length===2&&parts[0].length===parts[1].length)parts[0].forEach((p,k)=>{const q=parts[1][k],c=(p.a0+p.a1+q.a0+q.a1)/4,h=Math.max(p.a1-p.a0,q.a1-q.a0)/2;for(const r of [p,q]){r.a0=c-h;r.a1=c+h;}});
       for(const side of parts)for(const r of side)out.push({station,r,width:5});
-      for(const p of out.filter(p=>p.station===station&&!p.xy)){const m=(p.r.a0+p.r.a1)/2;p.xy=[o[0]+u[0]*m+v[0]*p.r.b,o[1]+u[1]*m+v[1]*p.r.b];p.angle=ang;p.length=p.r.a1-p.r.a0;delete p.r;}
+      for(const p of out.filter(p=>p.station===station&&!p.xy)){const m=(p.r.a0+p.r.a1)/2;p.xy=[o[0]+u[0]*m+v[0]*p.r.b,o[1]+u[1]*m+v[1]*p.r.b];p.angle=p.r.angle??ang;p.length=p.r.a1-p.r.a0;delete p.r;}
     }
     this.alignedPlatforms=out;
     for(const o of [this.stationGroup,this.stationRoofs]){if(!o)continue;this.scene.remove(o);o.traverse(x=>{x.geometry?.dispose();x.material?.dispose?.();});}

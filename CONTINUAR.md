@@ -119,8 +119,10 @@
   (o pasar a la ortofoto abierta de IDECA).
 - **Andenes continuos** (`setPlatforms`): los puntos de parada de cada servicio daban piezas de 28–62 m
   sueltas y corridas (San Façon en dos, Mandalay en cuatro). Ahora por estación y lado se unen en un
-  andén que los cubre (un hueco > 60 m separa cuerpos); dos lados a < 16 m son una isla; un andén por
-  sentido en separador ancho va enfrentado al otro (centro común, largo del mayor). Red: 100
+  andén que los cubre (un hueco > 15 m separa cuerpos: Mandalay son 4, dos por sentido con la plaza
+  en medio); dos lados a < 16 m son una isla; un andén por
+  sentido en separador ancho va enfrentado al otro de a pares (centro común, largo del mayor), cada
+  uno con el rumbo de su carril, que se abre en la estación. Red: 100
   estaciones de una estructura, 8 con andén por sentido, ninguna pieza < 40 m.
 - Híbrida: calzada y andenes al 55 % de su opacidad; sin el relleno de los patios.
 - Pasada satelital de estaciones con la propia app (`?depurar&satelite`): 0–49 revisadas (zonas A,
