@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20261002.1';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20261002.1';
+import {MetricPath} from './simulation.mjs?v=20261002.2';
+import {signalPhase,signalClusters,signalGreens,SIGNAL_CYCLE} from './signals.mjs?v=20261002.2';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20261002.1';
+import {pieceShape} from './wagons.mjs?v=20261002.2';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -1131,7 +1131,8 @@ export class NetworkMap {
     const color=new THREE.Color();let i=0;
     // Una intersección, una fase: los nodos de un mismo cruce comparten la del primero, igual que en el motor.
     const clusters=this.signalGroups||(this.signalGroups=signalClusters(this.data.busway_signals)),timing=this.signalTiming||SIGNAL_CYCLE,offsets=this.signalOffsets;
-    const phase=id=>{const rep=clusters.get(id)||id;if(!offsets||offsets[rep]===undefined)return signalPhase(rep,time||0,timing).color;const p=(((time||0)+offsets[rep])%timing.cycle+timing.cycle)%timing.cycle;return p<timing.green?'green':p<timing.green+timing.amber?'amber':'red';};
+    const gkey=timing.cycle+'/'+timing.green;if(this.greensKey!==gkey){this.greens=signalGreens(this.data,clusters,timing.cycle,timing.green);this.greensKey=gkey;}
+    const phase=id=>{const rep=clusters.get(id)||id,g=this.greens.get(rep),own=g?{...timing,green:g.green}:timing;if(!offsets||offsets[rep]===undefined)return signalPhase(rep,(time||0)-(g?.shift||0),own).color;const p=(((time||0)+offsets[rep]-(g?.shift||0))%own.cycle+own.cycle)%own.cycle;return p<own.green?'green':p<own.green+own.amber?'amber':'red';};
     for(const s of this.data.busway_signals.signals){this.object.position.set(s.xy[0],s.xy[1],.1);this.object.rotation.set(0,0,0);this.object.scale.set(Math.max(1.6,this.mpp*3),Math.max(1.6,this.mpp*3),1);this.object.updateMatrix();this.signalMesh.setMatrixAt(i,this.object.matrix);color.set({green:'#269765',amber:'#e8a41b',red:'#e8394b'}[phase(s.id)]);this.signalMesh.setColorAt(i++,color);}
     this.signalMesh.instanceMatrix.needsUpdate=true;this.signalMesh.instanceColor.needsUpdate=true;
   }

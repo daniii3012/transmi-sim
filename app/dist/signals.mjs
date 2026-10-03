@@ -1,4 +1,4 @@
-import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20261002.1';
+import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20261002.2';
 
 // Existence is sourced from OSM. These phases are explicitly scenario estimates.
 export const SIGNAL_CYCLE=Object.freeze({cycle:90,green:52,amber:3});
@@ -30,6 +30,15 @@ export function signalClusters(catalogue,radius=60){
 }
 // El ciclo se puede ajustar por escenario; sin argumento rige el estimado de 90 s. El desfase de
 // cada cruce sale de su identificador y se reparte sobre el ciclo vigente.
+/** Verde propio de una intersección (`signal_timings` en field_corrections.json), como fracción del
+ * ciclo: un cruce de obra con cuatro accesos le da a TransMilenio menos verde que el plan general. El
+ * verde recortado queda centrado en el del plan (`shift`, segundos que se corre su inicio), así el
+ * rojo crece por los dos lados. Por intersección (el primer nodo del grupo). */
+export function signalGreens(data,clusters,cycle,green=SIGNAL_CYCLE.green){
+ const out=new Map();
+ for(const c of data?.field_corrections?.signal_timings||[]){const own=Math.round(c.green_share*cycle);for(const id of c.signals||[])out.set(clusters.get(id)||id,{green:own,shift:Math.max(0,(green-own)/2)});}
+ return out;
+}
 export function signalPhase(id,time,timing=SIGNAL_CYCLE){
  const {cycle,green,amber}=timing,p=((time+phaseOffset(id)%cycle)%cycle+cycle)%cycle;
  return {color:p<green?'green':p<green+amber?'amber':'red',wait:p<green?0:cycle-p};

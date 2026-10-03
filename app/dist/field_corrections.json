@@ -123,5 +123,19 @@
    "verify": "Provisional mientras duren las obras (niveles 2 y 3 previstos para finales de 2027): al terminar, volver a verificar el trazado con las fuentes (OSM, IDU) y retirar esta corrección.",
    "observed": "2026-10-02"
   }
+ ],
+ "signal_timings": [
+  {
+   "id": "puente-aranda-cruce-obra-2026",
+   "signals": [
+    "osm-node-13105183732",
+    "osm-node-13105183744"
+   ],
+   "green_share": 0.4,
+   "where": "Av. Américas, cruce de la intersección de Puente Aranda en obra (Calle 13 × Carrera 50), entre Distrito Grafiti y Puente Aranda",
+   "reason": "El cruce de obra reparte el ciclo entre más accesos y el rojo para TransMilenio dura más que en el plan general (52 de 90 s en verde). Observación propia, sin plan semafórico publicado: verde estimado en el 40 % del ciclo (36 s de 90; unos 51 s de rojo). La velocidad por el tramo, que no suele pasar de 30 km/h, ya la traen los perfiles medidos.",
+   "verify": "Provisional mientras duren las obras de La Nueva Calle 13; al terminar, retirar junto con el desvío.",
+   "observed": "2026-10-02"
+  }
  ]
 }

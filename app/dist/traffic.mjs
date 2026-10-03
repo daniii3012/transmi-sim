@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20261002.1';
-import {signalOffset,signalClusters} from './signals.mjs?v=20261002.1';
-import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20261002.1';
-import {hash,programmedSpeed} from './operation.mjs?v=20261002.1';
-import {vehicleSpec} from './vehicles.mjs?v=20261002.1';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20261002.2';
+import {signalOffset,signalClusters,signalGreens} from './signals.mjs?v=20261002.2';
+import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20261002.2';
+import {hash,programmedSpeed} from './operation.mjs?v=20261002.2';
+import {vehicleSpec} from './vehicles.mjs?v=20261002.2';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -468,6 +468,7 @@ export class Traffic{
   const signalIds=new Map();this.signalIds=[];const clusters=signalClusters(op.data.busway_signals);
   const signalWay=new Map((op.data.busway_signals?.signals||[]).map(s=>[s.id,s.carriageway]));
   const offsets=op.signalOffsets&&op.signalOffsets.cycle===p.signalCycle?op.signalOffsets.map:(op.signalOffsets={cycle:p.signalCycle,map:coordinatedOffsets(this.routes,clusters,p.signalCycle)}).map;
+  const greens=signalGreens(op.data,clusters,p.signalCycle,p.signalGreen);
   this.info=this.routes.map(r=>{
    const spec=vehicleSpec(r),len=spec.length,map=guide.routeMaps.get(r.id);
    const stopFront=Float64Array.from(r.visits,v=>Math.max(len+.5,Math.min(r.path.length-.05,v.at_m+len/2)));
@@ -480,13 +481,15 @@ export class Traffic{
    const signals=r.signals.filter(s=>{if(signalWay.get(s.id)==='busway')return true;const {link,offset}=guide.locate(r.id,s.at_m),L=guide.links[link];if(!L?.level)return true;const c=Math.max(0,Math.min(L.level.length-1,Math.floor(offset/CELL)));return Math.abs(L.level[c])<.3;});
    this.skippedSignals=(this.skippedSignals||0)+r.signals.length-signals.length;
    const sigAt=Float64Array.from(signals.map(s=>s.at_m)),sigIx=Int32Array.from(signals.map(s=>{if(!signalIds.has(s.id)){signalIds.set(s.id,this.signalIds.length);this.signalIds.push(s.id);}return signalIds.get(s.id);}));
-   const sigOff=Float64Array.from(signals.map(s=>offsets.get(clusters.get(s.id)||s.id)));
+   const own=s=>greens.get(clusters.get(s.id)||s.id);
+   const sigOff=Float64Array.from(signals.map(s=>((offsets.get(clusters.get(s.id)||s.id)-(own(s)?.shift||0))%p.signalCycle+p.signalCycle)%p.signalCycle));
+   const sigGreen=Float64Array.from(signals.map(s=>own(s)?.green??p.signalGreen));
    const keys=r.visits.map(v=>v.station_id+'/'+v.direction);
    const origin=guide.locate(r.id,stopFront[0]);
    // Zonas de estación a lo largo del recorrido, en su propia abscisa.
    const zones=[];let cur=null;
    for(let k=0;k<map.links.length;k++){const link=guide.links[map.links[k]];for(let c=0;c<link.lanes.length;c++){const at=map.starts[k]+c*CELL;if(at>=map.starts[k+1])break;if(link.station[c]){if(!cur){cur={start:at,end:at+CELL,id:link.zoneId[c]};zones.push(cur);}else cur.end=at+CELL;}else cur=null;}}
-   return {r,spec,len,map,stopFront,sigAt,sigIx,sigOff,keys,cells:[],origin,originStation:r.stops[0].station_id,last:r.visits.length-1,
+   return {r,spec,len,map,stopFront,sigAt,sigIx,sigOff,sigGreen,keys,cells:[],origin,originStation:r.stops[0].station_id,last:r.visits.length-1,
     zStart:Float64Array.from(zones,z=>z.start),zEnd:Float64Array.from(zones,z=>z.end),zId:Int32Array.from(zones,z=>z.id),
     ...eventsOn(r.path,p.events)};
   });
@@ -543,7 +546,7 @@ export class Traffic{
   if(this.key)return this.key;
   const p=this.p,params=Object.keys(p).sort().map(k=>k+'='+JSON.stringify(p[k])).join('&');
   // Y una huella de los datos que no pasan por las salidas: calzada, andenes y semáforos.
-  const data=JSON.stringify(this.g.summary)+'/'+this.info.map(i=>i.stopFront.reduce((x,y)=>x+y,0).toFixed(1)+':'+i.sigOff.reduce((x,y)=>x+y,0).toFixed(1)).join(',');
+  const data=JSON.stringify(this.g.summary)+'/'+this.info.map(i=>i.stopFront.reduce((x,y)=>x+y,0).toFixed(1)+':'+i.sigOff.reduce((x,y)=>x+y,0).toFixed(1)+':'+i.sigGreen.reduce((x,y)=>x+y,0)).join(',');
   const text=[this.kind,dayType(addDays(this.date,1)),this.seed,this.demandFactor,params,data,this.routes.map(r=>r.id).join(','),this.trips.map(t=>t.rid+'@'+t.time+'/'+t.departure+'/'+t.scheduled).join(',')].join('|');
   return this.key=hash(text).toString(16).padStart(8,'0')+hash('#'+text).toString(16).padStart(8,'0');
  }
@@ -946,8 +949,8 @@ export class Traffic{
    let q0=a.sig[i];while(q0<info.sigAt.length&&info.sigAt[q0]<sR-.5)q0++;a.sig[i]=q0;
    for(let q=q0;q<info.sigAt.length&&q<q0+2;q++){
     const d=info.sigAt[q]-1.5-sR;if(d>LOOK)break;if(d<-.2)continue;
-    const ph=(t+info.sigOff[q])%cycle;
-    if(ph>=amber||ph>=green&&d>v*v/6){const dd=d>0?d:0,s=S0+vT+v*v/sqrtAB,qq=s/Math.max(.1,dd+S0),tq=qq*qq;if(tq>term){term=tq;binding=LIGHT;}if(dd<limit)limit=dd;break;}
+    const ph=(t+info.sigOff[q])%cycle,gq=info.sigGreen[q];
+    if(ph>=gq+amber-green||ph>=gq&&d>v*v/6){const dd=d>0?d:0,s=S0+vT+v*v/sqrtAB,qq=s/Math.max(.1,dd+S0),tq=qq*qq;if(tq>term){term=tq;binding=LIGHT;}if(dd<limit)limit=dd;break;}
    }
    // Varado: se detiene en su punto y ahí se queda hasta que lo retiran.
    if(a.brkAt[i]>0){const d=a.brkAt[i]-sR;if(d<LOOK){const dd=d>0?d:0,s=S0+vT+v*v/sqrtAB,qq=s/Math.max(.1,dd+S0),tq=qq*qq;if(tq>term){term=tq;binding=BROKEN;}if(dd<limit)limit=dd;}}

@@ -28,6 +28,12 @@ Archivos: `field_corrections.json` (las dos copias), `signals.mjs`, `traffic.mjs
   Aranda (46 % al 31 ago. 2026), glorieta de TransMilenio en el nivel 2 y los dos puentes de las
   Américas en el 3, de `data/raw/obras/20261002/puente_aranda.json`; la glorieta mixta a nivel queda
   fuera. La 68 trae 12 puentes y 5 deprimidos (Américas, Calle 13 y otros) y Soacha 4 puentes.
+- **Semáforo del cruce en obra** (`signal_timings`, `signalGreens()`): el plan general da 52 de 90 s
+  de verde y la onda verde hacía llegar a los pelotones justo al abrir: de 138 pasos entre 7:30 y 8:10
+  solo 2 se detenían y parecía que la luz cambiaba al llegar el bus. Daniel observa más rojo (la
+  velocidad, menos de 30 km/h, ya está bien): verde estimado en el 40 % del ciclo, centrado en el del
+  plan. Ahora se detienen 37 de 88 hacia el oriente y 13 de 49 hacia el occidente. Motor y mapa usan
+  el mismo verde; se retira con el desvío al acabar las obras. `?v=20261002.2`.
 - **Portal 20 de Julio**: una construcción de Catastro que la calzada cruza en más de 15 m² se recorta
   en vez de dibujarse entera (la cubierta tapaba la vuelta de los buses). La unión de la calzada se
   calcula una vez y se parte en celdas de 250 m.
