@@ -101,10 +101,10 @@
     {
      "id": "osm-node-13105183744",
      "xy": [
-      3104.2,
-      -298.4
+      3091.0,
+      -297.2
      ],
-     "why": "el semáforo de la calzada hacia el oriente en el cruce queda sobre el trazado desviado, a 5 m del de la calzada contraria"
+     "why": "el semáforo de la calzada hacia el oriente queda sobre el trazado desviado, antes del cruce de la Calle 13 (el bus detenido no la tapa)"
     }
    ],
    "routes_observed": [

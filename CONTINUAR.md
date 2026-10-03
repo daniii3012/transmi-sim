@@ -20,7 +20,8 @@ Archivos: `field_corrections.json` (las dos copias), `signals.mjs`, `traffic.mjs
   traen el trazado viejo, 20 m al sur): lo observó Daniel y se dibujó sobre su captura con los
   semáforos de referencia. `reroute()` reemplaza el tramo entre dos vértices en los 9 servicios que lo
   usan, corre las paradas siguientes (−2,4 m), marca `single_lane` y el motor le deja un carril; el
-  semáforo del cruce de ese sentido se mueve al trazado nuevo. **Al terminar las obras, volver a
+  semáforo del cruce de ese sentido se mueve al trazado nuevo, 13 m antes de la Calle 13 para que
+  el bus detenido no la tape (`?v=20261002.3`). **Al terminar las obras, volver a
   verificar con las fuentes y retirar la corrección.**
 - **Obras en 3D**: las vías en obra con `bridge`/`tunnel` y `layer` de OSM guardan su nivel y se
   levantan solo en Capas → Obras, con el diseño terminado (no lo construido): tablero, barandas y
