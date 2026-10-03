@@ -35,8 +35,9 @@ from collections import defaultdict
 from datetime import datetime, timezone
 
 from pyproj import Transformer
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import LineString, Polygon, box
 from shapely.strtree import STRtree
+from shapely.ops import unary_union
 from shapely.geometry.polygon import orient
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -73,7 +74,18 @@ def main() -> None:
     services = json.loads((ROOT / "app/dist/services.json").read_text())
     busway = [LineString(r["points"]).buffer(4.0) for r in services["routes"] if r.get("ready") and len(r["points"]) > 1]
     busway_tree = STRtree(busway)
-    over_busway = 0
+    # La misma calzada unida una sola vez y partida en celdas de 250 m, para recortar sin unir los
+    # contornos de cien recorridos por cada edificio.
+    merged = unary_union(busway)
+    x0, y0, x1, y1 = merged.bounds
+    cells = []
+    for gx in range(math.floor(x0 / 250), math.ceil(x1 / 250)):
+        for gy in range(math.floor(y0 / 250), math.ceil(y1 / 250)):
+            piece = merged.intersection(box(gx * 250, gy * 250, gx * 250 + 250, gy * 250 + 250))
+            if not piece.is_empty:
+                cells.append(piece)
+    cell_tree = STRtree(cells)
+    over_busway = clipped_busway = 0
     tiles: dict[tuple[int, int], list[tuple[int, list[tuple[float, float]]]]] = defaultdict(list)
     kept = dropped = 0
     floors_seen = []
@@ -119,19 +131,34 @@ def main() -> None:
         if poly.is_empty or poly.area < min_area[far] or poly.geom_type != "Polygon":
             dropped += 1
             continue
-        if any(busway[i].intersection(poly).area > 0.25 * poly.area or busway[i].contains(poly.centroid) for i in busway_tree.query(poly)):
+        near = [busway[i] for i in busway_tree.query(poly, predicate="intersects")]
+        if any(b.intersection(poly).area > 0.25 * poly.area or b.contains(poly.centroid) for b in near):
             over_busway += 1
             continue
-        coords = list(poly.exterior.coords)[:-1]
-        if len(coords) < 3 or len(coords) > MAX_VERTICES:
-            dropped += 1
-            continue
-        c = poly.centroid
-        tiles[(math.floor(c.x / TILE), math.floor(c.y / TILE))].append((floors, coords))
-        floors_seen.append(floors)
-        kept += 1
-        far_kept += far == 2
-        mid_kept += far == 1
+        # Una construcción grande que la vía cruza por una parte —la cubierta del Portal 20 de Julio
+        # sobre la vuelta de los buses— se recorta: se quita lo que pisa la calzada y queda el resto.
+        pieces = [poly]
+        under = [cells[i] for i in cell_tree.query(poly, predicate="intersects")]
+        if under:
+            # Las celdas no se solapan: el área bajo la calzada es la suma de sus intersecciones.
+            if sum(c.intersection(poly).area for c in under) > 15:
+                rest = poly
+                for c in under:
+                    rest = rest.difference(c)
+                pieces = [orient(g.simplify(SIMPLIFY, preserve_topology=True), 1.0) for g in (getattr(rest, "geoms", None) or [rest])
+                          if g.geom_type == "Polygon" and g.area >= min_area[far]]
+                clipped_busway += 1
+        for piece in pieces:
+            coords = list(piece.exterior.coords)[:-1]
+            if len(coords) < 3 or len(coords) > MAX_VERTICES:
+                dropped += 1
+                continue
+            c = piece.centroid
+            tiles[(math.floor(c.x / TILE), math.floor(c.y / TILE))].append((floors, coords))
+            floors_seen.append(floors)
+            kept += 1
+            far_kept += far == 2
+            mid_kept += far == 1
 
     out = ROOT / "app/dist/buildings"
     shutil.rmtree(out, ignore_errors=True)
@@ -181,6 +208,7 @@ def main() -> None:
             "background": far_kept,
             "dropped": dropped,
             "over_busway": over_busway,
+            "clipped_busway": clipped_busway,
             "tiles": len(index),
             "bytes": total,
             "floors_median": floors_seen[len(floors_seen) // 2] if floors_seen else 0,

@@ -1,4 +1,4 @@
-import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20260930.37';
+import {travelProfile,travelTimeAtDistance,travelAt} from './travel.mjs?v=20261002.1';
 
 // Existence is sourced from OSM. These phases are explicitly scenario estimates.
 export const SIGNAL_CYCLE=Object.freeze({cycle:90,green:52,amber:3});
@@ -118,8 +118,31 @@ function addStops(data){
   }
  }
 }
+/** Tramos de calzada que cambiaron en la calle y la fuente todavía no trae (`path_overrides`), como el
+ * desvío por obras en Puente Aranda: entre dos vértices que el recorrido publica, el trazado observado
+ * reemplaza al de la fuente. Las paradas siguientes se corren lo que cambió el largo y el tramo queda
+ * marcado (`single_lane`) para que el motor le deje un carril. No se aplica a un recorrido con una
+ * parada en medio del tramo. Una vez por juego de datos. */
+function reroute(data){
+ if(data._rerouted||!data.field_corrections?.path_overrides)return;data._rerouted=true;
+ const key=p=>p[0]+','+p[1],len=pts=>{let s=0;for(let i=1;i<pts.length;i++)s+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);return s;};
+ for(const c of data.field_corrections.path_overrides){
+  // El semáforo del cruce va con la calzada: queda sobre el trazado nuevo.
+  for(const m of c.signals_moved||[]){const s=data.busway_signals?.signals?.find(s=>s.id===m.id);if(s)s.xy=[...m.xy];}
+  for(const r of data.routes||[]){
+   const i=r.points.findIndex(p=>key(p)===key(c.from)),j=i<0?-1:r.points.findIndex((p,k)=>k>i&&key(p)===key(c.to));if(j<0)continue;
+   const before=len(r.points.slice(0,i+1)),old=len(r.points.slice(i,j+1));
+   if(r.stops.some(s=>s.at_m>before&&s.at_m<before+old))continue;
+   const fresh=[c.from,...c.points,c.to].map(p=>[...p]),delta=len(fresh)-old;
+   r.points.splice(i,j-i+1,...fresh);
+   for(const s of r.stops)if(s.at_m>=before+old)s.at_m+=delta;
+   if(r.length_m!=null)r.length_m+=delta;
+   if(c.lanes===1)(r.single_lane ||= []).push([before,before+old+delta]);
+  }
+ }
+}
 export function applyFieldCorrections(data){
- addStops(data);
+ reroute(data);addStops(data);
  const removed=new Set((data.field_corrections?.signals_removed||[]).filter(s=>!s.applies_to).map(s=>s.id));
  for(const c of data.field_corrections?.stations_status||[]){const st=data.stations?.find(s=>s.id===c.id);if(st){st.status=c.status;st.status_note=c.reason;}}
  // Paradas de calle que ningún servicio utilizable usa: restos de la C15 zonal en la Carrera 13 y 11.

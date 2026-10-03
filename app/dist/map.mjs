@@ -1,7 +1,7 @@
-import {MetricPath} from './simulation.mjs?v=20260930.37';
-import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20260930.37';
+import {MetricPath} from './simulation.mjs?v=20261002.1';
+import {signalPhase,signalClusters,SIGNAL_CYCLE} from './signals.mjs?v=20261002.1';
 import * as THREE from './vendor/three.module.js';
-import {pieceShape} from './wagons.mjs?v=20260930.37';
+import {pieceShape} from './wagons.mjs?v=20261002.1';
 
 // Cámara en perspectiva sobre el plano de la ciudad, en metros, con z hacia arriba. Mirando recto
 // hacia abajo se ve igual que el mapa 2D de siempre; inclinada, es la vista 3D. El estado de la
@@ -101,6 +101,22 @@ function bridgeParts(out,P,N,L,R,Z,{deck=1.1,parapet=.9,span=24}={}){
     }
     run+=len;
   }
+}
+
+// Altura de cada vía en obra con nivel, cada 5 m: 5,5 m por nivel —hacia abajo en un deprimido— y
+// rampas de 7 % dentro de la vía en los extremos que no tocan otra del mismo nivel (la glorieta
+// cerrada no tiene). Sin nivel, la vía va a ras del suelo.
+function worksLevels(ways){
+  const out=new Map(),key=p=>Math.round(p[0])+','+Math.round(p[1]),seen=new Map();
+  for(const w of ways)if(w.level)for(const p of w.points){const k=key(p)+':'+w.level;(seen.get(k)||seen.set(k,new Set()).get(k)).add(w);}
+  for(const w of ways){if(!w.level)continue;
+    const P=[w.points[0]];for(let i=1;i<w.points.length;i++){const a=w.points[i-1],b=w.points[i],n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/5));for(let k=1;k<=n;k++)P.push([a[0]+(b[0]-a[0])*k/n,a[1]+(b[1]-a[1])*k/n]);}
+    const cum=[0];for(let i=1;i<P.length;i++)cum.push(cum[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));
+    const L=cum.at(-1),H=w.level*5.5,ramp=Math.min(Math.abs(H)/.07,L/3),closed=key(w.points[0])===key(w.points.at(-1));
+    const free=p=>!closed&&(seen.get(key(p)+':'+w.level)?.size||0)<2,r0=free(w.points[0]),r1=free(w.points.at(-1));
+    out.set(w,{P,Z:cum.map(s=>H*Math.min(1,r0?s/ramp:1,r1?(L-s)/ramp:1))});
+  }
+  return out;
 }
 
 export class NetworkMap {
@@ -784,15 +800,29 @@ export class NetworkMap {
       this.updateBuildingTiles();
     }catch{}
   }
-  /** Obras de TransMilenio que no operan (obras.json): la Av. 68, la Séptima y Soacha, cada una en trazo
-   *  discontinuo de su color y con un rótulo; en Soacha también el contorno del Portal El Vínculo y la
-   *  calzada ya construida, en trazo continuo. Apagadas por defecto (Capas → Obras). Ninguna ruta las usa. */
+  /** Obras de TransMilenio que no operan (obras.json): la Av. 68, la Séptima, Soacha y la intersección de
+   *  Puente Aranda, cada una en trazo discontinuo de su color y con un rótulo; en Soacha también el
+   *  contorno del Portal El Vínculo y la calzada ya construida, en trazo continuo. Las vías con nivel
+   *  (la intersección de Puente Aranda, puentes y deprimidos de la 68 y Soacha) se levantan con el
+   *  diseño terminado: tablero, barandas y columnas, o muros en un deprimido; 5,5 m por nivel. Apagadas por defecto (Capas → Obras). Ninguna ruta las usa. */
   setWorks(on=false){
     const list=this.data.works?.works||[];if(!list.length)return;
     if(!this.worksGroup){this.worksGroup=new THREE.Group();this.scene.add(this.worksGroup);this.worksLabels=[];
-      const colors={av68:'#e07000',septima:'#1f9d55',soacha:'#b0369d'};
+      const colors={av68:'#e07000',septima:'#1f9d55',soacha:'#b0369d',calle13:'#2563c9'};
       for(const w of list){const color=colors[w.id]||'#e07000',dashed=new THREE.LineDashedMaterial({color,dashSize:18,gapSize:10,depthTest:false}),solid=new THREE.LineBasicMaterial({color,depthTest:false});
-        for(const way of w.ways){const g=new THREE.BufferGeometry().setFromPoints(way.points.map(p=>new THREE.Vector3(p[0],p[1],.4)));const l=new THREE.Line(g,way.built?solid:dashed);if(!way.built)l.computeLineDistances();l.renderOrder=3.5;this.worksGroup.add(l);}
+        const lifted=worksLevels(w.ways),parts=[],tops=[];
+        for(const way of w.ways){const P=lifted.get(way)?.P||way.points,Z=lifted.get(way)?.Z;
+          if(Z){const N=P.map((p,j)=>{const a=P[Math.max(0,j-1)],b=P[Math.min(P.length-1,j+1)],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return [-dy/l,dx/l];}),W=(way.lanes||1)*1.75+.6;
+            bridgeParts(parts,P,N,P.map(()=>-W),P.map(()=>W),Z,{deck:1.4,span:30});
+            // Deprimido: muros de contención del fondo al suelo a los dos lados.
+            for(let j=1;j<P.length;j++){if(!(Z[j-1]<-.3||Z[j]<-.3))continue;const at=(k,o,z)=>[P[k][0]+N[k][0]*o,P[k][1]+N[k][1]*o,z];
+              for(const o of [-W,W])parts.push(...at(j-1,o,Z[j-1]),...at(j,o,Z[j]),...at(j-1,o,0),...at(j-1,o,0),...at(j,o,Z[j]),...at(j,o,0));}
+            for(let j=1;j<P.length;j++){if(!(Math.abs(Z[j-1])>.3||Math.abs(Z[j])>.3))continue;const at=(k,o)=>[P[k][0]+N[k][0]*o,P[k][1]+N[k][1]*o,Z[k]];tops.push(...at(j-1,-W),...at(j,-W),...at(j-1,W),...at(j-1,W),...at(j,-W),...at(j,W));}}
+          const g=new THREE.BufferGeometry().setFromPoints(P.map((p,j)=>new THREE.Vector3(p[0],p[1],(Z?Z[j]:0)+.4)));const l=new THREE.Line(g,way.built?solid:dashed);if(!way.built)l.computeLineDistances();l.renderOrder=3.5;this.worksGroup.add(l);}
+        if(parts.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(parts,3));g.computeVertexNormals();
+          const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color,transparent:true,opacity:.32,depthWrite:false,side:THREE.DoubleSide}));m.renderOrder=8.3;this.worksGroup.add(m);}
+        if(tops.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(tops,3));
+          const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color,transparent:true,opacity:.22,depthWrite:false,side:THREE.DoubleSide}));m.renderOrder=8.25;this.worksGroup.add(m);}
         for(const a of w.areas||[]){const g=new THREE.BufferGeometry().setFromPoints(a.points.map(p=>new THREE.Vector3(p[0],p[1],.4)));const l=new THREE.Line(g,solid);l.renderOrder=3.5;this.worksGroup.add(l);}
         if(!w.ways.length)continue;const longest=w.ways.reduce((a,b)=>b.points.length>a.points.length?b:a),mid=longest.points[longest.points.length>>1];
         const label=document.createElement('div');label.className='station-label works-label';label.style.color=color;label.textContent=`${w.name} · ${w.status}${w.progress_pct?`, ${w.progress_pct} %`:''}`;this.labels.append(label);this.worksLabels.push({el:label,xy:mid});}}

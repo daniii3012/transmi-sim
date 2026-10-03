@@ -30,5 +30,98 @@
    "reason": "La calzada se abre en dos antes del semáforo: por la izquierda esperan los que giran hacia la troncal de la Calle 26 y por la derecha siguen los demás hacia el norte sin quedar detrás de esa fila.",
    "observed": "2026-09-28"
   }
+ ],
+ "path_overrides": [
+  {
+   "id": "puente-aranda-americas-oriente-2026",
+   "from": [
+    2970.18,
+    -296.309
+   ],
+   "to": [
+    3216.848,
+    -308.347
+   ],
+   "points": [
+    [
+     2999.1,
+     -298.8
+    ],
+    [
+     3012.1,
+     -298.0
+    ],
+    [
+     3024.3,
+     -295.5
+    ],
+    [
+     3044.7,
+     -293.1
+    ],
+    [
+     3065.1,
+     -294.6
+    ],
+    [
+     3085.3,
+     -296.7
+    ],
+    [
+     3105.8,
+     -298.5
+    ],
+    [
+     3122.1,
+     -299.6
+    ],
+    [
+     3138.4,
+     -299.6
+    ],
+    [
+     3154.7,
+     -300.4
+    ],
+    [
+     3175.1,
+     -301.6
+    ],
+    [
+     3191.4,
+     -304.1
+    ],
+    [
+     3203.6,
+     -306.5
+    ]
+   ],
+   "lanes": 1,
+   "signals_moved": [
+    {
+     "id": "osm-node-13105183744",
+     "xy": [
+      3104.2,
+      -298.4
+     ],
+     "why": "el semáforo de la calzada hacia el oriente en el cruce queda sobre el trazado desviado, a 5 m del de la calzada contraria"
+    }
+   ],
+   "routes_observed": [
+    "5",
+    "A60",
+    "A61",
+    "B26",
+    "B28",
+    "C19",
+    "E32",
+    "J23",
+    "M51"
+   ],
+   "where": "Av. Américas hacia el oriente, intersección de Puente Aranda (Calle 13 × Carrera 50), entre Distrito Grafiti y Puente Aranda",
+   "reason": "Por las obras de la intersección de La Nueva Calle 13 (tramo 1, desde octubre de 2025) la calzada de TransMilenio hacia el oriente se desvió y va junto a la que viene hacia el occidente, en un solo carril, durante unos 250 m. Ninguna fuente publica este trazado: se dibujó por observación propia sobre la calle y la vista de la ciudad, con los semáforos del cruce como referencia (±2 m). Separación mínima de 3 m con la calzada contraria.",
+   "verify": "Provisional mientras duren las obras (niveles 2 y 3 previstos para finales de 2027): al terminar, volver a verificar el trazado con las fuentes (OSM, IDU) y retirar esta corrección.",
+   "observed": "2026-10-02"
+  }
  ]
 }

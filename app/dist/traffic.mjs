@@ -19,11 +19,11 @@
  * viajes precalculados sino con un paso fijo determinista y puntos de control: retroceder el reloj
  * restaura el punto anterior y vuelve a simular, que da exactamente lo mismo que la primera vez.
  */
-import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20260930.37';
-import {signalOffset,signalClusters} from './signals.mjs?v=20260930.37';
-import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20260930.37';
-import {hash,programmedSpeed} from './operation.mjs?v=20260930.37';
-import {vehicleSpec} from './vehicles.mjs?v=20260930.37';
+import {DAY,addDays,dayType,demandPeriod} from './calendar.mjs?v=20261002.1';
+import {signalOffset,signalClusters} from './signals.mjs?v=20261002.1';
+import {generatedPassengers,alightFraction,routeOptions,abandonSeconds,routeAcceptance,odPeriod} from './passengers.mjs?v=20261002.1';
+import {hash,programmedSpeed} from './operation.mjs?v=20261002.1';
+import {vehicleSpec} from './vehicles.mjs?v=20261002.1';
 
 export const DT=1;                     // paso de integración, s simulados: el IDM es estable a 1 s y los topes duros impiden solapes
 export const SERVICE_START=3*3600;     // el día de servicio va de las 03:00 a las 03:00 siguientes
@@ -246,6 +246,16 @@ export class Guideway{
    if(link.street)continue;const L=link.lanes,B=link.level;
    runs(L,(a,b,v)=>{if(v===1&&a>0&&b<L.length-1&&(b-a+1)*CELL<15&&!B.subarray(a,b+1).some(x=>x>0))L.fill(2,a,b+1);});
    runs(L,(a,b,v)=>{if(v===2&&a>0&&b<L.length-1&&(b-a+1)*CELL<40)L.fill(1,a,b+1);});
+  }
+  // Tramos observados de un solo carril (field_corrections.json, `path_overrides`): el desvío por
+  // obras en Puente Aranda no tiene polígono ni etiqueta y la vía contraria queda a 3 m.
+  for(const r of routes){
+   const map=this.routeMaps.get(r.id);
+   for(const [from,to] of r.single_lane||[])for(let k=0;k<map.links.length;k++){
+    const a=Math.max(from,map.starts[k]),b=Math.min(to,map.starts[k+1]);if(b<=a)continue;
+    const link=this.links[map.links[k]];
+    for(let c=Math.floor((a-map.starts[k])/CELL);c<=Math.min(link.lanes.length-1,Math.floor((b-map.starts[k])/CELL));c++)link.lanes[c]=1;
+   }
   }
   // Zonas de estación: desde 70 m antes del primer punto de atención hasta 60 m después del último,
   // uniendo los de todos los servicios que paran ahí. Si la aproximación empieza en el tramo

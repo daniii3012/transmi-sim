@@ -11,6 +11,27 @@
   frente a `20260929.15`) que obligan a simular el día entero al abrir; crucero sin dimensión de
   franja; transbordos que no esperan en la estación de transbordo.
 
+### Puente Aranda en obra, Portal 20 de Julio y obras en 3D (2 oct.)
+Archivos: `field_corrections.json` (las dos copias), `signals.mjs`, `traffic.mjs`, `map.mjs`,
+`tools/build_obras.py`, `obras.json`, `tools/build_buildings.py`, `buildings/`, `?v=20261002.1`.
+- **Desvío por obras en Puente Aranda** (`path_overrides` en `field_corrections.json`): la calzada de
+  las Américas hacia el oriente va pegada a la que viene hacia el occidente durante unos 250 m, en un
+  carril, por las obras de La Nueva Calle 13 (tramo 1). Ninguna fuente lo publica (OSM y el GTFS
+  traen el trazado viejo, 20 m al sur): lo observó Daniel y se dibujó sobre su captura con los
+  semáforos de referencia. `reroute()` reemplaza el tramo entre dos vértices en los 9 servicios que lo
+  usan, corre las paradas siguientes (−2,4 m), marca `single_lane` y el motor le deja un carril; el
+  semáforo del cruce de ese sentido se mueve al trazado nuevo. **Al terminar las obras, volver a
+  verificar con las fuentes y retirar la corrección.**
+- **Obras en 3D**: las vías en obra con `bridge`/`tunnel` y `layer` de OSM guardan su nivel y se
+  levantan solo en Capas → Obras, con el diseño terminado (no lo construido): tablero, barandas y
+  columnas, o muros en un deprimido, 5,5 m por nivel. Nueva obra `calle13`: intersección de Puente
+  Aranda (46 % al 31 ago. 2026), glorieta de TransMilenio en el nivel 2 y los dos puentes de las
+  Américas en el 3, de `data/raw/obras/20261002/puente_aranda.json`; la glorieta mixta a nivel queda
+  fuera. La 68 trae 12 puentes y 5 deprimidos (Américas, Calle 13 y otros) y Soacha 4 puentes.
+- **Portal 20 de Julio**: una construcción de Catastro que la calzada cruza en más de 15 m² se recorta
+  en vez de dibujarse entera (la cubierta tapaba la vuelta de los buses). La unión de la calzada se
+  calcula una vez y se parte en celdas de 250 m.
+
 ### Fase 1 (30 sep.) — hecha
 
 - Puntos de control con la huella del motor (`app/dist/engine.json`, `tools/engine_fingerprint.mjs`):
